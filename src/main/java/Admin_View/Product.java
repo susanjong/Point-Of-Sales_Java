@@ -1,3 +1,5 @@
+package Admin_View;
+
 import javafx.application.Application;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;

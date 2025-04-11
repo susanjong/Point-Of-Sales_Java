@@ -6,51 +6,56 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.image.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ProductManagementController">
+<BorderPane xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Admin_View.ProductManagementController">
     <left>
-        <VBox prefWidth="180.0" style="-fx-background-color: #59812a;">
-            <Button fx:id="profileBtn" text="Profile" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 12px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 15px">
+        <VBox prefWidth="180.0" style="-fx-background-color: #59812a; -fx-padding: 20 0 0 0;">
+            <Button fx:id="profileBtn" text="Profile" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
                 <VBox.margin>
-                    <Insets top="20.0" bottom="10.0" left="15.0" right="15.0" />
+                    <Insets top="20.0" bottom="12.0" left="15.0" right="15.0" />
                 </VBox.margin>
             </Button>
-            <Button fx:id="cashierBtn" text="Cashier" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 12px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 15px">
+            <Button fx:id="cashierBtn" text="Cashier" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
                 <VBox.margin>
-                    <Insets top="10.0" bottom="10.0" left="15.0" right="15.0" />
+                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
                 </VBox.margin>
             </Button>
-            <Button fx:id="productsBtn" text="Products Management" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: #1d4008; -fx-font-size: 12px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 15px">
+            <Button fx:id="productsBtn" text="Products Management" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: #1d4008; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px; -fx-background-radius: 60px">
                 <VBox.margin>
-                    <Insets top="10.0" bottom="10.0" left="15.0" right="15.0" />
+                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
                 </VBox.margin>
             </Button>
-            <Button fx:id="usersBtn" text="User Management" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 12px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 15px">
+            <Button fx:id="usersBtn" text="User Management" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
                 <VBox.margin>
-                    <Insets top="10.0" bottom="10.0" left="15.0" right="15.0" />
+                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
                 </VBox.margin>
             </Button>
-            <Button fx:id="adminLogBtn" text="Admin Log" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 12px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 15px">
+            <Button fx:id="adminLogBtn" text="Admin Log" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
                 <VBox.margin>
-                    <Insets top="10.0" bottom="10.0" left="15.0" right="15.0" />
+                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
                 </VBox.margin>
             </Button>
         </VBox>
     </left>
     <top>
         <HBox alignment="CENTER" style="-fx-background-color: #1d4008;">
-            <Label text="SimpleMart" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;">
+            <Label text="SimpleMart" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold; -fx-font-style: italic;">
                 <HBox.margin>
-                    <Insets top="10.0" bottom="10.0" />
+                    <Insets top="8.0" bottom="8.0" />
                 </HBox.margin>
             </Label>
         </HBox>
     </top>
     <center>
-        <VBox spacing="10.0" alignment="TOP_CENTER">
+        <VBox spacing="10.0" style ="-fx-font-size: 14px; -fx-background-color: #FFFEFB;">
             <padding>
-                <Insets top="20.0" bottom="20.0" left="20.0" right="20.0" />
+                <Insets top="30.0" bottom="20.0" left="20.0" right="20.0" />
             </padding>
-            <Label text="Products Management" style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+            <Label text="Products Management" 
+                style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 0 0 10 0;">
+                <VBox.margin>
+                    <Insets left="10" top="10" />
+                </VBox.margin>
+            </Label>
             <TableView fx:id="productTable" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="codeColumn" text="Code" prefWidth="100.0" />

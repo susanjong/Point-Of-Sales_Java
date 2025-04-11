@@ -1,5 +1,6 @@
 package Admin_View;
 
+import com.example.uts_pbo.DatabaseConnection;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -13,6 +14,9 @@ import javafx.stage.FileChooser;
 
 import java.io.File;
 import java.net.URL;
+import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -54,7 +58,9 @@ public class ProductManagementController implements Initializable {
     private ObservableList<String> categories = FXCollections.observableArrayList(
             "Groceries", "Electronics", "Clothing", "Home Goods", "Beauty", "Beverages", "Snacks"
     );
-    
+
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy");
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         codeColumn.setCellValueFactory(new PropertyValueFactory<>("code"));
@@ -64,7 +70,7 @@ public class ProductManagementController implements Initializable {
         expDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
         categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
         
-        productTable.setItems(Product.getAllProducts());
+        loadProductsFromDatabase();
         
         categoryComboBox.setItems(categories);
         
@@ -77,12 +83,54 @@ public class ProductManagementController implements Initializable {
         resetProductImage();
     }
     
+    private void loadProductsFromDatabase() {
+        ObservableList<Product> productList = FXCollections.observableArrayList();
+        
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            String query = "SELECT code, product_name, price, qty, exp_date, category, image_path FROM product";
+            PreparedStatement pst = conn.prepareStatement(query);
+            ResultSet rs = pst.executeQuery();
+            
+            while (rs.next()) {
+                String code = rs.getString("code");
+                String name = rs.getString("product_name");
+                double price = rs.getDouble("price");
+                int qty = rs.getInt("qty");
+                //Handle data properly can be null
+                String expDate = null;
+                    Date sqlDate = rs.getDate("exp_date");
+                    if (sqlDate != null) {
+                        expDate = dateFormat.format(sqlDate);
+                    }
+                String category = rs.getString("category");
+                String imagePath = rs.getString("image_path");
+                
+                Product product = new Product(code, name, price, qty, expDate, category, imagePath);
+                productList.add(product);
+            }
+            
+            productTable.setItems(productList);
+            Product.getAllProducts().setAll(productList);
+            
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "Database Error", "Could not load products from database: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
     private void populateForm(Product product) {
         codeField.setText(product.getCode());
         nameField.setText(product.getName());
         priceField.setText(String.valueOf(product.getPrice()));
         qtyField.setText(String.valueOf(product.getQuantity()));
-        expDateField.setText(product.getExpirationDate());
+        
+        // Handle null expiration date
+        if (product.getExpirationDate() != null) {
+            expDateField.setText(product.getExpirationDate());
+        } else {
+            expDateField.setText("");
+        }
+
         categoryComboBox.setValue(product.getCategory());
         
         if (product.getImagePath() != null) {
@@ -134,32 +182,88 @@ public class ProductManagementController implements Initializable {
             String code = codeField.getText();
             String name = nameField.getText();
             double price = Double.parseDouble(priceField.getText());
-            int qty = Integer.parseInt(qtyField.getText());
-            String expDate = expDateField.getText();
+            int qty;
+            try {
+                qty = Integer.parseInt(qtyField.getText());
+                if (qty < 0) {
+                    showAlert(Alert.AlertType.ERROR, "Input Error", "Quantity cannot be negative");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                showAlert(Alert.AlertType.ERROR, "Input Error", "Quantity must be a valid number");
+                return;
+            }
+
+            String expDateStr = expDateField.getText();
             String category = categoryComboBox.getValue();
             
-            Optional<Product> existingProduct = Product.getAllProducts().stream()
-                    .filter(p -> p.getCode().equals(code))
-                    .findFirst();
-            
-            if (existingProduct.isPresent()) {
-                Product product = existingProduct.get();
-                product.setName(name);
-                product.setPrice(price);
-                product.setQuantity(qty);
-                product.setExpirationDate(expDate);
-                product.setCategory(category);
-                product.setImagePath(currentImagePath);
-                
-                productTable.refresh();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Product updated successfully");
-            } else {
-                Product newProduct = new Product(code, name, price, qty, expDate, category, currentImagePath);
-                Product.addProduct(newProduct);
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Product added successfully");
+            // Handle empty exp_date field - set to null if empty
+            java.sql.Date sqlDate = null;
+            if (expDateStr != null && !expDateStr.trim().isEmpty()) {
+                try {
+                    java.util.Date parsedDate = dateFormat.parse(expDateStr);
+                    sqlDate = new java.sql.Date(parsedDate.getTime());
+                } catch (ParseException e) {
+                    showAlert(Alert.AlertType.ERROR, "Date Format Error", 
+                              "Please enter the expiration date in YYYY-MM-DD format or leave it empty");
+                    return;
+                }
             }
             
-            clearForm();
+            try (Connection conn = DatabaseConnection.getConnection()) {
+                // Check if product exists
+                String checkQuery = "SELECT code FROM product WHERE code = ?";
+                PreparedStatement checkStmt = conn.prepareStatement(checkQuery);
+                checkStmt.setString(1, code);
+                ResultSet rs = checkStmt.executeQuery();
+                
+                if (rs.next()) {
+                    // Update existing product
+                    String updateQuery = "UPDATE Product SET product_name = ?, price = ?, qty = ?, exp_date = ?, category = ?, image_path = ? WHERE code = ?";
+                    PreparedStatement updateStmt = conn.prepareStatement(updateQuery);
+                    updateStmt.setString(1, name);
+                    updateStmt.setDouble(2, price);
+                    updateStmt.setInt(3, qty);
+                    if (sqlDate != null) {
+                        updateStmt.setDate(4, sqlDate);
+                    } else {
+                        updateStmt.setNull(4, Types.DATE);
+                    }
+                    updateStmt.setString(5, category);
+                    updateStmt.setString(6, currentImagePath);
+                    updateStmt.setString(7, code);
+                    updateStmt.executeUpdate();
+                    
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Product updated successfully");
+                } else {
+                    // Insert new product
+                    String insertQuery = "INSERT INTO Product (code, product_name, price, qty, exp_date, category, image_path) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
+                    insertStmt.setString(1, code);
+                    insertStmt.setString(2, name);
+                    insertStmt.setDouble(3, price);
+                    insertStmt.setInt(4, qty);
+                    // Set date as NULL if empty
+                    if (sqlDate != null) {
+                        insertStmt.setDate(5, sqlDate);
+                    } else {
+                        insertStmt.setNull(5, Types.DATE);
+                    }
+                    insertStmt.setString(6, category);
+                    insertStmt.setString(7, currentImagePath);
+                    insertStmt.executeUpdate();
+                    
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Product added successfully");
+                }
+                
+                // Reload products from database
+                loadProductsFromDatabase();
+                clearForm();
+                
+            } catch (SQLException e) {
+                showAlert(Alert.AlertType.ERROR, "Database Error", "Could not save product: " + e.getMessage());
+                e.printStackTrace();
+            }
             
         } catch (NumberFormatException e) {
             showAlert(Alert.AlertType.ERROR, "Input Error", "Invalid number format for price or quantity");
@@ -183,22 +287,22 @@ public class ProductManagementController implements Initializable {
         
         confirmDialog.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                Product.removeProduct(selectedProduct);
-                clearForm();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Product deleted successfully");
+                try (Connection conn = DatabaseConnection.getConnection()) {
+                    String deleteQuery = "DELETE FROM product WHERE code = ?";
+                    PreparedStatement pst = conn.prepareStatement(deleteQuery);
+                    pst.setString(1, selectedProduct.getCode());
+                    pst.executeUpdate();
+                    
+                    loadProductsFromDatabase();
+                    clearForm();
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Product deleted successfully");
+                    
+                } catch (SQLException e) {
+                    showAlert(Alert.AlertType.ERROR, "Database Error", "Could not delete product: " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
         });
-    }
-    
-    @FXML
-    private void handleUpdateProduct() {
-        Product selectedProduct = productTable.getSelectionModel().getSelectedItem();
-        if (selectedProduct == null) {
-            showAlert(Alert.AlertType.WARNING, "No Selection", "Please select a product to update");
-            return;
-        }
-        
-        populateForm(selectedProduct);
     }
     
     @FXML
@@ -257,5 +361,4 @@ public class ProductManagementController implements Initializable {
             }
         }
     }
-
 }

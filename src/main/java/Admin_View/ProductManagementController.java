@@ -165,9 +165,36 @@ public class ProductManagementController implements Initializable {
     }
     
     @FXML
-    private void handleNavigation(ActionEvent event) {
-        Button source = (Button) event.getSource();
-        System.out.println("Navigated to: " + source.getText());
+    void handleNavigation(ActionEvent event) {
+        Object source = event.getSource();
+        
+        try {
+            String fxmlFile = "";
+            
+            if (source == profileBtn) {
+                fxmlFile = "Profile.fxml";
+            } else if (source == cashierBtn) {
+                fxmlFile = "Cashier.fxml";
+            } else if (source == usersBtn) {
+                fxmlFile = "UserManagement.fxml";
+            } else if (source == adminLogBtn) {
+                fxmlFile = "AdminLog.fxml";
+            } else if (source == productsBtn) {
+                return;
+            }
+            
+            if (!fxmlFile.isEmpty()) {
+                Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
+                Stage stage = (Stage) ((Button) source).getScene().getWindow();
+                Scene scene = new Scene(root);
+                stage.setScene(scene);
+                stage.show();
+            }
+            
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Navigation Error", 
+                    "Could not navigate to the requested page: " + e.getMessage());
+        }
     }
     
     @FXML

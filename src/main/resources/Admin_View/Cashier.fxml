@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane style="-fx-font-family: Lato" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="CashierController">
+<BorderPane style="-fx-font-family: Lato" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Admin_View.CashierController">
     <left>
         <VBox prefWidth="180.0" style="-fx-background-color: #59812a;">
             <Button fx:id="profileBtn" onAction="#handleNavigation" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: none; -fx-font-size: 12px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 15px" styleClass="nav-button" text="Profile">

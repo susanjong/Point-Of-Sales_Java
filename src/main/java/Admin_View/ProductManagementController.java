@@ -1,6 +1,8 @@
 package Admin_View;
 
 import com.example.uts_pbo.DatabaseConnection;
+import com.example.uts_pbo.Main;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -19,6 +21,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import java.io.IOException;
 
 public class ProductManagementController implements Initializable {
 
@@ -163,39 +170,43 @@ public class ProductManagementController implements Initializable {
         }
         currentImagePath = null;
     }
+
+    @FXML
+    public void initialize() {
+        System.out.println("Controller initialized!");
+        System.out.println("profileBtn: " + (profileBtn != null ? "found" : "NOT FOUND"));
+        System.out.println("cashierBtn: " + (cashierBtn != null ? "found" : "NOT FOUND"));
+        
+    }
     
     @FXML
     void handleNavigation(ActionEvent event) {
-        Object source = event.getSource();
-        
+    Object source = event.getSource();
+    
+    String fxmlFile = "";
+    
+    if (source == profileBtn) {
+        fxmlFile = "Profile.fxml";
+    } else if (source == cashierBtn) {
+        fxmlFile = "Cashier.fxml";
+    } else if (source == usersBtn) {
+        fxmlFile = "UserManagement.fxml";
+    } else if (source == adminLogBtn) {
+        fxmlFile = "AdminLog.fxml";
+    } else if (source == productsBtn) {
+        fxmlFile = "ProductManagement.fxml";
+    }
+    
+    if (!fxmlFile.isEmpty()) {
         try {
-            String fxmlFile = "";
-            
-            if (source == profileBtn) {
-                fxmlFile = "Profile.fxml";
-            } else if (source == cashierBtn) {
-                fxmlFile = "Cashier.fxml";
-            } else if (source == usersBtn) {
-                fxmlFile = "UserManagement.fxml";
-            } else if (source == adminLogBtn) {
-                fxmlFile = "AdminLog.fxml";
-            } else if (source == productsBtn) {
-                return;
-            }
-            
-            if (!fxmlFile.isEmpty()) {
-                Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
-                Stage stage = (Stage) ((Button) source).getScene().getWindow();
-                Scene scene = new Scene(root);
-                stage.setScene(scene);
-                stage.show();
-            }
-            
-        } catch (IOException e) {
+            Main.navigateTo(fxmlFile);
+        } catch (Exception e) {
             showAlert(Alert.AlertType.ERROR, "Navigation Error", 
                     "Could not navigate to the requested page: " + e.getMessage());
         }
     }
+}
+
     
     @FXML
     private void handleSaveProduct() {

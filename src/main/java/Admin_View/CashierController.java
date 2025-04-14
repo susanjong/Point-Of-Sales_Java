@@ -34,64 +34,42 @@ public class CashierController implements Initializable {
     @FXML private TextField paidField;
     @FXML private Label balanceLabel;
     
-    // Add reference to the cart container to update items
     @FXML private VBox cartItemsContainer;
-    // Add reference to the total amount label
     @FXML private Label totalAmountLabel;
     
-    private double totalAmount = 0.0; // Starting with the example amount
+    private double totalAmount = 0.0;
     private NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
     
     private ObservableList<CartItem> cartItems = FXCollections.observableArrayList();
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        // Initialize with sample cart items
         cartItems.add(new CartItem("Chitato snack cheese flavour", 11000.0, 3));
         cartItems.add(new CartItem("Bango Kecap Manis", 11500.0, 2));
-        // ... other sample items ...
-        
-        // Set up currency formatter to show proper Indonesian Rupiah
         currencyFormat.setMaximumFractionDigits(0);
         
-        // Add listener to paidField to calculate balance
         paidField.textProperty().addListener((observable, oldValue, newValue) -> {
             calculateBalance();
         });
-        
-        // Initialize the cart view
         refreshCartView();
-        
-        // Calculate the total amount based on cart items
         updateTotalAmount();
-        
-        // Set the initial total amount display
         updateTotalDisplay();
     }
     
-    /**
-     * Creates the cart view from the cartItems list
-     */
     private void refreshCartView() {
         if (cartItemsContainer != null) {
             cartItemsContainer.getChildren().clear();
             
             for (CartItem item : cartItems) {
-                // Create the cart item view
                 HBox itemView = createCartItemView(item);
                 cartItemsContainer.getChildren().add(itemView);
             }
         }
     }
     
-    /**
-     * Creates a view for a cart item with functionality
-     */
     private HBox createCartItemView(CartItem item) {
         HBox itemRow = new HBox(10);
         itemRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-        
-        // Product info
         VBox productInfo = new VBox();
         HBox.setHgrow(productInfo, javafx.scene.layout.Priority.ALWAYS);
         
@@ -103,7 +81,6 @@ public class CashierController implements Initializable {
         
         productInfo.getChildren().addAll(nameLabel, priceLabel);
         
-        // Delete button
         Button deleteBtn = new Button("Delete");
         deleteBtn.setStyle("-fx-background-color: #9A030F; -fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;");
         deleteBtn.setPrefWidth(70.0);
@@ -111,7 +88,6 @@ public class CashierController implements Initializable {
             handleRemoveFromCart(item);
         });
         
-        // Quantity controls
         HBox quantityControls = new HBox(5);
         quantityControls.setAlignment(javafx.geometry.Pos.CENTER);
         
@@ -132,7 +108,6 @@ public class CashierController implements Initializable {
         
         quantityControls.getChildren().addAll(minusBtn, quantityLabel, plusBtn);
         
-        // Add all components to the row
         itemRow.getChildren().addAll(productInfo, deleteBtn, quantityControls);
         
         return itemRow;
@@ -145,8 +120,6 @@ public class CashierController implements Initializable {
                 balanceLabel.setText("");
                 return;
             }
-            
-            // Remove any non-numeric characters
             paidText = paidText.replaceAll("[^\\d]", "");
             
             double paidAmount = Double.parseDouble(paidText);
@@ -162,17 +135,10 @@ public class CashierController implements Initializable {
     void handleAddToCart(ActionEvent event) {
         String code = searchField.getText().trim();
         if (!code.isEmpty()) {
-            // In a real app, we would search for the product by code
-            // For demo purposes, let's add a default product
             CartItem newItem = new CartItem("Product from code " + code, 10000.0, 1);
-            
-            // Check if this product is already in the cart
             for (CartItem item : cartItems) {
                 if (item.getName().equals(newItem.getName())) {
-                    // If product already exists, just increase quantity
                     item.setQuantity(item.getQuantity() + 1);
-                    
-                    // Refresh the cart UI
                     refreshCartView();
                     updateTotalAmount();
                     searchField.clear();
@@ -181,8 +147,6 @@ public class CashierController implements Initializable {
                     return;
                 }
             }
-            
-            // If product is not in cart, add it as new item
             cartItems.add(newItem);
             refreshCartView();
             updateTotalAmount();
@@ -196,30 +160,21 @@ public class CashierController implements Initializable {
     
     @FXML
     void handleAddBundleToCart(ActionEvent event) {
-        // Determine which bundle was clicked based on source button
         Button clickedButton = (Button) event.getSource();
-        
-        // Get the parent VBox of the button to access bundle info
         VBox bundleBox = (VBox) clickedButton.getParent();
-        
-        // Find the label with the bundle name
         String bundleName = "";
-        double bundlePrice = 20400.0; // Default price
+        double bundlePrice = 20400.0;
         
         for (javafx.scene.Node node : bundleBox.getChildren()) {
             if (node instanceof Label) {
                 Label label = (Label) node;
-                // Check if this label contains the price (has bold styling)
                 if (label.getStyle().contains("-fx-font-weight: bold")) {
-                    // Extract price from "Rp 20.400" format
                     String priceText = label.getText().replace("Rp ", "").replace(".", "");
                     try {
                         bundlePrice = Double.parseDouble(priceText);
                     } catch (NumberFormatException e) {
-                        // Use default price if parsing fails
                     }
                 } else if (!label.getText().isEmpty() && !label.getText().startsWith("Rp")) {
-                    // This should be the name label
                     bundleName = label.getText();
                 }
             }
@@ -229,18 +184,15 @@ public class CashierController implements Initializable {
             bundleName = "Bundling Chitato snack cheese flavour, Bango Kecap Manis";
         }
         
-        // Check if this bundle is already in the cart
         boolean bundleFound = false;
         for (CartItem item : cartItems) {
             if (item.getName().equals(bundleName)) {
-                // If bundle already exists, just increase quantity
                 item.setQuantity(item.getQuantity() + 1);
                 bundleFound = true;
                 break;
             }
         }
         
-        // If bundle is not in cart, add it as new item
         if (!bundleFound) {
             CartItem bundleItem = new CartItem(bundleName, bundlePrice, 1);
             cartItems.add(bundleItem);
@@ -254,30 +206,21 @@ public class CashierController implements Initializable {
     
     @FXML
     void handleAddProductToCart(ActionEvent event) {
-        // Determine which product was clicked based on source button
         Button clickedButton = (Button) event.getSource();
-        
-        // Get the parent VBox of the button to access product info
         VBox productBox = (VBox) clickedButton.getParent();
-        
-        // Find the label with the product name and price
         String productName = "";
-        double productPrice = 11500.0; // Default price
+        double productPrice = 11500.0; 
         
         for (javafx.scene.Node node : productBox.getChildren()) {
             if (node instanceof Label) {
                 Label label = (Label) node;
-                // Check if this label contains the price (has bold styling)
                 if (label.getStyle().contains("-fx-font-weight: bold")) {
-                    // Extract price from "Rp 11.500" format
                     String priceText = label.getText().replace("Rp ", "").replace(".", "");
                     try {
                         productPrice = Double.parseDouble(priceText);
                     } catch (NumberFormatException e) {
-                        // Use default price if parsing fails
                     }
                 } else if (!label.getText().isEmpty() && !label.getText().startsWith("Rp")) {
-                    // This should be the name label
                     productName = label.getText();
                 }
             }
@@ -287,18 +230,15 @@ public class CashierController implements Initializable {
             productName = "Chitato snack cheese flavour";
         }
         
-        // Check if this product is already in the cart
         boolean productFound = false;
         for (CartItem item : cartItems) {
             if (item.getName().equals(productName)) {
-                // If product already exists, just increase quantity
                 item.setQuantity(item.getQuantity() + 1);
                 productFound = true;
                 break;
             }
         }
         
-        // If product is not in cart, add it as new item
         if (!productFound) {
             CartItem productItem = new CartItem(productName, productPrice, 1);
             cartItems.add(productItem);
@@ -310,7 +250,6 @@ public class CashierController implements Initializable {
         showAlert(Alert.AlertType.INFORMATION, "Success", "Product added to cart!");
     }
     
-    // New method that removes a specific cart item
     private void handleRemoveFromCart(CartItem itemToRemove) {
         cartItems.remove(itemToRemove);
         refreshCartView();
@@ -319,8 +258,6 @@ public class CashierController implements Initializable {
     
     @FXML
     void handleRemoveFromCart(ActionEvent event) {
-        // This method will be called when a Delete button is pressed without direct access to the item
-        // This is a fallback for when we can't directly identify the item
         Button clickedButton = (Button) event.getSource();
         HBox parentRow = (HBox) clickedButton.getParent();
         
@@ -332,7 +269,6 @@ public class CashierController implements Initializable {
         }
     }
     
-    // New method that increases quantity for a specific cart item
     private void handleIncreaseQuantity(CartItem item) {
         item.setQuantity(item.getQuantity() + 1);
         refreshCartView();
@@ -341,7 +277,6 @@ public class CashierController implements Initializable {
     
     @FXML
     void handleIncreaseQuantity(ActionEvent event) {
-        // This method will be called when a + button is pressed without direct access to the item
         Button clickedButton = (Button) event.getSource();
         HBox quantityBox = (HBox) clickedButton.getParent();
         HBox parentRow = (HBox) quantityBox.getParent();
@@ -355,7 +290,6 @@ public class CashierController implements Initializable {
         }
     }
     
-    // New method that decreases quantity for a specific cart item
     private void handleDecreaseQuantity(CartItem item) {
         if (item.getQuantity() > 1) {
             item.setQuantity(item.getQuantity() - 1);
@@ -366,7 +300,6 @@ public class CashierController implements Initializable {
     
     @FXML
     void handleDecreaseQuantity(ActionEvent event) {
-        // This method will be called when a - button is pressed without direct access to the item
         Button clickedButton = (Button) event.getSource();
         HBox quantityBox = (HBox) clickedButton.getParent();
         HBox parentRow = (HBox) quantityBox.getParent();
@@ -391,7 +324,6 @@ public class CashierController implements Initializable {
         }
         
         try {
-            // Remove any non-numeric characters
             paidText = paidText.replaceAll("[^\\d]", "");
             double paidAmount = Double.parseDouble(paidText);
             
@@ -400,17 +332,13 @@ public class CashierController implements Initializable {
                 return;
             }
             
-            // Process payment
             double change = paidAmount - totalAmount;
             
-            // Show success message
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Payment Successful");
             alert.setHeaderText(null);
             alert.setContentText("Payment received!\nChange: " + formatPrice(change));
             alert.showAndWait();
-            
-            // Clear cart
             cartItems.clear();
             totalAmount = 0.0;
             paidField.clear();
@@ -425,13 +353,10 @@ public class CashierController implements Initializable {
     
     private void updateTotalAmount() {
         totalAmount = 0.0;
-        // Loop through all cart items
         for (CartItem item : cartItems) {
-            // Add the item's subtotal (price * quantity) to the total amount
             double itemSubtotal = item.getPrice() * item.getQuantity();
             totalAmount += itemSubtotal;
         }
-        // Update the UI display with the new total
         updateTotalDisplay();
     }
     
@@ -469,7 +394,6 @@ public class CashierController implements Initializable {
             } else if (source == adminLogBtn) {
                 fxmlFile = "AdminLog.fxml";
             } else if (source == cashierBtn) {
-                // Already on cashier page
                 return;
             }
             
@@ -487,7 +411,6 @@ public class CashierController implements Initializable {
         }
     }
     
-    // Inner class to represent cart items
     public static class CartItem {
         private String name;
         private double price;

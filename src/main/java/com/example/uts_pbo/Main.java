@@ -89,12 +89,7 @@ public class Main extends Application {
         }
     }
     
-    public static void main(String[] args) {
-        // Initialize sample data
-        Product.addProduct(new Product("P001", "Chitato snack cheese flavour", 5.99, 100, "2025-05-15", "Groceries", "images/chitato.png"));
-        Product.addProduct(new Product("P002", "Bango kecap manis", 3.49, 50, "2025-04-20", "Groceries", null));
-        Product.addProduct(new Product("P003", "Wardah Lightening Whip Facial Foam", 1.29, 200, "2026-01-10", "Beverages", null));
-        
+    public static void main(String[] args) {        
         launch(args);
     }
 }

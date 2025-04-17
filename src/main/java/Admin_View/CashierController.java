@@ -19,6 +19,10 @@ import java.net.URL;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class CashierController implements Initializable {
 
@@ -209,7 +213,7 @@ public class CashierController implements Initializable {
         Button clickedButton = (Button) event.getSource();
         VBox productBox = (VBox) clickedButton.getParent();
         String productName = "";
-        double productPrice = 11500.0; 
+        double productPrice = 0; 
         
         for (javafx.scene.Node node : productBox.getChildren()) {
             if (node instanceof Label) {
@@ -352,7 +356,7 @@ public class CashierController implements Initializable {
     }
     
     private void updateTotalAmount() {
-        totalAmount = 0.0;
+        totalAmount = 0;
         for (CartItem item : cartItems) {
             double itemSubtotal = item.getPrice() * item.getQuantity();
             totalAmount += itemSubtotal;

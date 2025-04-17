@@ -396,7 +396,7 @@ public class CashierController implements Initializable {
             } else if (source == usersBtn) {
                 fxmlFile = "UserManagement.fxml";
             } else if (source == adminLogBtn) {
-                fxmlFile = "AdminLog.fxml";
+                fxmlFile = "AuthenticationLog.fxml";
             } else if (source == cashierBtn) {
                 return;
             }

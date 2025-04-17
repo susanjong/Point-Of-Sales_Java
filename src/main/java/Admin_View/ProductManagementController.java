@@ -191,7 +191,7 @@ public class ProductManagementController implements Initializable {
     } else if (source == usersBtn) {
         fxmlFile = "UserManagement.fxml";
     } else if (source == adminLogBtn) {
-        fxmlFile = "AdminLog.fxml";
+        fxmlFile = "AuthenticationLog.fxml";
     } else if (source == productsBtn) {
         fxmlFile = "ProductManagement.fxml";
     }

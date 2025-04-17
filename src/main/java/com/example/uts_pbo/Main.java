@@ -12,6 +12,29 @@ import java.io.IOException;
 public class Main extends Application {
     private static Stage primaryStage;
 
+    public static void navigateTo(String fxmlPath) {
+        try {
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource(fxmlPath));
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
+            
+            primaryStage.setScene(scene);
+            primaryStage.show();
+        } catch (IOException e) {
+            System.err.println("Error loading " + fxmlPath + ": " + e.getMessage());
+            e.printStackTrace();
+            showAlert("Loading Error", "Could not load the requested screen: " + e.getMessage());
+        }
+    }
+
+    private static void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
     @Override
     public void start(Stage stage) throws Exception {
         primaryStage = stage;
@@ -30,9 +53,7 @@ public class Main extends Application {
             FXMLLoader loader = new FXMLLoader(Main.class.getResource("Login.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root);
-            
-           
-            
+
             primaryStage.setTitle("SimpleMart - Login");
             primaryStage.setScene(scene);
             primaryStage.setMinWidth(320);
@@ -62,34 +83,9 @@ public class Main extends Application {
         }
     }
     
-<<<<<<< HEAD
-    public static void main(String[] args) {        
-=======
-    // Method to show data diri sign up screen
-    public static void showDataDiriSignUp(String username) {
-        try {
-            FXMLLoader loader = new FXMLLoader(Main.class.getResource("DataDiriSignUp.fxml"));
-            Parent root = loader.load();
-            
-            // Pass the username to the controller
-            DataDiriSignUpController controller = loader.getController();
-            controller.setUsername(username);
-            
-            Scene scene = new Scene(root);
-            primaryStage.setTitle("SimpleMart - Complete Registration");
-            primaryStage.setScene(scene);
-            primaryStage.show();
-        } catch (IOException e) {
-            System.err.println("Error loading DataDiriSignUp.fxml: " + e.getMessage());
-            e.printStackTrace();
-            showAlert("Loading Error", "Could not load the data diri sign up screen: " + e.getMessage());
-        }
-    }
-    
-    // Method to show product management screen
     public static void showProductManagement() {
         try {
-            FXMLLoader loader = new FXMLLoader(Main.class.getResource("/Admin_View/ProductManagement.fxml"));
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("ProductManagement.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root);
             
@@ -102,11 +98,35 @@ public class Main extends Application {
             showAlert("Loading Error", "Could not load the product management screen: " + e.getMessage());
         }
     }
-    
-    // Method to show cashier screen
+
+    // Add this method to your Main class
+    public static void showDataDiriSignUp(String username) {
+        try {
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("DataDiriSignUp.fxml"));
+            Parent root = loader.load();
+            
+            // Get the controller and pass the username
+            DataDiriSignUpController controller = loader.getController();
+            if (controller != null) {
+                controller.setUsername(username);
+            }
+            
+            Scene scene = new Scene(root);
+            
+            primaryStage.setTitle("SimpleMart - Complete Registration");
+            primaryStage.setScene(scene);
+            primaryStage.show();
+        } catch (IOException e) {
+            System.err.println("Error loading DataDiriSignUp.fxml: " + e.getMessage());
+            e.printStackTrace();
+            showAlert("Loading Error", "Could not load the registration data screen: " + e.getMessage());
+        }
+    }
+
+    // Add this method to your Main class
     public static void showCashier() {
         try {
-            FXMLLoader loader = new FXMLLoader(Main.class.getResource("/Admin_View/Cashier.fxml"));
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("Cashier.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root);
             
@@ -119,52 +139,8 @@ public class Main extends Application {
             showAlert("Loading Error", "Could not load the cashier screen: " + e.getMessage());
         }
     }
-    
-    // General navigation method
-    public static void navigateTo(String fxmlPath) {
-        try {
-            FXMLLoader loader = new FXMLLoader(Main.class.getResource(fxmlPath));
-            Parent root = loader.load();
-            Scene scene = new Scene(root);
-            
-            primaryStage.setScene(scene);
-            primaryStage.show();
-        } catch (IOException e) {
-            System.err.println("Error loading " + fxmlPath + ": " + e.getMessage());
-            e.printStackTrace();
-            showAlert("Navigation Error", "Could not navigate to the requested screen: " + e.getMessage());
-        }
-    }
-    
-    // Helper method to show alerts
-    private static void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-    
-    public static void main(String[] args) {
-        // Initialize database connection test
-        try {
-            DatabaseConnection.getConnection();
-            System.out.println("Database connection successful!");
-            
-            // Initialize admin user
-            AdminInitializer.initialize();
-            
-        } catch (Exception e) {
-            System.err.println("Database connection failed: " + e.getMessage());
-            e.printStackTrace();
-        }
-        
-        // Initialize sample data
-        Product.addProduct(new Product("P001", "Chitato snack cheese flavour", 5.99, 100, "2025-05-15", "Groceries", "images/chitato.png"));
-        Product.addProduct(new Product("P002", "Bango kecap manis", 3.49, 50, "2025-04-20", "Groceries", null));
-        Product.addProduct(new Product("P003", "Wardah Lightening Whip Facial Foam", 1.29, 200, "2026-01-10", "Beverages", null));
-        
->>>>>>> b1503ea0244d3dc7d6e3c6d25cca2c8fca5d6ae2
+
+    public static void main(String[] args) {        
         launch(args);
     }
 }

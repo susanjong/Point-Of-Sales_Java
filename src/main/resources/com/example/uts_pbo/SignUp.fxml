@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="748.0" prefWidth="1331.0" style="-fx-background-color: #D9D9D9;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="748.0" prefWidth="1331.0" style="-fx-background-color: #D9D9D9;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.uts_pbo.SignUpController">
    <children>
       <Pane layoutX="556.0" layoutY="145.0" prefHeight="514.0" prefWidth="436.0" style="-fx-background-color: #FFFEFB;">
          <children>
@@ -28,12 +28,12 @@
                   <Font name="System Bold" size="12.0" />
                </font>
             </Label>
-            <TextField fx:id="EmailFieldText" layoutX="33.0" layoutY="173.0" prefHeight="43.0" prefWidth="345.0" promptText="Enter Your Email" style="-fx-background-radius: 2px;">
+            <TextField fx:id="emailField" layoutX="33.0" layoutY="173.0" prefHeight="43.0" prefWidth="345.0" promptText="Enter Your Email" style="-fx-background-radius: 2px;">
                <font>
                   <Font size="11.0" />
                </font>
             </TextField>
-            <Button fx:id="ButtonContinue" layoutX="33.0" layoutY="389.0" mnemonicParsing="false" prefHeight="43.0" prefWidth="345.0" style="-fx-background-color: #204200; -fx-background-radius: 100px;" text="Continue" textFill="WHITE">
+            <Button fx:id="continueButton" onAction="#continueButtonOnAction" layoutX="33.0" layoutY="389.0" mnemonicParsing="false" prefHeight="43.0" prefWidth="345.0" style="-fx-background-color: #204200; -fx-background-radius: 100px;" text="Continue" textFill="WHITE">
                <font>
                   <Font size="18.0" />
                </font>
@@ -41,12 +41,17 @@
                   <Insets />
                </opaqueInsets>
             </Button>
-            <Hyperlink fx:id="HyperlinkSignIn" layoutX="192.0" layoutY="438.0" text="Sign In" textFill="#5b8336">
+            <Hyperlink fx:id="loginLink" onAction="#loginLinkOnAction" layoutX="192.0" layoutY="438.0" text="Sign In" textFill="#5b8336">
                <font>
                   <Font name="System Bold" size="14.0" />
                </font>
             </Hyperlink>
             <Label layoutX="37.0" layoutY="441.0" text="Already have an account?">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </Label>
+            <Label fx:id="messageLabel" alignment="CENTER" layoutX="33.0" layoutY="330.0" prefHeight="43.0" prefWidth="345.0" textFill="#cd0404">
                <font>
                   <Font size="14.0" />
                </font>

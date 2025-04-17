@@ -2,17 +2,12 @@ package com.example.uts_pbo;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
-import java.io.IOException;
 
 public class LoginController {
     @FXML
@@ -33,6 +28,14 @@ public class LoginController {
     @FXML
     private TextField UsernameFieldText;
 
+    // Add a static variable to store the logged-in user
+    private static User currentUser;
+
+    // Getter for the current user
+    public static User getCurrentUser() {
+        return currentUser;
+    }
+
     @FXML
     void ButtonContinueOnAction(ActionEvent event) {
         validateLogin();
@@ -41,20 +44,9 @@ public class LoginController {
     @FXML
     void forgotPasswordOnAction(ActionEvent event) {
         try {
-            // Load the forgot password FXML file
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("OTPEmail.fxml"));
-            Parent root = loader.load();
-
-            // Get the current stage from the event source
-            Stage stage = (Stage) ForgotPassword.getScene().getWindow();
-
-            // Create new scene and set it on the current stage
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Forgot Password");
-            stage.show();
-
-        } catch (IOException e) {
+            Main.getPrimaryStage().setTitle("Forgot Password");
+            Main.showLoginScreen(); // Redirect to OTP email screen when implemented
+        } catch (Exception e) {
             LoginMessageLabel.setText("Error: Could not load forgot password page");
             LoginMessageLabel.setTextFill(Color.RED);
             e.printStackTrace();
@@ -64,20 +56,8 @@ public class LoginController {
     @FXML
     void createAccountOnAction(ActionEvent event) {
         try {
-            // Load the signup FXML file
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("SignUp.fxml"));
-            Parent root = loader.load();
-
-            // Get the current stage from the event source
-            Stage stage = (Stage) HyperlinkCreateAcc.getScene().getWindow();
-
-            // Create new scene and set it on the current stage
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.setTitle("Sign Up");
-            stage.show();
-
-        } catch (IOException e) {
+            Main.showSignUpScreen();
+        } catch (Exception e) {
             LoginMessageLabel.setText("Error: Could not load signup page");
             LoginMessageLabel.setTextFill(Color.RED);
             e.printStackTrace();
@@ -85,26 +65,60 @@ public class LoginController {
     }
 
     private void validateLogin() {
-        // Cek jika username dan password kosong
+        // Check if username and password are empty
         if (UsernameFieldText.getText().isEmpty() && EnterPassword.getText().isEmpty()) {
             LoginMessageLabel.setText("Username and password cannot be empty!");
             LoginMessageLabel.setTextFill(Color.RED);
         }
-        // Cek jika hanya username yang kosong
+        // Check if only username is empty
         else if (UsernameFieldText.getText().isEmpty()) {
             LoginMessageLabel.setText("Username cannot be empty!");
             LoginMessageLabel.setTextFill(Color.RED);
         }
-        // Cek jika hanya password yang kosong
+        // Check if only password is empty
         else if (EnterPassword.getText().isEmpty()) {
             LoginMessageLabel.setText("Password cannot be empty!");
             LoginMessageLabel.setTextFill(Color.RED);
         }
-        // Jika semua field telah diisi
+        // If all fields are filled, validate against the database
         else {
-            // Tambahkan logic autentikasi sebenarnya di sini
-            LoginMessageLabel.setText("Login succesfull!");
+            authenticateUser();
+        }
+    }
+    
+    private void authenticateUser() {
+        String usernameOrEmail = UsernameFieldText.getText();
+        String password = EnterPassword.getText();
+        
+        // Try to authenticate user
+        User user = UserDAO.getUserByUsernameOrEmail(usernameOrEmail);
+        
+        if (user != null && user.verifyPassword(password)) {
+            // Login successful
+            currentUser = user;
+            UserSession.setCurrentUser(user);
+            
+            LoginMessageLabel.setText("Login successful!");
             LoginMessageLabel.setTextFill(Color.GREEN);
+            
+            // Navigate based on user role
+            try {
+                if (user.isAdmin()) {
+                    // Navigate to admin dashboard
+                    Main.showProductManagement();
+                } else {
+                    // Navigate to user dashboard or shopping interface
+                    Main.showCashier();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                LoginMessageLabel.setText("Error navigating to dashboard");
+                LoginMessageLabel.setTextFill(Color.RED);
+            }
+        } else {
+            // Login failed
+            LoginMessageLabel.setText("Invalid username or password");
+            LoginMessageLabel.setTextFill(Color.RED);
         }
     }
 }

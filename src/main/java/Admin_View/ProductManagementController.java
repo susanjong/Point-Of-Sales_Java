@@ -24,13 +24,7 @@ import java.net.URL;
 import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Optional;
 import java.util.ResourceBundle;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
-import java.io.IOException;
 
 public class ProductManagementController implements Initializable {
 
@@ -201,16 +195,20 @@ public class ProductManagementController implements Initializable {
     } else if (source == productsBtn) {
         fxmlFile = "ProductManagement.fxml";
     }
-    
+
     if (!fxmlFile.isEmpty()) {
         try {
-            Main.navigateTo(fxmlFile);
-        } catch (Exception e) {
+            Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
+            Stage stage = (Stage) ((Button) source).getScene().getWindow();
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e) {
             showAlert(Alert.AlertType.ERROR, "Navigation Error", 
-                    "Could not navigate to the requested page: " + e.getMessage());
+            "Could not navigate to the requested page: " + e.getMessage());
+            }
         }
     }
-}
 
     
     @FXML

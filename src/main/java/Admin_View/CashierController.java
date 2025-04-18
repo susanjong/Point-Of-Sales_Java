@@ -47,6 +47,8 @@ public class CashierController implements Initializable, Payable {
     @FXML private FlowPane productsContainer;
     @FXML private TextField searchField;
     @FXML private Button addToCartBtn;
+    @FXML private Label productNameLabel;
+    @FXML private Label priceLabel;
     
     @FXML private TextField paidField;
     @FXML private Label balanceLabel;
@@ -92,6 +94,66 @@ public class CashierController implements Initializable, Payable {
         refreshCartView();
         updateTotalAmount();
         updateTotalDisplay();
+        setupSearchFieldListener();
+
+        if (productNameLabel == null || priceLabel == null) {
+            // Get the containers where your labels should be displayed
+            VBox productNameVBox = null;
+            VBox priceVBox = null;
+            
+            // Find the containers in the FXML hierarchy
+            for (javafx.scene.Node node : searchField.getParent().getParent().getChildrenUnmodifiable()) {
+                if (node instanceof HBox) {
+                    HBox hbox = (HBox) node;
+                    for (javafx.scene.Node child : hbox.getChildren()) {
+                        if (child instanceof VBox) {
+                            VBox vbox = (VBox) child;
+                            for (javafx.scene.Node vboxChild : vbox.getChildren()) {
+                                if (vboxChild instanceof Label) {
+                                    Label label = (Label) vboxChild;
+                                    if (label.getText().equals("PRODUCT NAME")) {
+                                        productNameVBox = vbox;
+                                    } else if (label.getText().equals("PRICE")) {
+                                        priceVBox = vbox;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (productNameVBox != null && priceVBox != null) {
+                // Create and add productNameLabel
+                productNameLabel = new Label("");
+                productNameLabel.setPrefHeight(30.0);
+                productNameLabel.setPrefWidth(300.0);
+                productNameLabel.setStyle("-fx-background-color: #E0E0E0; -fx-background-radius: 5; -fx-padding: 5px;");
+                
+                // Find the Region and replace it with our label
+                for (int i = 0; i < productNameVBox.getChildren().size(); i++) {
+                    if (productNameVBox.getChildren().get(i) instanceof javafx.scene.layout.Region) {
+                        productNameVBox.getChildren().set(i, productNameLabel);
+                        break;
+                    }
+                }
+                
+                // Create and add priceLabel
+                priceLabel = new Label("");
+                priceLabel.setPrefHeight(30.0);
+                priceLabel.setPrefWidth(200.0);
+                priceLabel.setStyle("-fx-background-color: #E0E0E0; -fx-background-radius: 5; -fx-padding: 5px;");
+                
+                // Find the Region and replace it with our label
+                for (int i = 0; i < priceVBox.getChildren().size(); i++) {
+                    if (priceVBox.getChildren().get(i) instanceof javafx.scene.layout.Region) {
+                        priceVBox.getChildren().set(i, priceLabel);
+                        break;
+                    }
+                }
+            }
+        }
+        addToCartBtn.setDisable(true);
     }
     
     private void loadProductsFromDatabase() {
@@ -416,30 +478,137 @@ public class CashierController implements Initializable, Payable {
     }
     
     @FXML
-    void handleAddToCart(ActionEvent event) {
+    private void searchProductByCode() {
         String code = searchField.getText().trim();
         if (!code.isEmpty()) {
-            CartItem newItem = new CartItem("Product from code " + code, 10000.0, 1);
+            Connection conn = null;
+            PreparedStatement pst = null;
+            ResultSet rs = null;
+            
+            try {
+                conn = DatabaseConnection.getConnection();
+                if (conn == null) {
+                    System.err.println("Database connection is null");
+                    showAlert(Alert.AlertType.ERROR, "Database Error", "Could not connect to database");
+                    return;
+                }
+                
+                String query = "SELECT code, product_name, price, qty, exp_date, category, image_path FROM product WHERE code = ?";
+                pst = conn.prepareStatement(query);
+                pst.setString(1, code);
+                rs = pst.executeQuery();
+                
+                if (rs.next()) {
+                    String productCode = rs.getString("code");
+                    String name = rs.getString("product_name");
+                    double price = rs.getDouble("price");
+                    int qty = rs.getInt("qty");
+                    
+                    // Handle exp_date which can be null
+                    String expDate = null;
+                    Date sqlDate = rs.getDate("exp_date");
+                    if (sqlDate != null) {
+                        expDate = dateFormat.format(sqlDate);
+                    }
+                    
+                    String category = rs.getString("category");
+                    String imagePath = rs.getString("image_path");
+                    
+                    // Create product object with all fields from database
+                    currentProduct = new Product(productCode, name, price, qty, expDate, category, imagePath);
+                    
+                    // Display product info
+                    productNameLabel.setText(name);
+                    priceLabel.setText(formatPrice(price));
+                    addToCartBtn.setDisable(qty <= 0);
+                    
+                    System.out.println("Found product: " + name + " with price: " + price);
+                } else {
+                    // Reset if product not found
+                    currentProduct = null;
+                    productNameLabel.setText("Product not found");
+                    priceLabel.setText("");
+                    addToCartBtn.setDisable(true);
+                    
+                    showAlert(Alert.AlertType.WARNING, "Not Found", "Product with code " + code + " not found.");
+                }
+                
+            } catch (SQLException e) {
+                System.err.println("SQL Error: " + e.getMessage());
+                e.printStackTrace();
+                showAlert(Alert.AlertType.ERROR, "Database Error", 
+                        "Could not search product: " + e.getMessage());
+            } finally {
+                try {
+                    if (rs != null) rs.close();
+                    if (pst != null) pst.close();
+                    if (conn != null) conn.close();
+                } catch (SQLException e) {
+                    System.err.println("Error closing resources: " + e.getMessage());
+                }
+            }
+        } else {
+            currentProduct = null;
+            productNameLabel.setText("");
+            priceLabel.setText("");
+            addToCartBtn.setDisable(true);
+        }
+    }
+
+    @FXML
+    void handleAddToCart(ActionEvent event) {
+        if (currentProduct != null) {
+            String productName = currentProduct.getName();
+            double productPrice = currentProduct.getPrice();
+            
+            // Check if product already exists in cart
             for (CartItem item : cartItems) {
-                if (item.getName().equals(newItem.getName())) {
+                if (item.getName().equals(productName)) {
                     item.setQuantity(item.getQuantity() + 1);
                     refreshCartView();
                     updateTotalAmount();
                     searchField.clear();
                     
+                    // Reset product info display
+                    currentProduct = null;
+                    productNameLabel.setText("");
+                    priceLabel.setText("");
+                    addToCartBtn.setDisable(true);
+                    
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Product quantity increased!");
                     return;
                 }
             }
+            
+            // Add new product to cart
+            CartItem newItem = new CartItem(productName, productPrice, 1);
             cartItems.add(newItem);
             refreshCartView();
             updateTotalAmount();
             searchField.clear();
             
+            // Reset product info display
+            currentProduct = null;
+            productNameLabel.setText("");
+            priceLabel.setText("");
+            addToCartBtn.setDisable(true);
+            
             showAlert(Alert.AlertType.INFORMATION, "Success", "Product added to cart!");
         } else {
-            showAlert(Alert.AlertType.WARNING, "Warning", "Please enter a product code.");
+            showAlert(Alert.AlertType.WARNING, "Warning", "Please search for a valid product first.");
         }
+    }
+
+    /**
+     * Add event listener for search field
+     * Add this to your initialize method
+     */
+    private void setupSearchFieldListener() {
+        searchField.setOnKeyPressed(event -> {
+            if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                searchProductByCode();
+            }
+        });
     }
     
     @FXML

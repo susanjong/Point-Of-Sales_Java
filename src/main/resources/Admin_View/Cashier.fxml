@@ -106,8 +106,8 @@
                             <Image url="@resources/images/bango.png" />
                         </ImageView>
                     </HBox>
-                    <Label maxWidth="180.0" text="Bundling Chitato snack cheese flavour, Wardah Lightening Whip Facial Foam" wrapText="true" />
-                    <Label style="-fx-font-weight: bold;" text="Rp 20.400" />
+                    <Label maxWidth="180.0" style="-fx-font-size: 14px;" text="Bundling Chitato snack cheese flavour, Wardah Lightening Whip Facial Foam" wrapText="true" />
+                    <Label style="-fx-font-weight: bold; -fx-font-size: 14px;" text="Rp 20.400" />
                     <Button onAction="#handleAddBundleToCart" style="-fx-background-color: #5B8336; -fx-text-fill: white;" text="Add to Cart" />
                 </VBox>
 
@@ -120,8 +120,8 @@
                             <Image url="@resources/images/bango.png" />
                         </ImageView>
                     </HBox>
-                    <Label maxWidth="180.0" text="Bundling Chitato snack cheese flavour, Bango Kecap Manis" wrapText="true" />
-                    <Label style="-fx-font-weight: bold;" text="Rp 20.400" />
+                    <Label maxWidth="180.0" style="-fx-font-size: 14px;" text="Bundling Chitato snack cheese flavour, Bango Kecap Manis" wrapText="true" />
+                    <Label style="-fx-font-weight: bold; -fx-font-size: 14px;" text="Rp 20.400" />
                     <Button onAction="#handleAddBundleToCart" style="-fx-background-color: #5B8336; -fx-text-fill: white;" text="Add to Cart" />
                 </VBox>
             </HBox>

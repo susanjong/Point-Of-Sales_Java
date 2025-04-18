@@ -85,7 +85,7 @@ public class Main extends Application {
     
     public static void showProductManagement() {
         try {
-            FXMLLoader loader = new FXMLLoader(Main.class.getResource("ProductManagement.fxml"));
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("/Admin_View/ProductManagement.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root);
             
@@ -126,7 +126,7 @@ public class Main extends Application {
     // Add this method to your Main class
     public static void showCashier() {
         try {
-            FXMLLoader loader = new FXMLLoader(Main.class.getResource("Cashier.fxml"));
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("/Admin_View/Cashier.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root);
             

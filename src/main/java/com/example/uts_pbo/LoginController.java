@@ -97,6 +97,8 @@ public class LoginController {
             // Login successful
             currentUser = user;
             UserSession.setCurrentUser(user);
+
+            AuthLogger.logLogin(user);
             
             LoginMessageLabel.setText("Login successful!");
             LoginMessageLabel.setTextFill(Color.GREEN);

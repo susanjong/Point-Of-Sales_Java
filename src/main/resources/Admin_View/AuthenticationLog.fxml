@@ -1,149 +1,119 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.gluonhq.charm.glisten.control.Avatar?>
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Hyperlink?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Rectangle?>
-<?import javafx.scene.text.Font?>
-<?import javafx.scene.text.Text?>
+<?import javafx.scene.text.*?>
 
-<BorderPane prefHeight="786.0" prefWidth="1553.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Admin_View.AuthenticationLog">
-    <top>
-        <AnchorPane prefHeight="86.0" prefWidth="1553.0">
-           <children>
-              <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#204200" height="86.0" layoutX="-1.0" layoutY="-1.0" stroke="WHITE" strokeType="INSIDE" width="1553.0" />
-              <Text fill="WHITE" layoutX="33.0" layoutY="52.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Simple" wrappingWidth="118.93670654296875">
-                 <font>
-                    <Font name="Lucida Sans Demibold Italic" size="30.0" />
-                 </font>
-              </Text>
-              <Text fill="#5b8336" layoutX="139.0" layoutY="51.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Mart">
-                 <font>
-                    <Font name="Lucida Sans Demibold Italic" size="30.0" />
-                 </font>
-              </Text>
-              <Text fill="#71766d" layoutX="220.0" layoutY="52.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Admin">
-                 <font>
-                    <Font name="Lucida Sans Demibold Italic" size="30.0" />
-                 </font>
-              </Text>
-              <Hyperlink layoutX="1283.0" layoutY="15.0" prefHeight="54.0" prefWidth="99.0" text="ADMIN&#10;LOG" textAlignment="CENTER" textFill="WHITE">
-                 <font>
-                    <Font name="System Bold" size="15.0" />
-                 </font>
-              </Hyperlink>
-              <Avatar layoutX="1397.0" layoutY="24.0">
-                 <image>
-                    <Image url="@../../../../../istockphoto-1332100919-612x612.jpg" />
-                 </image>
-              </Avatar>
-              <Hyperlink layoutX="1151.0" layoutY="15.0" prefHeight="54.0" prefWidth="99.0" text="PRODUCT &#10;CATALOG" textAlignment="CENTER" textFill="WHITE">
-                 <font>
-                    <Font name="System Bold" size="15.0" />
-                 </font>
-              </Hyperlink>
-           </children>
-        </AnchorPane>
-    </top>
-    
-    <left>
-        <VBox prefWidth="180.0" style="-fx-background-color: #59812a; -fx-padding: 20 0 0 0;">
-            <Button text="Profile" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
-                <VBox.margin>
-                    <Insets top="20.0" bottom="12.0" left="15.0" right="15.0" />
-                </VBox.margin>
+<AnchorPane prefHeight="786.0" prefWidth="1553.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Admin_View.AuthenticationLogController">
+   <children>
+      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#204200" height="86.0" layoutX="-1.0" layoutY="-1.0" stroke="WHITE" strokeType="INSIDE" width="1553.0" />
+      <Text fill="WHITE" layoutX="33.0" layoutY="52.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Simple" wrappingWidth="118.93670654296875">
+         <font>
+            <Font name="Lucida Sans Demibold Italic" size="30.0" />
+         </font>
+      </Text>
+      <Text fill="#5b8336" layoutX="139.0" layoutY="51.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Mart">
+         <font>
+            <Font name="Lucida Sans Demibold Italic" size="30.0" />
+         </font>
+      </Text>
+      <Text fill="#71766d" layoutX="220.0" layoutY="52.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Admin">
+         <font>
+            <Font name="Lucida Sans Demibold Italic" size="30.0" />
+         </font>
+      </Text>
+      
+      <!-- Navigation Buttons -->
+      <HBox alignment="CENTER_RIGHT" layoutX="900.0" layoutY="16.0" spacing="10.0">
+         <children>
+            <Button fx:id="profileBtn" onAction="#handleNavigation" styleClass="nav-button" text="PROFILE" />
+            <Button fx:id="cashierBtn" onAction="#handleNavigation" styleClass="nav-button" text="CASHIER" />
+            <Button fx:id="productsBtn" onAction="#handleNavigation" styleClass="nav-button" text="PRODUCTS" />
+            <Button fx:id="usersBtn" onAction="#handleNavigation" styleClass="nav-button" text="USERS" />
+            <Button fx:id="adminLogBtn" onAction="#handleNavigation" styleClass="nav-button" text="ADMIN LOG" style="-fx-background-color: #5b8336; -fx-text-fill: white;" />
+         </children>
+      </HBox>
+      
+      <!-- Category Buttons -->
+      <HBox layoutX="238.0" layoutY="146.0" prefHeight="54.0" prefWidth="1002.0">
+         <children>
+            <Button fx:id="authButton" mnemonicParsing="false" prefHeight="38.0" prefWidth="155.0" style="-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;" text="AUTHENTICATION">
+               <HBox.margin>
+                  <Insets left="10.0" right="10.0" />
+               </HBox.margin>
             </Button>
-            <Button text="Cashier" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
-                <VBox.margin>
-                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
-                </VBox.margin>
+            <Button fx:id="transactionButton" mnemonicParsing="false" prefHeight="38.0" prefWidth="155.0" style="-fx-background-radius: 50px;" text="TRANSACTION">
+               <HBox.margin>
+                  <Insets left="10.0" right="10.0" />
+               </HBox.margin>
             </Button>
-           
-<Button fx:id="productsBtn" text="Products Management" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px; -fx-background-radius: 60px">
-                <VBox.margin>
-                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
-                </VBox.margin>
+            <Button fx:id="productModButton" mnemonicParsing="false" prefHeight="38.0" prefWidth="194.0" style="-fx-background-radius: 50px;" text="PRODUCT MODIFICATION">
+               <HBox.margin>
+                  <Insets left="10.0" right="10.0" />
+               </HBox.margin>
             </Button>
-            <Button text="User Management" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
-                <VBox.margin>
-                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
-                </VBox.margin>
+            <Button fx:id="sellingModButton" mnemonicParsing="false" prefHeight="38.0" prefWidth="194.0" style="-fx-background-radius: 50px;" text="SELLING MODIFICATION">
+               <HBox.margin>
+                  <Insets left="10.0" right="10.0" />
+               </HBox.margin>
+               <opaqueInsets>
+                  <Insets right="10.0" />
+               </opaqueInsets>
             </Button>
-            <Button fx:id="adminLogBtn" text="Admin Log" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: #1d4008; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px; -fx-background-radius: 60px">
-                <VBox.margin>
-                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
-                </VBox.margin>
+            <Button fx:id="transDetailButton" mnemonicParsing="false" prefHeight="38.0" prefWidth="202.0" style="-fx-background-radius: 50px;" text="TRANSACTION DETAIL">
+               <HBox.margin>
+                  <Insets left="10.0" right="10.0" />
+               </HBox.margin>
+               <opaqueInsets>
+                  <Insets left="5.0" right="5.0" />
+               </opaqueInsets>
             </Button>
-        </VBox>
-    </left>
-    
-    <center>
-        <AnchorPane>
-           <children>
-              <HBox layoutX="58.0" layoutY="60.0" prefHeight="54.0" prefWidth="1002.0">
-                 <children>
-                    <Button mnemonicParsing="false" prefHeight="38.0" prefWidth="155.0" style="-fx-background-radius: 50px;" text="AUTHENTICATION">
-                       <HBox.margin>
-                          <Insets left="10.0" right="10.0" />
-                       </HBox.margin>
-                    </Button>
-                    <Button mnemonicParsing="false" prefHeight="38.0" prefWidth="155.0" style="-fx-background-radius: 50px;" text="TRANSACTION">
-                       <HBox.margin>
-                          <Insets left="10.0" right="10.0" />
-                       </HBox.margin>
-                    </Button>
-                    <Button mnemonicParsing="false" prefHeight="38.0" prefWidth="194.0" style="-fx-background-radius: 50px;" text="PRODUCT MODIFICATION">
-                       <HBox.margin>
-                          <Insets left="10.0" right="10.0" />
-                       </HBox.margin>
-                    </Button>
-                    <Button mnemonicParsing="false" prefHeight="38.0" prefWidth="194.0" style="-fx-background-radius: 50px;" text="SELLING MODIFICATION">
-                       <HBox.margin>
-                          <Insets left="10.0" right="10.0" />
-                       </HBox.margin>
-                       <opaqueInsets>
-                          <Insets right="10.0" />
-                       </opaqueInsets>
-                    </Button>
-                    <Button mnemonicParsing="false" prefHeight="38.0" prefWidth="202.0" style="-fx-background-radius: 50px;" text="TRANSACTION DETAIL">
-                       <HBox.margin>
-                          <Insets left="10.0" right="10.0" />
-                       </HBox.margin>
-                       <opaqueInsets>
-                          <Insets left="5.0" right="5.0" />
-                       </opaqueInsets>
-                    </Button>
-                 </children>
-                 <padding>
-                    <Insets left="5.0" right="5.0" />
-                 </padding>
-              </HBox>
-              <TableView layoutX="90.0" layoutY="166.0" prefHeight="510.0" prefWidth="924.0">
-                <columns>
-                  <TableColumn prefWidth="40.000030517578125" text="No" />
-                  <TableColumn prefWidth="185.60000610351562" text="Date/Time" />
-                    <TableColumn prefWidth="114.4000244140625" text="User ID" />
-                    <TableColumn prefWidth="171.20001220703125" text="Username " />
-                    <TableColumn prefWidth="107.199951171875" text="Role" />
-                    <TableColumn prefWidth="211.20001220703125" text="Email" />
-                    <TableColumn prefWidth="88.7999267578125" text="Activity" />
-                </columns>
-              </TableView>
-              <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#204200" height="36.0" layoutX="90.0" layoutY="132.0" stroke="WHITE" strokeType="INSIDE" width="924.0" />
-              <Text fill="#fffefb" layoutX="472.0" layoutY="159.0" strokeType="OUTSIDE" strokeWidth="0.0" text="AUTHENTICATION" textAlignment="CENTER">
-                 <font>
-                    <Font size="24.0" />
-                 </font>
-              </Text>
-           </children>
-        </AnchorPane>
-    </center>
-</BorderPane>
+         </children>
+         <padding>
+            <Insets left="5.0" right="5.0" />
+         </padding>
+      </HBox>
+      
+      <!-- Filter Controls -->
+      <HBox layoutX="270.0" layoutY="100.0" spacing="10.0" alignment="CENTER_LEFT" prefHeight="40.0">
+         <children>
+            <Label text="From:" />
+            <DatePicker fx:id="startDatePicker" />
+            <Label text="To:" />
+            <DatePicker fx:id="endDatePicker" />
+            <Label text="Activity:" />
+            <ComboBox fx:id="activityFilterComboBox" prefWidth="120.0" />
+            <Label text="User:" />
+            <TextField fx:id="userSearchField" promptText="Username or ID" />
+            <Button fx:id="filterButton" text="Apply Filter" />
+            <Button fx:id="resetFilterButton" text="Reset" />
+         </children>
+         <padding>
+            <Insets top="5.0" bottom="5.0" />
+         </padding>
+      </HBox>
+
+      <!-- Table View - move it lower to avoid overlapping -->
+      <TableView fx:id="logTableView" layoutX="270.0" layoutY="270.0" prefHeight="490.0" prefWidth="924.0">
+      <columns>
+         <TableColumn fx:id="noColumn" prefWidth="40.0" text="No" />
+         <TableColumn fx:id="timestampColumn" prefWidth="185.6" text="Date/Time" />
+         <TableColumn fx:id="userIdColumn" prefWidth="114.4" text="User ID" />
+         <TableColumn fx:id="usernameColumn" prefWidth="171.2" text="Username" />
+         <TableColumn fx:id="roleColumn" prefWidth="107.2" text="Role" />
+         <TableColumn fx:id="emailColumn" prefWidth="211.2" text="Email" />
+         <TableColumn fx:id="activityColumn" prefWidth="88.8" text="Activity" />
+      </columns>
+      </TableView>
+
+      
+      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#204200" height="36.0" layoutX="270.0" layoutY="218.0" stroke="WHITE" strokeType="INSIDE" width="924.0" />
+      <Text fill="#fffefb" layoutX="652.0" layoutY="245.0" strokeType="OUTSIDE" strokeWidth="0.0" text="AUTHENTICATION" textAlignment="CENTER">
+         <font>
+            <Font size="24.0" />
+         </font>
+      </Text>
+   </children>
+</AnchorPane>

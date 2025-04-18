@@ -47,8 +47,6 @@ public class CashierController implements Initializable, Payable {
     @FXML private FlowPane productsContainer;
     @FXML private TextField searchField;
     @FXML private Button addToCartBtn;
-    @FXML private Label productNameLabel;
-    @FXML private Label priceLabel;
     
     @FXML private TextField paidField;
     @FXML private Label balanceLabel;
@@ -94,66 +92,6 @@ public class CashierController implements Initializable, Payable {
         refreshCartView();
         updateTotalAmount();
         updateTotalDisplay();
-        setupSearchFieldListener();
-
-        if (productNameLabel == null || priceLabel == null) {
-            // Get the containers where your labels should be displayed
-            VBox productNameVBox = null;
-            VBox priceVBox = null;
-            
-            // Find the containers in the FXML hierarchy
-            for (javafx.scene.Node node : searchField.getParent().getParent().getChildrenUnmodifiable()) {
-                if (node instanceof HBox) {
-                    HBox hbox = (HBox) node;
-                    for (javafx.scene.Node child : hbox.getChildren()) {
-                        if (child instanceof VBox) {
-                            VBox vbox = (VBox) child;
-                            for (javafx.scene.Node vboxChild : vbox.getChildren()) {
-                                if (vboxChild instanceof Label) {
-                                    Label label = (Label) vboxChild;
-                                    if (label.getText().equals("PRODUCT NAME")) {
-                                        productNameVBox = vbox;
-                                    } else if (label.getText().equals("PRICE")) {
-                                        priceVBox = vbox;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            if (productNameVBox != null && priceVBox != null) {
-                // Create and add productNameLabel
-                productNameLabel = new Label("");
-                productNameLabel.setPrefHeight(30.0);
-                productNameLabel.setPrefWidth(300.0);
-                productNameLabel.setStyle("-fx-background-color: #E0E0E0; -fx-background-radius: 5; -fx-padding: 5px;");
-                
-                // Find the Region and replace it with our label
-                for (int i = 0; i < productNameVBox.getChildren().size(); i++) {
-                    if (productNameVBox.getChildren().get(i) instanceof javafx.scene.layout.Region) {
-                        productNameVBox.getChildren().set(i, productNameLabel);
-                        break;
-                    }
-                }
-                
-                // Create and add priceLabel
-                priceLabel = new Label("");
-                priceLabel.setPrefHeight(30.0);
-                priceLabel.setPrefWidth(200.0);
-                priceLabel.setStyle("-fx-background-color: #E0E0E0; -fx-background-radius: 5; -fx-padding: 5px;");
-                
-                // Find the Region and replace it with our label
-                for (int i = 0; i < priceVBox.getChildren().size(); i++) {
-                    if (priceVBox.getChildren().get(i) instanceof javafx.scene.layout.Region) {
-                        priceVBox.getChildren().set(i, priceLabel);
-                        break;
-                    }
-                }
-            }
-        }
-        addToCartBtn.setDisable(true);
     }
     
     private void loadProductsFromDatabase() {
@@ -190,7 +128,28 @@ public class CashierController implements Initializable, Payable {
                 String category = rs.getString("category");
                 String imagePath = rs.getString("image_path");
                 
-                System.out.println("Loaded product: " + name + " with image: " + imagePath);
+                // Normalize image path if needed
+                if (imagePath != null && !imagePath.isEmpty()) {
+                    // If it doesn't already have a leading slash and isn't an absolute path
+                    if (!imagePath.startsWith("/") && !imagePath.contains(":")) {
+                        // Try to normalize it to our expected resource format
+                        if (!imagePath.startsWith("resource/images/")) {
+                            if (imagePath.contains("/")) {
+                                // Just get the filename
+                                String filename = imagePath.substring(imagePath.lastIndexOf('/') + 1);
+                                imagePath = "/resource/images/" + filename;
+                            } else {
+                                // It's just a filename
+                                imagePath = "/resource/images/" + imagePath;
+                            }
+                        } else {
+                            // It already has the right folder structure, just add leading slash
+                            imagePath = "/" + imagePath;
+                        }
+                    }
+                }
+                
+                System.out.println("Loaded product: " + name + " with normalized image path: " + imagePath);
                 
                 // Create product object with all fields from database
                 Product product = new Product(code, name, price, qty, expDate, category, imagePath);
@@ -247,40 +206,91 @@ public class CashierController implements Initializable, Payable {
         imageView.setPreserveRatio(true);
         
         try {
-            // Try loading the image from the path
+            // Get image path from the product
             String imagePath = product.getImagePath();
-            Image image;
+            Image image = null;
             
             if (imagePath != null && !imagePath.isEmpty()) {
-                try {
-                    // First try as a direct file path
-                    image = new Image("file:" + imagePath);
-                    imageView.setImage(image);
-                } catch (Exception e) {
-                    // If that fails, try as a resource path
+                // Try different path formats for resources
+                String[] possiblePaths = {
+                    imagePath,                                    // Original path
+                    imagePath.startsWith("/") ? imagePath : "/" + imagePath,  // Add leading slash
+                    "/resources/images/" + getFileName(imagePath),            // Standard resources folder
+                    "/resources/images/" + imagePath,                         // Full path in resources
+                    "resources/images/" + getFileName(imagePath),             // Without leading slash
+                    "/resource/images/" + getFileName(imagePath),             // Alternate spelling
+                    "/resource/images/" + imagePath                           // Full path in alternate spelling
+                };
+                
+                // Try all possible paths
+                for (String path : possiblePaths) {
                     try {
-                        image = new Image(getClass().getResourceAsStream(imagePath));
-                        imageView.setImage(image);
+                        System.out.println("Trying to load image from: " + path);
+                        image = new Image(getClass().getResourceAsStream(path));
+                        
+                        // Check if image loaded successfully
+                        if (image != null && !image.isError() && image.getWidth() > 0) {
+                            System.out.println("Successfully loaded image from: " + path);
+                            break;  // Exit loop if successful
+                        }
+                    } catch (Exception e) {
+                        // Continue to next path
+                        System.out.println("Failed to load from: " + path);
+                    }
+                }
+                
+                // If all resource loading attempts failed, try file system
+                if (image == null || image.isError() || image.getWidth() == 0) {
+                    try {
+                        System.out.println("Trying to load as file: " + imagePath);
+                        image = new Image("file:" + imagePath);
+                        if (image.isError()) {
+                            throw new Exception("Failed to load from file path");
+                        }
                     } catch (Exception ex) {
-                        System.err.println("Could not load image as resource: " + ex.getMessage());
-                        // Use placeholder
-                        imageView.setImage(new Image(getClass().getResourceAsStream("/resources/images/placeholder.png")));
+                        System.out.println("Failed to load as file: " + ex.getMessage());
+                        // Use placeholder if all attempts fail
+                        image = new Image(getClass().getResourceAsStream("/resources/images/placeholder.png"));
+                        if (image == null || image.isError()) {
+                            image = new Image(getClass().getResourceAsStream("/resource/images/placeholder.png"));
+                        }
                     }
                 }
             } else {
                 // Use placeholder for null or empty path
-                imageView.setImage(new Image(getClass().getResourceAsStream("/resources/images/placeholder.png")));
+                image = new Image(getClass().getResourceAsStream("/resources/images/placeholder.png"));
+                if (image == null || image.isError()) {
+                    image = new Image(getClass().getResourceAsStream("/resource/images/placeholder.png"));
+                }
             }
+            
+            // Set the image to ImageView
+            if (image != null && !image.isError() && image.getWidth() > 0) {
+                imageView.setImage(image);
+            } else {
+                throw new Exception("Image could not be loaded");
+            }
+            
         } catch (Exception e) {
             System.err.println("Error loading image for " + product.getName() + ": " + e.getMessage());
             try {
-                // Try to use placeholder image
-                imageView.setImage(new Image(getClass().getResourceAsStream("/resources/images/placeholder.png")));
+                // Try both versions of placeholder path
+                Image placeholder = null;
+                try {
+                    placeholder = new Image(getClass().getResourceAsStream("/resources/images/placeholder.png"));
+                } catch (Exception ex) {
+                    placeholder = new Image(getClass().getResourceAsStream("/resource/images/placeholder.png"));
+                }
+                
+                if (placeholder != null && !placeholder.isError()) {
+                    imageView.setImage(placeholder);
+                }
             } catch (Exception ex) {
                 System.err.println("Error loading placeholder image: " + ex.getMessage());
             }
         }
         
+        // Rest of your method remains the same...
         Label nameLabel = new Label(product.getName());
         nameLabel.setMaxWidth(150.0);
         nameLabel.setMinWidth(150.0);
@@ -297,6 +307,16 @@ public class CashierController implements Initializable, Payable {
         productBox.getChildren().addAll(imageView, nameLabel, priceLabel, addButton);
         
         return productBox;
+    }
+    
+    // Helper method to extract filename from path
+    private String getFileName(String path) {
+        if (path == null) return "";
+        int lastSlash = path.lastIndexOf('/');
+        if (lastSlash >= 0 && lastSlash < path.length() - 1) {
+            return path.substring(lastSlash + 1);
+        }
+        return path;
     }
     
     private void handleAddToCartFromDisplay(Product product) {
@@ -396,137 +416,30 @@ public class CashierController implements Initializable, Payable {
     }
     
     @FXML
-    private void searchProductByCode() {
+    void handleAddToCart(ActionEvent event) {
         String code = searchField.getText().trim();
         if (!code.isEmpty()) {
-            Connection conn = null;
-            PreparedStatement pst = null;
-            ResultSet rs = null;
-            
-            try {
-                conn = DatabaseConnection.getConnection();
-                if (conn == null) {
-                    System.err.println("Database connection is null");
-                    showAlert(Alert.AlertType.ERROR, "Database Error", "Could not connect to database");
-                    return;
-                }
-                
-                String query = "SELECT code, product_name, price, qty, exp_date, category, image_path FROM product WHERE code = ?";
-                pst = conn.prepareStatement(query);
-                pst.setString(1, code);
-                rs = pst.executeQuery();
-                
-                if (rs.next()) {
-                    String productCode = rs.getString("code");
-                    String name = rs.getString("product_name");
-                    double price = rs.getDouble("price");
-                    int qty = rs.getInt("qty");
-                    
-                    // Handle exp_date which can be null
-                    String expDate = null;
-                    Date sqlDate = rs.getDate("exp_date");
-                    if (sqlDate != null) {
-                        expDate = dateFormat.format(sqlDate);
-                    }
-                    
-                    String category = rs.getString("category");
-                    String imagePath = rs.getString("image_path");
-                    
-                    // Create product object with all fields from database
-                    currentProduct = new Product(productCode, name, price, qty, expDate, category, imagePath);
-                    
-                    // Display product info
-                    productNameLabel.setText(name);
-                    priceLabel.setText(formatPrice(price));
-                    addToCartBtn.setDisable(qty <= 0);
-                    
-                    System.out.println("Found product: " + name + " with price: " + price);
-                } else {
-                    // Reset if product not found
-                    currentProduct = null;
-                    productNameLabel.setText("Product not found");
-                    priceLabel.setText("");
-                    addToCartBtn.setDisable(true);
-                    
-                    showAlert(Alert.AlertType.WARNING, "Not Found", "Product with code " + code + " not found.");
-                }
-                
-            } catch (SQLException e) {
-                System.err.println("SQL Error: " + e.getMessage());
-                e.printStackTrace();
-                showAlert(Alert.AlertType.ERROR, "Database Error", 
-                        "Could not search product: " + e.getMessage());
-            } finally {
-                try {
-                    if (rs != null) rs.close();
-                    if (pst != null) pst.close();
-                    if (conn != null) conn.close();
-                } catch (SQLException e) {
-                    System.err.println("Error closing resources: " + e.getMessage());
-                }
-            }
-        } else {
-            currentProduct = null;
-            productNameLabel.setText("");
-            priceLabel.setText("");
-            addToCartBtn.setDisable(true);
-        }
-    }
-
-    @FXML
-    void handleAddToCart(ActionEvent event) {
-        if (currentProduct != null) {
-            String productName = currentProduct.getName();
-            double productPrice = currentProduct.getPrice();
-            
-            // Check if product already exists in cart
+            CartItem newItem = new CartItem("Product from code " + code, 10000.0, 1);
             for (CartItem item : cartItems) {
-                if (item.getName().equals(productName)) {
+                if (item.getName().equals(newItem.getName())) {
                     item.setQuantity(item.getQuantity() + 1);
                     refreshCartView();
                     updateTotalAmount();
                     searchField.clear();
                     
-                    // Reset product info display
-                    currentProduct = null;
-                    productNameLabel.setText("");
-                    priceLabel.setText("");
-                    addToCartBtn.setDisable(true);
-                    
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Product quantity increased!");
                     return;
                 }
             }
-            
-            // Add new product to cart
-            CartItem newItem = new CartItem(productName, productPrice, 1);
             cartItems.add(newItem);
             refreshCartView();
             updateTotalAmount();
             searchField.clear();
             
-            // Reset product info display
-            currentProduct = null;
-            productNameLabel.setText("");
-            priceLabel.setText("");
-            addToCartBtn.setDisable(true);
-            
             showAlert(Alert.AlertType.INFORMATION, "Success", "Product added to cart!");
         } else {
-            showAlert(Alert.AlertType.WARNING, "Warning", "Please search for a valid product first.");
+            showAlert(Alert.AlertType.WARNING, "Warning", "Please enter a product code.");
         }
-    }
-
-    /**
-     * Add event listener for search field
-     * Add this to your initialize method
-     */
-    private void setupSearchFieldListener() {
-        searchField.setOnKeyPressed(event -> {
-            if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
-                searchProductByCode();
-            }
-        });
     }
     
     @FXML
@@ -595,6 +508,10 @@ public class CashierController implements Initializable, Payable {
                     productName = label.getText();
                 }
             }
+        }
+        
+        if (productName.isEmpty()) {
+            productName = "Chitato snack cheese flavour";
         }
         
         boolean productFound = false;

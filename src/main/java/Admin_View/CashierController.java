@@ -11,9 +11,12 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Random;
 import java.util.ResourceBundle;
 
 import com.example.uts_pbo.DatabaseConnection;
+import com.example.uts_pbo.LoginController;
+import com.example.uts_pbo.User;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -34,7 +37,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-public class CashierController implements Initializable {
+public class CashierController implements Initializable, Payable {
 
     @FXML private Button profileBtn;
     @FXML private Button cashierBtn;
@@ -57,8 +60,11 @@ public class CashierController implements Initializable {
     private NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
     private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy");
     private Product currentProduct = null;
-    private ObservableList<CartItem> cartItems = FXCollections.observableArrayList();
-    private ArrayList<Product> products = new ArrayList<>();
+    private final ObservableList<CartItem> cartItems = FXCollections.observableArrayList();
+    private final ArrayList<Product> products = new ArrayList<>();
+    private int transactionId;
+    private boolean transactionSaved = false;
+    private boolean processingComplete = false;
     
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -684,6 +690,12 @@ public class CashierController implements Initializable {
             return;
         }
         
+        // Check if cart is empty
+        if (cartItems.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Warning", "Cart is empty. Please add products first.");
+            return;
+        }
+        
         try {
             paidText = paidText.replaceAll("[^\\d]", "");
             double paidAmount = Double.parseDouble(paidText);
@@ -695,11 +707,18 @@ public class CashierController implements Initializable {
             
             double change = paidAmount - totalAmount;
             
+            // Process the transaction using both interface methods
+             // Just prints a message to console
+            serializeTransaction(); // This handles the actual database insertion
+            processTransaction(); 
+
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Payment Successful");
             alert.setHeaderText(null);
             alert.setContentText("Payment received!\nChange: " + formatPrice(change));
             alert.showAndWait();
+            
+            // Reset UI after successful transaction
             cartItems.clear();
             totalAmount = 0.0;
             paidField.clear();
@@ -712,15 +731,146 @@ public class CashierController implements Initializable {
         }
     }
     
-    private void updateTotalAmount() {
-        totalAmount = 0.0;
+    @Override
+    public double calculateTotal() {
+        double total = 0.0;
         for (CartItem item : cartItems) {
             double itemSubtotal = item.getPrice() * item.getQuantity();
-            totalAmount += itemSubtotal;
+            total += itemSubtotal;
         }
+        return total;
+    }
+
+    @Override
+    public void processTransaction() {
+        // Jika transaksi belum disimpan, simpan dulu
+        if (!transactionSaved) {
+            serializeTransaction();
+        }
+
+        processingComplete = true;
+        
+        // Gunakan transaction ID yang sudah dihasilkan
+        System.out.println("Transaksi dengan ID " + transactionId + " telah diproses");
+
+        transactionId = 0;
+        transactionSaved = false;
+        processingComplete = false;
+    }
+
+    @Override
+    public String serializeTransaction() {
+        if (transactionSaved) {
+            StringBuilder transactionData = new StringBuilder();
+            transactionData.append("Transaction ID: ").append(transactionId).append("\n");
+            return transactionData.toString();
+        }
+
+        transactionId = 0;
+        processingComplete = false;
+        transactionSaved = false;
+
+        StringBuilder transactionData = new StringBuilder();
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = DatabaseConnection.getConnection();
+            if (conn == null) {
+                System.err.println("Database connection is null");
+                showAlert(Alert.AlertType.ERROR, "Database Error", "Could not connect to database");
+                return "Error: Database connection failed";
+            }
+            
+            // Get current date and time
+            java.util.Date currentDate = new java.util.Date();
+            java.sql.Timestamp timestamp = new java.sql.Timestamp(currentDate.getTime());
+            
+            // Count total items
+            int totalItems = 0;
+            for (CartItem item : cartItems) {
+                totalItems += item.getQuantity();
+            }
+            
+            // Create products string (list of products in cart)
+            StringBuilder productsStr = new StringBuilder();
+            for (CartItem item : cartItems) {
+                productsStr.append(item.getName())
+                        .append(" (")
+                        .append(item.getQuantity())
+                        .append("), ");
+            }
+            // Remove trailing comma and space
+            if (productsStr.length() > 2) {
+                productsStr.setLength(productsStr.length() - 2);
+            }
+
+            String username = "guest"; // Default value
+        
+            // Get the current user from LoginController
+            User currentUser = LoginController.getCurrentUser();
+            if (currentUser != null) {
+                username = currentUser.getUsername();
+            }
+            
+            // Insert into transaksi table dengan RETURNING clause untuk mendapatkan ID
+            String query = "INSERT INTO transaction (date, username, products, total_item, total_price) VALUES (?, ?, ?, ?, ?) RETURNING transaction_id";
+            pst = conn.prepareStatement(query);
+            pst.setTimestamp(1, timestamp);
+            pst.setString(2, username);
+            pst.setString(3, productsStr.toString());
+            pst.setInt(4, totalItems);
+            pst.setDouble(5, totalAmount);
+            
+            // Execute dan ambil ID yang dibuat Supabase
+            rs = pst.executeQuery();
+            
+            if (rs.next()) {
+                transactionId = rs.getInt(1);
+            } else {
+                // Fallback jika tidak bisa mendapatkan ID
+                transactionId = new Random().nextInt(100000000);
+            }
+            
+            System.out.println("Transaction saved to database with ID: " + transactionId);
+            
+            // Build transaction summary for return value
+            transactionData.append("Transaction ID: ").append(transactionId).append("\n");
+            transactionData.append("Date: ").append(new java.util.Date()).append("\n");
+            transactionData.append("Total Amount: ").append(formatPrice(totalAmount));
+            transactionData.append("User: ").append(username).append("\n");
+            transactionSaved = true;
+            
+        } catch (SQLException e) {
+            System.err.println("SQL Error while serializing transaction: " + e.getMessage());
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Database Error", 
+                    "Could not save transaction data: " + e.getMessage());
+            
+            // Fallback jika error
+            if (transactionId == 0) {
+                transactionId = new Random().nextInt(100000000);
+            }
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (pst != null) pst.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                System.err.println("Error closing resources: " + e.getMessage());
+            }
+        }
+        
+        // Return the string representation of the transaction summary
+        return transactionData.toString();
+    }
+
+    private void updateTotalAmount() {
+        totalAmount = calculateTotal();
         updateTotalDisplay();
     }
-    
+
     private void updateTotalDisplay() {
         if (totalAmountLabel != null) {
             totalAmountLabel.setText(formatPrice(totalAmount));
@@ -770,6 +920,14 @@ public class CashierController implements Initializable {
             showAlert(Alert.AlertType.ERROR, "Navigation Error", 
                     "Could not navigate to the requested page: " + e.getMessage());
         }
+    }
+
+    public SimpleDateFormat getDateFormat() {
+        return dateFormat;
+    }
+
+    public void setDateFormat(SimpleDateFormat dateFormat) {
+        this.dateFormat = dateFormat;
     }
 
     

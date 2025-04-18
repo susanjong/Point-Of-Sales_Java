@@ -6,38 +6,47 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Statement;
 
 public class UserDAO {
     
     // Create a new user in the database
     public static boolean createUser(User user) {
-        String sql = "INSERT INTO users (email, first_name, last_name, username, password, salt, role) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    String sql = "INSERT INTO users (email, first_name, last_name, username, password, salt, role) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    
+    try (Connection conn = DatabaseConnection.getConnection();
+         // Add Statement.RETURN_GENERATED_KEYS here
+         PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
         
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
-            stmt.setString(1, user.getEmail());
-            stmt.setString(2, user.getFirstName());
-            stmt.setString(3, user.getLastName());
-            stmt.setString(4, user.getUsername());
-            stmt.setString(5, user.getPassword());
-            stmt.setString(6, user.getSalt());
-            stmt.setString(7, user.getRole());
-            
-            int rowsAffected = stmt.executeUpdate();
-            
-            if (rowsAffected > 0) {
-                // Log account creation
-                AuthLogger.logAccountCreation(user);
-                return true;
+        stmt.setString(1, user.getEmail());
+        stmt.setString(2, user.getFirstName());
+        stmt.setString(3, user.getLastName());
+        stmt.setString(4, user.getUsername());
+        stmt.setString(5, user.getPassword());
+        stmt.setString(6, user.getSalt());
+        stmt.setString(7, user.getRole());
+        
+        int rowsAffected = stmt.executeUpdate();
+        
+        if (rowsAffected > 0) {
+            // Get the generated ID
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    int generatedId = generatedKeys.getInt(1);
+                    user.setId(generatedId); // Update the user object with correct ID
+                }
             }
-            return false;
-            
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            // Log account creation
+            AuthLogger.logAccountCreation(user);
+            return true;
         }
+        return false;
+        
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return false;
     }
+}
     
     // Get user by username or email
     public static User getUserByUsernameOrEmail(String usernameOrEmail) {

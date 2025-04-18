@@ -97,6 +97,8 @@ public class LoginController {
             // Login successful
             currentUser = user;
             UserSession.setCurrentUser(user);
+
+            AuthLogger.logLogin(user);
             
             LoginMessageLabel.setText("Login successful!");
             LoginMessageLabel.setTextFill(Color.GREEN);
@@ -117,6 +119,14 @@ public class LoginController {
             }
         } else {
             // Login failed
+            if (user != null) {
+                // Username exists but password is wrong
+                AuthLogger.logFailedPasswordAttempt(user);
+            } else {
+                // Username/email doesn't exist
+                AuthLogger.logFailedLogin(usernameOrEmail);
+            }
+            
             LoginMessageLabel.setText("Invalid username or password");
             LoginMessageLabel.setTextFill(Color.RED);
         }

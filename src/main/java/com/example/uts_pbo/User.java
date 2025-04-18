@@ -45,6 +45,9 @@ public class User {
         this.role = role;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
     // Getter methods
     public int getId() {
         return id;
@@ -101,4 +104,32 @@ public class User {
     public boolean isUser() {
         return "user".equalsIgnoreCase(this.role);
     }
+
+    // Add this method to the User class
+public static boolean isValidPassword(String password) {
+    // Check if password is between 6-20 characters
+    if (password.length() < 6 || password.length() > 20) {
+        return false;
+    }
+    
+    // Check for at least one digit
+    boolean hasDigit = false;
+    // Check for at least one uppercase letter
+    boolean hasUppercase = false;
+    // Check for at least one lowercase letter
+    boolean hasLowercase = false;
+    
+    for (char c : password.toCharArray()) {
+        if (Character.isDigit(c)) {
+            hasDigit = true;
+        } else if (Character.isUpperCase(c)) {
+            hasUppercase = true;
+        } else if (Character.isLowerCase(c)) {
+            hasLowercase = true;
+        }
+    }
+    
+    // Password must contain at least one digit, one uppercase, and one lowercase letter
+    return hasDigit && hasUppercase && hasLowercase;
+}
 }

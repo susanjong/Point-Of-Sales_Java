@@ -10,9 +10,12 @@ import java.io.IOException;
 public class AuthenticationLog extends Application {
     @Override
     public void start(Stage stage) throws IOException {
+        // Ensure the authentication log table exists
+        AuthenticationLogDAO.createTableIfNotExists();
+        
         FXMLLoader fxmlLoader = new FXMLLoader(AuthenticationLog.class.getResource("AuthenticationLog.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 320, 240);
-        stage.setTitle("Ini Login");
+        Scene scene = new Scene(fxmlLoader.load());
+        stage.setTitle("Authentication Log");
         stage.setScene(scene);
         stage.show();
     }

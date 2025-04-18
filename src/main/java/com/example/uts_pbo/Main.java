@@ -1,5 +1,7 @@
 package com.example.uts_pbo;
 
+import Admin_View.AuthenticationLogDAO;
+import Admin_View.AuthenticationLogEntry;
 import Admin_View.Product;
 import javafx.application.Application;
 import javafx.stage.Stage;
@@ -38,6 +40,9 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         primaryStage = stage;
+
+         // Initialize the default admin account
+         AdminInitializer.initialize();
         // Start with the login screen
         showLoginScreen();
     }
@@ -140,7 +145,23 @@ public class Main extends Application {
         }
     }
 
-    public static void main(String[] args) {        
+    public static void showAuthenticationLogs() {
+        try {
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("/Admin_View/AuthenticationLog.fxml"));
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
+            
+            primaryStage.setTitle("SimpleMart - Admin Panel");
+            primaryStage.setScene(scene);
+            primaryStage.show();
+        } catch (IOException e) {
+            System.err.println("Error loading AuthenticationLog.fxml: " + e.getMessage());
+            e.printStackTrace();
+            showAlert("Loading Error", "Could not load the AuthenticationLog screen: " + e.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
         launch(args);
     }
 }

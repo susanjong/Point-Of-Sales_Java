@@ -9,20 +9,23 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
+import java.sql.*;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+
+import com.example.uts_pbo.DatabaseConnection;
 
 public class CashierController implements Initializable {
 
@@ -31,7 +34,7 @@ public class CashierController implements Initializable {
     @FXML private Button productsBtn;
     @FXML private Button usersBtn;
     @FXML private Button adminLogBtn;
-    
+    @FXML private FlowPane productsContainer;
     @FXML private TextField searchField;
     @FXML private Button addToCartBtn;
     
@@ -43,23 +46,205 @@ public class CashierController implements Initializable {
     
     private double totalAmount = 0.0;
     private NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
-    
-    private ObservableList<CartItem> cartItems = FXCollections.observableArrayList();
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy");
 
+    private ObservableList<CartItem> cartItems = FXCollections.observableArrayList();
+    private ArrayList<Product> products = new ArrayList<>();
+    
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        cartItems.add(new CartItem("Chitato snack cheese flavour", 11000.0, 3));
-        cartItems.add(new CartItem("Bango Kecap Manis", 11500.0, 2));
+        System.out.println("Initializing CashierController...");
+        
+        // Set up currency format
         currencyFormat.setMaximumFractionDigits(0);
         
+        // Set up listeners
         paidField.textProperty().addListener((observable, oldValue, newValue) -> {
             calculateBalance();
         });
+        
+        // Load initial data
+        try {
+            loadProductsFromDatabase();
+            System.out.println("Loaded " + products.size() + " products from database");
+            displayProducts();
+            System.out.println("Displayed products in UI");
+        } catch (Exception e) {
+            System.err.println("Error during initialization: " + e.getMessage());
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Initialization Error", "Error loading products: " + e.getMessage());
+        }
+        
+        // Initialize UI components
         refreshCartView();
         updateTotalAmount();
         updateTotalDisplay();
     }
     
+    private void loadProductsFromDatabase() {
+        products.clear();
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = DatabaseConnection.getConnection();
+            if (conn == null) {
+                System.err.println("Database connection is null");
+                showAlert(Alert.AlertType.ERROR, "Database Error", "Could not connect to database");
+                return;
+            }
+            
+            String query = "SELECT code, product_name, price, qty, exp_date, category, image_path FROM product";
+            pst = conn.prepareStatement(query);
+            rs = pst.executeQuery();
+            
+            while (rs.next()) {
+                String code = rs.getString("code");
+                String name = rs.getString("product_name");
+                double price = rs.getDouble("price");
+                int qty = rs.getInt("qty");
+                
+                // Handle exp_date which can be null
+                String expDate = null;
+                Date sqlDate = rs.getDate("exp_date");
+                if (sqlDate != null) {
+                    expDate = dateFormat.format(sqlDate);
+                }
+                
+                String category = rs.getString("category");
+                String imagePath = rs.getString("image_path");
+                
+                System.out.println("Loaded product: " + name + " with image: " + imagePath);
+                
+                // Create product object with all fields from database
+                Product product = new Product(code, name, price, qty, expDate, category, imagePath);
+                products.add(product);
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("SQL Error: " + e.getMessage());
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Database Error", 
+                    "Could not load products from database: " + e.getMessage());
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (pst != null) pst.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                System.err.println("Error closing resources: " + e.getMessage());
+            }
+        }
+    }
+
+    private void displayProducts() {
+        if (productsContainer != null) {
+            productsContainer.getChildren().clear();
+            
+            if (products.isEmpty()) {
+                Label noProductsLabel = new Label("No products available");
+                noProductsLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: gray;");
+                productsContainer.getChildren().add(noProductsLabel);
+            } else {
+                for (Product product : products) {
+                    try {
+                        VBox productBox = createProductBox(product);
+                        productsContainer.getChildren().add(productBox);
+                    } catch (Exception e) {
+                        System.err.println("Error creating product box for " + product.getName() + ": " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } else {
+            System.err.println("productsContainer is null");
+        }
+    }
+
+    private VBox createProductBox(Product product) {
+        VBox productBox = new VBox(5);
+        productBox.setStyle("-fx-border-color: #CCCCCC; -fx-border-radius: 8; -fx-padding: 10.0;");
+        
+        ImageView imageView = new ImageView();
+        imageView.setFitHeight(120.0);
+        imageView.setFitWidth(120.0);
+        imageView.setPreserveRatio(true);
+        
+        try {
+            // Try loading the image from the path
+            String imagePath = product.getImagePath();
+            Image image;
+            
+            if (imagePath != null && !imagePath.isEmpty()) {
+                try {
+                    // First try as a direct file path
+                    image = new Image("file:" + imagePath);
+                    imageView.setImage(image);
+                } catch (Exception e) {
+                    // If that fails, try as a resource path
+                    try {
+                        image = new Image(getClass().getResourceAsStream(imagePath));
+                        imageView.setImage(image);
+                    } catch (Exception ex) {
+                        System.err.println("Could not load image as resource: " + ex.getMessage());
+                        // Use placeholder
+                        imageView.setImage(new Image(getClass().getResourceAsStream("/resources/images/placeholder.png")));
+                    }
+                }
+            } else {
+                // Use placeholder for null or empty path
+                imageView.setImage(new Image(getClass().getResourceAsStream("/resources/images/placeholder.png")));
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading image for " + product.getName() + ": " + e.getMessage());
+            try {
+                // Try to use placeholder image
+                imageView.setImage(new Image(getClass().getResourceAsStream("/resources/images/placeholder.png")));
+            } catch (Exception ex) {
+                System.err.println("Error loading placeholder image: " + ex.getMessage());
+            }
+        }
+        
+        Label nameLabel = new Label(product.getName());
+        nameLabel.setMaxWidth(150.0);
+        nameLabel.setMinWidth(150.0);
+        nameLabel.setWrapText(true);
+        nameLabel.setStyle("-fx-font-size: 14px;");
+        
+        Label priceLabel = new Label(formatPrice(product.getPrice()));
+        priceLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+        
+        Button addButton = new Button("Add to Cart");
+        addButton.setStyle("-fx-background-color: #5B8336; -fx-text-fill: white; -fx-font-size: 12px;");
+        addButton.setOnAction(e -> handleAddToCartFromDisplay(product));
+        
+        productBox.getChildren().addAll(imageView, nameLabel, priceLabel, addButton);
+        
+        return productBox;
+    }
+    
+    private void handleAddToCartFromDisplay(Product product) {
+        boolean productFound = false;
+        for (CartItem item : cartItems) {
+            if (item.getName().equals(product.getName())) {
+                item.setQuantity(item.getQuantity() + 1);
+                productFound = true;
+                break;
+            }
+        }
+        
+        if (!productFound) {
+            CartItem productItem = new CartItem(product.getName(), product.getPrice(), 1);
+            cartItems.add(productItem);
+        }
+        
+        refreshCartView();
+        updateTotalAmount();
+        
+        showAlert(Alert.AlertType.INFORMATION, "Success", "Product added to cart!");
+    }
+
     private void refreshCartView() {
         if (cartItemsContainer != null) {
             cartItemsContainer.getChildren().clear();
@@ -356,7 +541,7 @@ public class CashierController implements Initializable {
     }
     
     private void updateTotalAmount() {
-        totalAmount = 0;
+        totalAmount = 0.0;
         for (CartItem item : cartItems) {
             double itemSubtotal = item.getPrice() * item.getQuantity();
             totalAmount += itemSubtotal;
@@ -414,6 +599,7 @@ public class CashierController implements Initializable {
                     "Could not navigate to the requested page: " + e.getMessage());
         }
     }
+
     
     public static class CartItem {
         private String name;

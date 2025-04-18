@@ -3,10 +3,12 @@ package Admin_View;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Product {
     private static ObservableList<Product> allProducts = FXCollections.observableArrayList();
-    
+
     private final StringProperty code = new SimpleStringProperty();
     private final StringProperty name = new SimpleStringProperty();
     private final DoubleProperty price = new SimpleDoubleProperty();

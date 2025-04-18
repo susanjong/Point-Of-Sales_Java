@@ -9,7 +9,7 @@ public class AdminInitializer {
     // Default admin credentials
     private static final String DEFAULT_ADMIN_EMAIL = "admin@simplemart.com";
     private static final String DEFAULT_ADMIN_USERNAME = "admin";
-    private static final String DEFAULT_ADMIN_PASSWORD = "admin123";
+    private static final String DEFAULT_ADMIN_PASSWORD = "Admin123";
     
     /**
      * Initializes the default admin user if no admin exists in the system

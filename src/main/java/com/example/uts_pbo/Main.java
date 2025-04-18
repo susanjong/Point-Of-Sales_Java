@@ -38,6 +38,9 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         primaryStage = stage;
+
+         // Initialize the default admin account
+         AdminInitializer.initialize();
         // Start with the login screen
         showLoginScreen();
     }

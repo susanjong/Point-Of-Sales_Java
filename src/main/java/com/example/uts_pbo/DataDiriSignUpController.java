@@ -41,7 +41,7 @@ public class DataDiriSignUpController {
 
     @FXML
     private void handleRegister(ActionEvent event) {
-        // Get user input
+    // Get user input
         String username = usernameField.getText().trim();
         String firstName = firstNameField.getText().trim();
         String lastName = lastNameField.getText().trim();
@@ -52,6 +52,13 @@ public class DataDiriSignUpController {
         // Validate input
         if (username.isEmpty() || firstName.isEmpty() || password.isEmpty()) {
             messageLabel.setText("Username, first name, and password are required");
+            messageLabel.setTextFill(Color.RED);
+            return;
+        }
+        
+        // Validate password format
+        if (!User.isValidPassword(password)) {
+            messageLabel.setText("Password must be 6-20 characters with at least 1 uppercase letter, 1 lowercase letter, and 1 number");
             messageLabel.setTextFill(Color.RED);
             return;
         }

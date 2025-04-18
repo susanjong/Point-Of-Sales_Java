@@ -71,12 +71,12 @@
                 <VBox>
                     <Label style="-fx-font-weight: bold; -fx-font-size: 11px;" text="PRODUCT NAME" />
                     <Region prefHeight="5.0" />
-                    <Region prefHeight="30.0" prefWidth="300.0" style="-fx-background-color: #E0E0E0; -fx-background-radius: 5;" />
+                    <Label fx:id="productNameLabel" prefHeight="30.0" prefWidth="300.0" style="-fx-background-color: #E0E0E0; -fx-background-radius: 5; -fx-padding: 5px;" />
                 </VBox>
                 <VBox>
                     <Label style="-fx-font-weight: bold; -fx-font-size: 11px;" text="PRICE" />
                     <Region prefHeight="5.0" />
-                    <Region prefHeight="30.0" prefWidth="200.0" style="-fx-background-color: #E0E0E0; -fx-background-radius: 5;" />
+                    <Label fx:id="priceLabel" prefHeight="30.0" prefWidth="200.0" style="-fx-background-color: #E0E0E0; -fx-background-radius: 5; -fx-padding: 5px;" />
                 </VBox>
             </HBox>
             <Label style="-fx-font-weight: bold; -fx-font-size: 18px;" text="Bundling Product" />
@@ -152,31 +152,6 @@
                 <padding>
                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                 </padding>
-                <VBox spacing="5.0" style="-fx-background-color: white; -fx-padding: 8.0; -fx-background-radius: 5; -fx-font-size: 14px;">
-                    <Label text="Chitato snack cheese flavour" wrapText="true" />
-                    <Button onAction="#handleRemoveFromCart" prefWidth="80.0" style="-fx-background-color: #9A030F; -fx-text-fill: white; -fx-font-size: 10px;" text="Delete" />
-                    <HBox alignment="CENTER_LEFT" spacing="5.0">
-                        <Label style="-fx-font-weight: bold;" text="Rp 11.000" HBox.hgrow="ALWAYS" />
-                        <HBox alignment="CENTER_RIGHT" spacing="5.0">
-                            <Button onAction="#handleDecreaseQuantity" prefWidth="25.0" text="-" />
-                            <Label prefWidth="30.0" style="-fx-font-weight: bold; -fx-alignment: center;" text="3" />
-                            <Button onAction="#handleIncreaseQuantity" prefWidth="25.0" text="+" />
-                        </HBox>
-                    </HBox>
-                </VBox>
-
-                <VBox spacing="5.0" style="-fx-background-color: white; -fx-padding: 8.0; -fx-background-radius: 5;">
-                    <Label text="Bango Kecap Manis" wrapText="true" />
-                    <Button onAction="#handleRemoveFromCart" prefWidth="80.0" style="-fx-background-color: #9A030F; -fx-text-fill: white; -fx-font-size: 10px;" text="Delete" />
-                    <HBox alignment="CENTER_LEFT" spacing="5.0">
-                        <Label style="-fx-font-weight: bold;" text="Rp 11.500" HBox.hgrow="ALWAYS" />
-                        <HBox alignment="CENTER_RIGHT" spacing="5.0">
-                            <Button onAction="#handleDecreaseQuantity" prefWidth="25.0" text="-" />
-                            <Label prefWidth="30.0" style="-fx-font-weight: bold; -fx-alignment: center;" text="2" />
-                            <Button onAction="#handleIncreaseQuantity" prefWidth="25.0" text="+" />
-                        </HBox>
-                    </HBox>
-                </VBox>
             </VBox>
         </content>
             <VBox.margin>

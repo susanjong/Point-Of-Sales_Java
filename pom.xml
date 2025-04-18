@@ -73,11 +73,6 @@
         </dependency>
 
         <!-- Gluon Charm Glisten for Avatar control -->
-        <dependency>
-            <groupId>com.gluonhq</groupId>
-            <artifactId>charm-glisten</artifactId>
-            <version>6.2.3</version>
-        </dependency>
     </dependencies>
 
     <build>

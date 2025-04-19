@@ -2,130 +2,92 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.PasswordField?>
 
-<BorderPane style="-fx-font-family: Lato" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.uts_pbo.ProfileController">
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            xmlns="http://javafx.com/javafx/23.0.1"
+            fx:controller="com.example.uts_pbo.ProfileController">
+    
+    <!-- Left Navigation -->
     <left>
-        <VBox prefWidth="180.0" style="-fx-background-color: #59812a; -fx-padding: 20 0 0 0;">
-            <Button fx:id="profileBtn" text="Profile" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: #1d4008; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px; -fx-background-radius: 60px">
-                <VBox.margin>
-                    <Insets top="20.0" bottom="12.0" left="15.0" right="15.0" />
-                </VBox.margin>
-            </Button>
-            <Button fx:id="cashierBtn" text="Cashier" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
-                <VBox.margin>
-                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
-                </VBox.margin>
-            </Button>
-            <Button fx:id="productsBtn" text="Products Management" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
-                <VBox.margin>
-                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
-                </VBox.margin>
-            </Button>
-            <Button fx:id="usersBtn" text="User Management" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
-                <VBox.margin>
-                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
-                </VBox.margin>
-            </Button>
-            <Button fx:id="adminLogBtn" text="Admin Log" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
-                <VBox.margin>
-                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
-                </VBox.margin>
-            </Button>
+        <VBox prefWidth="180.0" spacing="10.0" style="-fx-background-color: #59812a; -fx-padding: 20 0 0 0;">
+            <Button fx:id="dashboardBtn" text="Dashboard" styleClass="nav-button"
+                    prefWidth="150.0" prefHeight="40.0" onAction="#goToDashboard"
+                    style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px;"/>
+            <Button fx:id="profileBtn" text="Profile" styleClass="nav-button"
+                    prefWidth="150.0" prefHeight="40.0" disable="true"
+                    style="-fx-background-color: #1d4008; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px; -fx-background-radius: 60px;"/>
         </VBox>
     </left>
+
+    <!-- Top Header -->
     <top>
         <HBox alignment="CENTER" style="-fx-background-color: #1d4008;">
-            <Label text="SimpleMart" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold; -fx-font-style: italic;">
+            <Label text="SimpleMart - Profile" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold; -fx-font-style: italic;">
                 <HBox.margin>
                     <Insets top="8.0" bottom="8.0" />
                 </HBox.margin>
             </Label>
         </HBox>
     </top>
+
+    <!-- Center: Profile Form -->
     <center>
-        <VBox alignment="TOP_CENTER" spacing="30.0" style="-fx-padding: 30;">
-            <VBox style="-fx-border-color: #CCCCCC; -fx-border-radius: 5; -fx-padding: 20; -fx-background-color: white;">
-                <GridPane hgap="50" vgap="15">
-                    <columnConstraints>
-                        <ColumnConstraints percentWidth="50" />
-                        <ColumnConstraints percentWidth="50" />
-                    </columnConstraints>
-                    
-                    <Label text="Personal Information" style="-fx-font-size: 18; -fx-text-fill: #59812a; -fx-font-weight: bold;" 
-                           GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                    
-                    <Label text="Set new password" style="-fx-font-size: 18; -fx-text-fill: #59812a; -fx-font-weight: bold;" 
-                           GridPane.columnIndex="1" GridPane.rowIndex="0" />
-                    
-                    <!-- Left Column - Personal Information -->
-                    <VBox spacing="10" GridPane.columnIndex="0" GridPane.rowIndex="1">
-                        <Label text="Name" style="-fx-text-fill: #555555;" />
-                        <TextField fx:id="nameField" promptText="Full Name" />
-                        
-                        <Label text="Username" style="-fx-text-fill: #555555;">
-                            <VBox.margin>
-                                <Insets top="10" />
-                            </VBox.margin>
-                        </Label>
-                        <TextField fx:id="usernameField" promptText="Username" />
-                        
-                        <Label text="Email" style="-fx-text-fill: #555555;">
-                            <VBox.margin>
-                                <Insets top="10" />
-                            </VBox.margin>
-                        </Label>
-                        <TextField fx:id="emailField" promptText="Email address" />
-                    </VBox>
-                    
-                    <!-- Right Column - Password Information -->
-                    <VBox spacing="10" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                        <Label text="Role" style="-fx-text-fill: #555555;" />
-                        <TextField fx:id="roleField" promptText="User Role" editable="false" />
-                        
-                        <Label text="Password" style="-fx-text-fill: #555555;">
-                            <VBox.margin>
-                                <Insets top="10" />
-                            </VBox.margin>
-                        </Label>
-                        <HBox spacing="5">
-                            <PasswordField fx:id="passwordField" HBox.hgrow="ALWAYS" />
-                            <Button fx:id="editPasswordBtn" text="✏️" onAction="#handleEditPassword" />
-                        </HBox>
-                        
-                        <Label text="Password must include at least: 8-20 characters, 1 number, 1 uppercase letter, 1 lowercase letter*" 
-                               style="-fx-text-fill: gray; -fx-font-size: 12;" wrapText="true" />
-                    </VBox>
-                    
-                    <HBox alignment="CENTER_RIGHT" GridPane.columnIndex="1" GridPane.rowIndex="2">
-                        <Button fx:id="confirmChangesBtn" text="Confirm Changes" onAction="#handleConfirmChanges"
-                                style="-fx-background-color: #59812a; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15;" />
-                    </HBox>
-                </GridPane>
-            </VBox>
-            
-            <!-- Privacy Settings Section -->
-            <VBox style="-fx-border-color: #CCCCCC; -fx-border-radius: 5; -fx-padding: 20; -fx-background-color: white;">
-                <Label text="Privacy Settings" style="-fx-font-size: 18; -fx-text-fill: #59812a; -fx-font-weight: bold;" />
-                
-                <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 15 0;">
-                    <CheckBox fx:id="deleteAccountCheckbox" text="I agree to delete my SimpleMart account" />
-                </HBox>
-                
-                <HBox alignment="CENTER_RIGHT">
-                    <Button fx:id="deleteAccountBtn" text="Delete Account" onAction="#handleDeleteAccount"
-                            style="-fx-background-color: #9A030F; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15;" />
-                </HBox>
-            </VBox>
-        </VBox>
+        <GridPane hgap="10" vgap="10" style="-fx-background-color: #FFFEFB;">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <columnConstraints>
+                <ColumnConstraints percentWidth="30" />
+                <ColumnConstraints percentWidth="70" />
+            </columnConstraints>
+
+            <!-- First Name -->
+            <Label text="First Name:" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+            <TextField fx:id="firstNameField" GridPane.rowIndex="0" GridPane.columnIndex="1" />
+
+            <!-- Last Name -->
+            <Label text="Last Name:" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+            <TextField fx:id="lastNameField" GridPane.rowIndex="1" GridPane.columnIndex="1" />
+
+            <!-- Email -->
+            <Label text="Email:" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+            <TextField fx:id="emailField" GridPane.rowIndex="2" GridPane.columnIndex="1" />
+
+            <!-- Username -->
+            <Label text="Username:" GridPane.rowIndex="3" GridPane.columnIndex="0" />
+            <TextField fx:id="usernameField" GridPane.rowIndex="3" GridPane.columnIndex="1" />
+
+            <!-- New Password -->
+            <Label text="New Password:" GridPane.rowIndex="4" GridPane.columnIndex="0" />
+            <PasswordField fx:id="newPasswordField" GridPane.rowIndex="4" GridPane.columnIndex="1" />
+
+            <!-- Confirm Password -->
+            <Label text="Confirm Password:" GridPane.rowIndex="5" GridPane.columnIndex="0" />
+            <PasswordField fx:id="confirmPasswordField" GridPane.rowIndex="5" GridPane.columnIndex="1" />
+
+            <!-- Buttons -->
+            <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.rowIndex="6" GridPane.columnIndex="1">
+                <Button text="Update Profile" onAction="#handleUpdateProfile"
+                        styleClass="primary-button" />
+                <Button text="Change Password" onAction="#handleUpdatePassword"
+                        styleClass="primary-button" />
+                <Button text="Delete Account" onAction="#handleDeleteAccount"
+                        style="-fx-text-fill: red; -fx-font-weight: bold;" />
+            </HBox>
+        </GridPane>
     </center>
 </BorderPane>

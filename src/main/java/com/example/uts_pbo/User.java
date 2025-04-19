@@ -86,6 +86,23 @@ public class User {
         this.role = role;
     }
 
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+    
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+    
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    
+
     // Method to verify a password against this user's stored hash
     public boolean verifyPassword(String inputPassword) {
         return PasswordHasher.verifyPassword(inputPassword, this.password, this.salt);

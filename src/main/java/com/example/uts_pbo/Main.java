@@ -161,6 +161,22 @@ public class Main extends Application {
         }
     }
 
+    public static void showProfile() {
+        try {
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("Profile.fxml"));
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
+            
+            primaryStage.setTitle("SimpleMart - Profile");
+            primaryStage.setScene(scene);
+            primaryStage.show();
+        } catch (IOException e) {
+            System.err.println("Error loading Profile.fxml: " + e.getMessage());
+            e.printStackTrace();
+            showAlert("Loading Error", "Could not load the profile screen: " + e.getMessage());
+        }
+    }
+
     public static void main(String[] args) {
         launch(args);
     }

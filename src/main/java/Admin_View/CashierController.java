@@ -995,7 +995,28 @@ public class CashierController implements Initializable, Payable {
             }
             
             if (!fxmlFile.isEmpty()) {
-                Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
+                URL url = getClass().getResource(fxmlFile);
+                
+                if (url == null) {
+                    // Try alternative path format if the first attempt fails
+                    String altPath = fxmlFile.replace("/com/example/uts_pbo/", "/");
+                    url = getClass().getResource(altPath);
+                    
+                    if (url == null) {
+                        // Try one more alternative - without leading slash
+                        String noSlashPath = fxmlFile.substring(1);
+                        url = getClass().getClassLoader().getResource(noSlashPath);
+                        
+                        if (url == null) {
+                            showAlert(Alert.AlertType.ERROR, "Navigation Error", 
+                                "Could not find FXML file: " + fxmlFile + 
+                                "\nPlease check if the file exists in the resources folder.");
+                            return;
+                        }
+                    }
+                }
+                
+                Parent root = FXMLLoader.load(url);
                 Stage stage = (Stage) ((Button) source).getScene().getWindow();
                 Scene scene = new Scene(root);
                 stage.setScene(scene);
@@ -1005,6 +1026,7 @@ public class CashierController implements Initializable, Payable {
         } catch (IOException e) {
             showAlert(Alert.AlertType.ERROR, "Navigation Error", 
                     "Could not navigate to the requested page: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

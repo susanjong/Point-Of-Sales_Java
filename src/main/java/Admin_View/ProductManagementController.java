@@ -180,33 +180,56 @@ public class ProductManagementController implements Initializable {
     
     @FXML
     void handleNavigation(ActionEvent event) {
-    Object source = event.getSource();
-    
-    String fxmlFile = "";
-    
-    if (source == profileBtn) {
-        fxmlFile = "Profile.fxml";
-    } else if (source == cashierBtn) {
-        fxmlFile = "Cashier.fxml";
-    } else if (source == usersBtn) {
-        fxmlFile = "UserManagement.fxml";
-    } else if (source == adminLogBtn) {
-        fxmlFile = "AuthenticationLog.fxml";
-    } else if (source == productsBtn) {
-        fxmlFile = "ProductManagement.fxml";
-    }
-
-    if (!fxmlFile.isEmpty()) {
+        Object source = event.getSource();
+        
         try {
-            Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
-            Stage stage = (Stage) ((Button) source).getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.show();
+            String fxmlFile = "";
+            
+            if (source == profileBtn) {
+                fxmlFile = "Profile.fxml";
+            } else if (source == cashierBtn) {
+                fxmlFile = "Cashier.fxml";
+            } else if (source == usersBtn) {
+                fxmlFile = "UserManagement.fxml";
+            } else if (source == adminLogBtn) {
+                fxmlFile = "AuthenticationLog.fxml";
+            } else if (source == productsBtn) {
+                return;
+            }
+            
+            if (!fxmlFile.isEmpty()) {
+                URL url = getClass().getResource(fxmlFile);
+                
+                if (url == null) {
+                    // Try alternative path format if the first attempt fails
+                    String altPath = fxmlFile.replace("/com/example/uts_pbo/", "/");
+                    url = getClass().getResource(altPath);
+                    
+                    if (url == null) {
+                        // Try one more alternative - without leading slash
+                        String noSlashPath = fxmlFile.substring(1);
+                        url = getClass().getClassLoader().getResource(noSlashPath);
+                        
+                        if (url == null) {
+                            showAlert(Alert.AlertType.ERROR, "Navigation Error", 
+                                "Could not find FXML file: " + fxmlFile + 
+                                "\nPlease check if the file exists in the resources folder.");
+                            return;
+                        }
+                    }
+                }
+                
+                Parent root = FXMLLoader.load(url);
+                Stage stage = (Stage) ((Button) source).getScene().getWindow();
+                Scene scene = new Scene(root);
+                stage.setScene(scene);
+                stage.show();
+            }
+            
         } catch (IOException e) {
             showAlert(Alert.AlertType.ERROR, "Navigation Error", 
-            "Could not navigate to the requested page: " + e.getMessage());
-            }
+                    "Could not navigate to the requested page: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

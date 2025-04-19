@@ -136,7 +136,7 @@ public class ProfileController implements Initializable {
              } else if (source == cashierBtn) {
                  fxmlFile = "/Admin_View/Cashier.fxml";
              } else if (source == usersBtn) {
-                 fxmlFile = "UserManagement.fxml";
+                 fxmlFile = "/Admin_View/UserManagement.fxml";
              } else if (source == adminLogBtn) {
                  fxmlFile = "/Admin_View/AuthenticationLog.fxml";
              } else if (source == profileBtn) {

@@ -257,6 +257,33 @@ public class Main extends Application {
         }
     }
 
+    public static void showUserManagement() {
+        try {
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("/Admin_View/UserManagement.fxml"));
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
+            primaryStage.setTitle("SimpleMart - Profile");
+            primaryStage.setScene(scene);
+            primaryStage.setX(screenBounds.getMinX());
+            primaryStage.setY(screenBounds.getMinY());
+            primaryStage.setWidth(screenBounds.getWidth());
+            primaryStage.setHeight(screenBounds.getHeight());
+        
+            // (Opsional) Atur ukuran minimal jika ingin tetap bisa resize ke kecil
+            primaryStage.setMinWidth(800);  
+            primaryStage.setMinHeight(600);
+            
+            primaryStage.show();
+            
+        } catch (IOException e) {
+            System.err.println("Error loading UserManagement.fxml: " + e.getMessage());
+            e.printStackTrace();
+            showAlert("Loading Error", "Could not load the user management screen: " + e.getMessage());
+        }
+    }
+
     public static void main(String[] args) {
         launch(args);
     }

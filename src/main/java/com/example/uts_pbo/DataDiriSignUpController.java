@@ -58,7 +58,7 @@ public class DataDiriSignUpController {
         
         // Validate password format
         if (!User.isValidPassword(password)) {
-            messageLabel.setText("Password must be 6-20 characters with at least 1 uppercase letter, 1 lowercase letter, and 1 number");
+            messageLabel.setText("Password must be 6-20 characters with at least 1 uppercase letter,\n1 lowercase letter, and 1 number");
             messageLabel.setTextFill(Color.RED);
             return;
         }

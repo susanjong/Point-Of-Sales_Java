@@ -33,7 +33,7 @@
                   <Font size="11.0" />
                </font>
             </TextField>
-            <Button fx:id="continueButton" onAction="#continueButtonOnAction" layoutX="33.0" layoutY="389.0" mnemonicParsing="false" prefHeight="43.0" prefWidth="345.0" style="-fx-background-color: #204200; -fx-background-radius: 100px;" text="Continue" textFill="WHITE">
+            <Button fx:id="continueButton" layoutX="47.0" layoutY="376.0" mnemonicParsing="false" onAction="#continueButtonOnAction" prefHeight="43.0" prefWidth="345.0" style="-fx-background-color: #204200; -fx-background-radius: 100px;" text="Continue" textFill="WHITE">
                <font>
                   <Font size="18.0" />
                </font>
@@ -41,7 +41,7 @@
                   <Insets />
                </opaqueInsets>
             </Button>
-            <Hyperlink fx:id="loginLink" onAction="#loginLinkOnAction" layoutX="192.0" layoutY="438.0" text="Sign In" textFill="#5b8336">
+            <Hyperlink fx:id="loginLink" layoutX="192.0" layoutY="438.0" onAction="#loginLinkOnAction" text="Sign In" textFill="#5b8336">
                <font>
                   <Font name="System Bold" size="14.0" />
                </font>
@@ -51,7 +51,7 @@
                   <Font size="14.0" />
                </font>
             </Label>
-            <Label fx:id="messageLabel" alignment="CENTER" layoutX="33.0" layoutY="330.0" prefHeight="43.0" prefWidth="345.0" textFill="#cd0404">
+            <Label fx:id="messageLabel" alignment="CENTER" layoutX="46.0" layoutY="326.0" prefHeight="43.0" prefWidth="345.0" textFill="#cd0404">
                <font>
                   <Font size="14.0" />
                </font>

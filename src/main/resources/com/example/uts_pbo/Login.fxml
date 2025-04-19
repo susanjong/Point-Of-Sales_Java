@@ -40,7 +40,7 @@
                </font>
             </Label>
             <PasswordField fx:id="EnterPassword" layoutX="33.0" layoutY="251.0" prefHeight="43.0" prefWidth="345.0" promptText="Enter Your Password" />
-            <Button fx:id="ButtonContinue" onAction="#ButtonContinueOnAction" layoutX="33.0" layoutY="339.0" mnemonicParsing="false" prefHeight="43.0" prefWidth="345.0" style="-fx-background-color: #204200; -fx-background-radius: 100px;" text="Continue" textFill="WHITE">
+            <Button fx:id="ButtonContinue" layoutX="45.0" layoutY="398.0" mnemonicParsing="false" onAction="#ButtonContinueOnAction" prefHeight="43.0" prefWidth="345.0" style="-fx-background-color: #204200; -fx-background-radius: 100px;" text="Continue" textFill="WHITE">
                <font>
                   <Font size="18.0" />
                </font>
@@ -48,22 +48,22 @@
                   <Insets />
                </opaqueInsets>
             </Button>
-            <Hyperlink fx:id="ForgotPassword" onAction="#forgotPasswordOnAction" layoutX="165.0" layoutY="299.0" text="Forgot Password?" textFill="#5b8336">
+            <Hyperlink fx:id="ForgotPassword" layoutX="266.0" layoutY="304.0" onAction="#forgotPasswordOnAction" text="Forgot Password?" textFill="#5b8336">
                <font>
                   <Font size="14.0" />
                </font>
             </Hyperlink>
-            <Hyperlink fx:id="HyperlinkCreateAcc" onAction="#createAccountOnAction" layoutX="199.0" layoutY="438.0" text="Create Account" textFill="#5b8336">
+            <Hyperlink fx:id="HyperlinkCreateAcc" layoutX="185.0" layoutY="451.0" onAction="#createAccountOnAction" text="Create Account" textFill="#5b8336">
                <font>
                   <Font name="System Bold" size="14.0" />
                </font>
             </Hyperlink>
-            <Label layoutX="37.0" layoutY="441.0" text="Don't have an account?">
+            <Label layoutX="40.0" layoutY="454.0" text="Don't have an account?">
                <font>
                   <Font size="14.0" />
                </font>
             </Label>
-            <Label fx:id="LoginMessageLabel" alignment="CENTER" layoutX="33.0" layoutY="388.0" prefHeight="43.0" prefWidth="345.0" textFill="#cd0404">
+            <Label fx:id="LoginMessageLabel" alignment="CENTER" layoutX="45.0" layoutY="338.0" prefHeight="43.0" prefWidth="345.0" textFill="#cd0404">
                <font>
                   <Font size="14.0" />
                </font>

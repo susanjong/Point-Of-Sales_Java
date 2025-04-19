@@ -24,8 +24,7 @@
                     <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
                 </VBox.margin>
             </Button>
-           <Button fx:id="userBtn" text="Users Management" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px; -fx-background-radius: 60px" />
-
+            <Button fx:id="usersBtn" text="User Management" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
                 <VBox.margin>
                     <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
                 </VBox.margin>
@@ -51,20 +50,20 @@
             <padding>
                 <Insets top="30.0" bottom="20.0" left="20.0" right="20.0" />
             </padding>
-            <Label text="Products Management" 
+            <Label text="User Management" 
                 style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 0 0 10 0;">
                 <VBox.margin>
                     <Insets left="10" top="10" />
                 </VBox.margin>
             </Label>
-            <TableView fx:id="productTable" VBox.vgrow="ALWAYS">
+            <TableView fx:id="UserTable" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="codeColumn" text="Code" prefWidth="100.0" />
-                    <TableColumn fx:id="nameColumn" text="Product Name" prefWidth="180.0" />
-                    <TableColumn fx:id="priceColumn" text="Price" prefWidth="100.0" />
-                    <TableColumn fx:id="qtyColumn" text="Qty" prefWidth="70.0" />
-                    <TableColumn fx:id="expDateColumn" text="Exp Date" prefWidth="100.0" />
-                    <TableColumn fx:id="categoryColumn" text="Category" prefWidth="120.0" />
+                    <TableColumn fx:id="UserIDColumn" text="User ID" prefWidth="100.0" />
+                    <TableColumn fx:id="nameColumn" text="Name" prefWidth="180.0" />
+                    <TableColumn fx:id="UsernameColumn" text="Username" prefWidth="100.0" />
+                    <TableColumn fx:id="EmailColumn" text="Email" prefWidth="70.0" />
+                    <TableColumn fx:id="PasswordColumn" text="Password" prefWidth="100.0" />
+                    <TableColumn fx:id="RoleColumn" text="Role" prefWidth="120.0" />
                 </columns>
             </TableView>
             <HBox alignment="CENTER_RIGHT" spacing="10.0">
@@ -80,28 +79,28 @@
             <padding>
                 <Insets top="20.0" bottom="20.0" left="20.0" right="20.0" />
             </padding>
-            <Label text="Image" />
-            <ImageView fx:id="productImage" fitWidth="200.0" fitHeight="120.0" preserveRatio="true" style="-fx-border-color: #cccccc; -fx-border-width: 1px;">
-                <VBox.margin>
-                    <Insets bottom="5.0" />
-                </VBox.margin>
-            </ImageView>
-            <Button fx:id="addImageBtn" text="Add Image" onAction="#handleAddImage">
-                <VBox.margin>
-                    <Insets bottom="10.0" />
-                </VBox.margin>
-            </Button>
-            <Label text="Code:" />
+            
+            <Label text="User ID (auto):" />
             <TextField fx:id="codeField" />
-            <Label text="Product Name:" />
+            <Label text="Name:" />
             <TextField fx:id="nameField" />
-            <Label text="Price:" />
-            <TextField fx:id="priceField" />
-            <Label text="Qty:" />
-            <TextField fx:id="qtyField" />
-            <Label text="Exp Date:" />
-            <TextField fx:id="expDateField" />
-            <Label text="Category:" />
+            <Label text="Username:" />
+            <TextField fx:id="UsernameField" />
+            <Label text="Email:" />
+            <TextField fx:id="EmailField" />
+            <Label text="Password:" />
+            <PasswordField fx:id="passwordField" />
+           <Label text="Select Role:" />
+            <ComboBox fx:id="roleComboBox" promptText="Choose Role" prefWidth="200.0">
+    <items>
+        <FXCollections fx:factory="observableArrayList">
+            <String fx:value="Admin" />
+            <String fx:value="Cashier" />
+            <String fx:value="Staff" />
+        </FXCollections>
+    </items>
+</ComboBox>
+
             <HBox spacing="10.0">
                 <ComboBox fx:id="categoryComboBox" prefWidth="200.0" promptText="Select Category" />
                 <Button fx:id="addCategoryBtn" text="Add" onAction="#handleAddCategory" />

@@ -47,8 +47,8 @@ public class AuthLogger {
                 -1, // Use -1 to indicate unknown user
                 usernameOrEmail,
                 "unknown",
-                "unknown",
-                "Failed Login (Unknown User)"
+                "unknown@example.com",
+                "Failed Login"
             );
             AuthenticationLogDAO.recordLog(entry);
         }

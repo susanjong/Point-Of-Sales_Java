@@ -4,12 +4,15 @@ import Admin_View.AuthenticationLogDAO;
 import Admin_View.AuthenticationLogEntry;
 import Admin_View.Product;
 import javafx.application.Application;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import java.io.IOException;
+import javafx.geometry.Rectangle2D;
 
 public class Main extends Application {
     private static Stage primaryStage;
@@ -59,11 +62,21 @@ public class Main extends Application {
             Parent root = loader.load();
             Scene scene = new Scene(root);
 
+              Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
             primaryStage.setTitle("SimpleMart - Login");
             primaryStage.setScene(scene);
-            primaryStage.setMinWidth(320);
-            primaryStage.setMinHeight(400);
+            primaryStage.setX(screenBounds.getMinX());
+            primaryStage.setY(screenBounds.getMinY());
+            primaryStage.setWidth(screenBounds.getWidth());
+            primaryStage.setHeight(screenBounds.getHeight());
+        
+            // (Opsional) Atur ukuran minimal jika ingin tetap bisa resize ke kecil
+            primaryStage.setMinWidth(800);  
+            primaryStage.setMinHeight(600);
+            
             primaryStage.show();
+            
         } catch (IOException e) {
             System.err.println("Error loading Login.fxml: " + e.getMessage());
             e.printStackTrace();
@@ -78,8 +91,19 @@ public class Main extends Application {
             Parent root = loader.load();
             Scene scene = new Scene(root);
             
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
             primaryStage.setTitle("SimpleMart - Sign Up");
             primaryStage.setScene(scene);
+            primaryStage.setX(screenBounds.getMinX());
+            primaryStage.setY(screenBounds.getMinY());
+            primaryStage.setWidth(screenBounds.getWidth());
+            primaryStage.setHeight(screenBounds.getHeight());
+        
+            // (Opsional) Atur ukuran minimal jika ingin tetap bisa resize ke kecil
+            primaryStage.setMinWidth(800);  
+            primaryStage.setMinHeight(600);
+            
             primaryStage.show();
         } catch (IOException e) {
             System.err.println("Error loading SignUp.fxml: " + e.getMessage());
@@ -94,8 +118,20 @@ public class Main extends Application {
             Parent root = loader.load();
             Scene scene = new Scene(root);
             
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
             primaryStage.setTitle("SimpleMart - Product Management");
-            primaryStage.setScene(scene);
+
+             primaryStage.setScene(scene);
+            primaryStage.setX(screenBounds.getMinX());
+            primaryStage.setY(screenBounds.getMinY());
+            primaryStage.setWidth(screenBounds.getWidth());
+            primaryStage.setHeight(screenBounds.getHeight());
+        
+            // (Opsional) Atur ukuran minimal jika ingin tetap bisa resize ke kecil
+            primaryStage.setMinWidth(800);  
+            primaryStage.setMinHeight(600);
+            
             primaryStage.show();
         } catch (IOException e) {
             System.err.println("Error loading ProductManagement.fxml: " + e.getMessage());
@@ -117,9 +153,19 @@ public class Main extends Application {
             }
             
             Scene scene = new Scene(root);
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
             
             primaryStage.setTitle("SimpleMart - Complete Registration");
             primaryStage.setScene(scene);
+            primaryStage.setX(screenBounds.getMinX());
+            primaryStage.setY(screenBounds.getMinY());
+            primaryStage.setWidth(screenBounds.getWidth());
+            primaryStage.setHeight(screenBounds.getHeight());
+        
+            // (Opsional) Atur ukuran minimal jika ingin tetap bisa resize ke kecil
+            primaryStage.setMinWidth(800);  
+            primaryStage.setMinHeight(600);
+            
             primaryStage.show();
         } catch (IOException e) {
             System.err.println("Error loading DataDiriSignUp.fxml: " + e.getMessage());
@@ -135,9 +181,21 @@ public class Main extends Application {
             Parent root = loader.load();
             Scene scene = new Scene(root);
             
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
             primaryStage.setTitle("SimpleMart - Cashier");
             primaryStage.setScene(scene);
+            primaryStage.setX(screenBounds.getMinX());
+            primaryStage.setY(screenBounds.getMinY());
+            primaryStage.setWidth(screenBounds.getWidth());
+            primaryStage.setHeight(screenBounds.getHeight());
+        
+            // (Opsional) Atur ukuran minimal jika ingin tetap bisa resize ke kecil
+            primaryStage.setMinWidth(800);  
+            primaryStage.setMinHeight(600);
+            
             primaryStage.show();
+
         } catch (IOException e) {
             System.err.println("Error loading Cashier.fxml: " + e.getMessage());
             e.printStackTrace();
@@ -151,8 +209,19 @@ public class Main extends Application {
             Parent root = loader.load();
             Scene scene = new Scene(root);
             
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+            
             primaryStage.setTitle("SimpleMart - Admin Panel");
             primaryStage.setScene(scene);
+            primaryStage.setX(screenBounds.getMinX());
+            primaryStage.setY(screenBounds.getMinY());
+            primaryStage.setWidth(screenBounds.getWidth());
+            primaryStage.setHeight(screenBounds.getHeight());
+        
+            // (Opsional) Atur ukuran minimal jika ingin tetap bisa resize ke kecil
+            primaryStage.setMinWidth(800);  
+            primaryStage.setMinHeight(600);
+            
             primaryStage.show();
         } catch (IOException e) {
             System.err.println("Error loading AuthenticationLog.fxml: " + e.getMessage());
@@ -166,10 +235,21 @@ public class Main extends Application {
             FXMLLoader loader = new FXMLLoader(Main.class.getResource("Profile.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root);
-            
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
             primaryStage.setTitle("SimpleMart - Profile");
             primaryStage.setScene(scene);
+            primaryStage.setX(screenBounds.getMinX());
+            primaryStage.setY(screenBounds.getMinY());
+            primaryStage.setWidth(screenBounds.getWidth());
+            primaryStage.setHeight(screenBounds.getHeight());
+        
+            // (Opsional) Atur ukuran minimal jika ingin tetap bisa resize ke kecil
+            primaryStage.setMinWidth(800);  
+            primaryStage.setMinHeight(600);
+            
             primaryStage.show();
+            
         } catch (IOException e) {
             System.err.println("Error loading Profile.fxml: " + e.getMessage());
             e.printStackTrace();

@@ -6,10 +6,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -17,6 +14,12 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 public class ProfileController implements Initializable {
+
+     @FXML private Button profileBtn;
+     @FXML private Button cashierBtn;
+     @FXML private Button productsBtn;
+     @FXML private Button usersBtn;
+     @FXML private Button adminLogBtn;
 
     @FXML private TextField firstNameField;
     @FXML private TextField lastNameField;
@@ -122,17 +125,59 @@ public class ProfileController implements Initializable {
     }
 
     @FXML
-    private void goToDashboard(ActionEvent event) {
-        System.out.println("[DEBUG] goToDashboard() invoked");
-        try {
-            Parent root = FXMLLoader.load(getClass().getResource("dashboard.fxml"));
-            Stage stage = (Stage) firstNameField.getScene().getWindow();
-            stage.setScene(new Scene(root));
-        } catch (IOException e) {
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Cannot load Dashboard.");
-        }
-    }
+     void handleNavigation(ActionEvent event) {
+         Object source = event.getSource();
+         
+         try {
+             String fxmlFile = "";
+             
+             if (source == productsBtn) {
+                 fxmlFile = "/Admin_View/ProductManagement.fxml";
+             } else if (source == cashierBtn) {
+                 fxmlFile = "/Admin_View/Cashier.fxml";
+             } else if (source == usersBtn) {
+                 fxmlFile = "UserManagement.fxml";
+             } else if (source == adminLogBtn) {
+                 fxmlFile = "/Admin_View/AuthenticationLog.fxml";
+             } else if (source == profileBtn) {
+                 return;
+             }
+             
+             if (!fxmlFile.isEmpty()) {
+                 URL url = getClass().getResource(fxmlFile);
+                 
+                 if (url == null) {
+                     // Try alternative path format if the first attempt fails
+                     String altPath = fxmlFile.replace("/com/example/uts_pbo/", "/");
+                     url = getClass().getResource(altPath);
+                     
+                     if (url == null) {
+                         // Try one more alternative - without leading slash
+                         String noSlashPath = fxmlFile.substring(1);
+                         url = getClass().getClassLoader().getResource(noSlashPath);
+                         
+                         if (url == null) {
+                             showAlert(Alert.AlertType.ERROR, "Navigation Error", 
+                                 "Could not find FXML file: " + fxmlFile + 
+                                 "\nPlease check if the file exists in the resources folder.");
+                             return;
+                         }
+                     }
+                 }
+                 
+                 Parent root = FXMLLoader.load(url);
+                 Stage stage = (Stage) ((Button) source).getScene().getWindow();
+                 Scene scene = new Scene(root);
+                 stage.setScene(scene);
+                 stage.show();
+             }
+             
+         } catch (IOException e) {
+             showAlert(Alert.AlertType.ERROR, "Navigation Error", 
+                     "Could not navigate to the requested page: " + e.getMessage());
+             e.printStackTrace();
+         }
+     }
 
     private void redirectToLogin() {
         System.out.println("[DEBUG] redirectToLogin() invoked");
@@ -151,4 +196,13 @@ public class ProfileController implements Initializable {
         alert.setContentText(message);
         alert.showAndWait();
     }
+
+    private void showAlert(Alert.AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+    
 }

@@ -64,9 +64,9 @@ public class AuthenticationLogController implements Initializable {
         activityColumn.setCellValueFactory(new PropertyValueFactory<>("activity"));
         
         // Update the activity filter combo box initialization
-            activityFilterComboBox.setItems(FXCollections.observableArrayList(
-                "All", "Login", "Logout", "Failed Login", "Password Reset", "Account Creation"
-                ));
+        activityFilterComboBox.setItems(FXCollections.observableArrayList(
+            "All", "Login", "Logout", "Failed Login", "Failed Password Attempt", "Password Reset", "Account Creation"
+        ));
         activityFilterComboBox.setValue("All");
         
         // Set up date pickers with default values
@@ -103,6 +103,7 @@ public class AuthenticationLogController implements Initializable {
         List<AuthenticationLogEntry> logs = AuthenticationLogDAO.getLogsByActivity("Login");
         logs.addAll(AuthenticationLogDAO.getLogsByActivity("Logout"));
         logs.addAll(AuthenticationLogDAO.getLogsByActivity("Failed Login"));
+        logs.addAll(AuthenticationLogDAO.getLogsByActivity("Failed Password Attempt"));
         logs.addAll(AuthenticationLogDAO.getLogsByActivity("Account Creation")); // Add this line
         logEntries = FXCollections.observableArrayList(logs);
         logTableView.setItems(logEntries);

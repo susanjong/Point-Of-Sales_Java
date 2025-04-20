@@ -1,26 +1,33 @@
 package Admin_View;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.Date;
 
 public abstract class Transaction {
-    private final String transactionId;
-    private final LocalDateTime date;
+    protected Date date;
+    protected int transactionId;
     
     public Transaction() {
-        this.transactionId = generateUniqueId();
-        this.date = LocalDateTime.now();
+        this.date = new Date();
     }
     
-    private String generateUniqueId() {
-        return UUID.randomUUID().toString().substring(0, 8);
+    public Transaction(Date date, int transactionId) {
+        this.date = date;
+        this.transactionId = transactionId;
     }
     
-    public String getTransactionId() {
+    public Date getDate() {
+        return date;
+    }
+    
+    public void setDate(Date date) {
+        this.date = date;
+    }
+    
+    public int getTransactionId() {
         return transactionId;
     }
     
-    public LocalDateTime getDate() {
-        return date;
+    public void setTransactionId(int transactionId) {
+        this.transactionId = transactionId;
     }
 }

@@ -7,12 +7,10 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Locale;
-import java.util.Random;
 import java.util.ResourceBundle;
 
 import com.example.uts_pbo.DatabaseConnection;
@@ -38,7 +36,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-public class CashierController implements Initializable, Payable {
+public class CashierController implements Initializable{
 
     @FXML private Button profileBtn;
     @FXML private Button cashierBtn;
@@ -888,6 +886,8 @@ public class CashierController implements Initializable, Payable {
             }
         }
     }
+
+    private PurchaseTransaction currentTransaction;
     
     @FXML
     void handlePayment(ActionEvent event) {
@@ -912,13 +912,26 @@ public class CashierController implements Initializable, Payable {
                 return;
             }
             
-            double change = paidAmount - totalAmount;
+            String username = "guest"; // Default value
+            User currentUser = LoginController.getCurrentUser();
+            if (currentUser != null) {
+                username = currentUser.getUsername();
+            }
             
-            // Process the transaction using both interface methods
-             // Just prints a message to console
-            serializeTransaction(); // This handles the actual database insertion
-            processTransaction(); 
-
+            // Create PurchaseTransaction instance
+            PurchaseTransaction transaction = new PurchaseTransaction(
+                new java.sql.Date(System.currentTimeMillis()),
+                0, // transactionId will be set during serialization
+                cartItems,
+                username
+            );
+            
+            // Process transaction using PurchaseTransaction methods
+            String transactionData = transaction.serializeTransaction();
+            transaction.processTransaction();
+            
+            double change = paidAmount - transaction.getTotalAmount();
+            
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Payment Successful");
             alert.setHeaderText(null);
@@ -937,208 +950,12 @@ public class CashierController implements Initializable, Payable {
             showAlert(Alert.AlertType.ERROR, "Error", "Invalid payment amount.");
         }
     }
-    
-    @Override
-    public double calculateTotal() {
-        double total = 0.0;
-        for (CartItem item : cartItems) {
-            double itemSubtotal = item.getPrice() * item.getQuantity();
-            total += itemSubtotal;
-        }
-        return total;
-    }
-
-    @Override
-    public void processTransaction() {
-        if (!transactionSaved) {
-            serializeTransaction();
-        }
-
-        processingComplete = true;
-
-        System.out.println("Transaksi dengan ID " + transactionId + " telah diproses");
-
-        transactionId = 0;
-        transactionSaved = false;
-        processingComplete = false;
-    }
-
-    @Override
-    public String serializeTransaction() {
-        if (transactionSaved) {
-            StringBuilder transactionData = new StringBuilder();
-            transactionData.append("Transaction ID: ").append(transactionId).append("\n");
-            return transactionData.toString();
-        }
-
-        transactionId = 0;
-        processingComplete = false;
-        transactionSaved = false;
-
-        StringBuilder transactionData = new StringBuilder();
-        Connection conn = null;
-        
-        try {
-            // Dapatkan koneksi dan tambahkan parameter untuk menonaktifkan prepared statements
-            conn = DatabaseConnection.getConnection();
-            if (conn == null) {
-                System.err.println("Database connection is null");
-                showAlert(Alert.AlertType.ERROR, "Database Error", "Could not connect to database");
-                return "Error: Database connection failed";
-            }
-            
-            // Coba deallocate semua prepared statements yang ada
-            try (Statement deallocStmt = conn.createStatement()) {
-                deallocStmt.execute("DEALLOCATE ALL");
-            } catch (SQLException e) {
-                // Abaikan error ini, hanya mencoba membersihkan
-                System.out.println("Info: Deallocate all statements: " + e.getMessage());
-            }
-            
-            // Set autocommit false untuk memulai transaksi database
-            conn.setAutoCommit(false);
-            
-            // Get current date and time
-            java.util.Date currentDate = new java.util.Date();
-            java.sql.Timestamp timestamp = new java.sql.Timestamp(currentDate.getTime());
-            
-            // Count total items
-            int totalItems = 0;
-            for (CartItem item : cartItems) {
-                totalItems += item.getQuantity();
-            }
-            
-            // Create products string
-            StringBuilder productsStr = new StringBuilder();
-            for (CartItem item : cartItems) {
-                productsStr.append(item.getName())
-                        .append(" (")
-                        .append(item.getQuantity())
-                        .append("), ");
-            }
-            if (productsStr.length() > 2) {
-                productsStr.setLength(productsStr.length() - 2);
-            }
-
-            String username = "guest"; // Default value
-            User currentUser = LoginController.getCurrentUser();
-            if (currentUser != null) {
-                username = currentUser.getUsername();
-            }
-            
-            // Gunakan try-with-resources untuk setiap statement
-            String query = "INSERT INTO transaction (date, username, products, total_item, total_price) VALUES (?, ?, ?, ?, ?) RETURNING transaction_id";
-            
-            // Gunakan nama unik untuk setiap prepared statement
-            String uniqueId = System.currentTimeMillis() + "_" + new Random().nextInt(1000);
-            
-            try (PreparedStatement pst = conn.prepareStatement(query)) {
-                pst.setTimestamp(1, timestamp);
-                pst.setString(2, username);
-                pst.setString(3, productsStr.toString());
-                pst.setInt(4, totalItems);
-                pst.setDouble(5, totalAmount);
-                
-                try (ResultSet rs = pst.executeQuery()) {
-                    if (rs.next()) {
-                        transactionId = rs.getInt(1);
-                    } else {
-                        transactionId = new Random().nextInt(100000000);
-                    }
-                }
-            }
-
-            // Build transaction summary
-            transactionData.append("Transaction ID: ").append(transactionId).append("\n");
-            transactionData.append("Date: ").append(new java.util.Date()).append("\n");
-            transactionData.append("Products: ").append(productsStr.toString()).append("\n");
-            transactionData.append("Total Items: ").append(totalItems).append("\n");
-            transactionData.append("Total Price: ").append(formatPrice(totalAmount)).append("\n");
-            transactionData.append("User: ").append(username);
-            
-            // Print transaction details
-            System.out.println("====================== TRANSACTION DETAIL ======================");
-            System.out.println(transactionData.toString());
-            System.out.println("===============================================================");
-            
-            // Update stok produk - gunakan Statement biasa bukan PreparedStatement
-            for (CartItem item : cartItems) {
-                String productCode = "";
-                for (Product product : products) {
-                    if (product.getName().equals(item.getName())) {
-                        productCode = product.getCode();
-                        break;
-                    }
-                }
-                
-                if (!productCode.isEmpty()) {
-                    int quantity = item.getQuantity();
-                    
-                    // Gunakan statement biasa untuk mengurangi risiko prepared statement
-                    try (Statement stmt = conn.createStatement()) {
-                        String updateSQL = "UPDATE product SET qty = qty - " + quantity + " WHERE code = '" + productCode + "'";
-                        int rowsAffected = stmt.executeUpdate(updateSQL);
-                        
-                        if (rowsAffected == 0) {
-                            System.err.println("Warning: No stock updated for product: " + item.getName() + " (Code: " + productCode + ")");
-                        } else {
-                            System.out.println("- Updated stock for: " + item.getName() + " (Code: " + productCode + "), reduced by: " + quantity);
-                        }
-                    }
-                } else {
-                    System.err.println("Warning: Could not find product code for: " + item.getName());
-                }
-            }
-            
-            // Commit transaksi jika semua operasi berhasil
-            conn.commit();
-            transactionSaved = true;
-            
-        } catch (SQLException e) {
-            System.err.println("SQL Error while serializing transaction: " + e.getMessage());
-            e.printStackTrace();
-            
-            // Rollback jika terjadi error
-            try {
-                if (conn != null && !conn.isClosed()) {
-                    conn.rollback();
-                    System.out.println("Transaction rolled back due to error");
-                }
-            } catch (SQLException rollbackEx) {
-                System.err.println("Error during rollback: " + rollbackEx.getMessage());
-            }
-            
-            showAlert(Alert.AlertType.ERROR, "Database Error", 
-                    "Could not save transaction data: " + e.getMessage());
-            
-            // Fallback jika error
-            if (transactionId == 0) {
-                transactionId = new Random().nextInt(100000000);
-            }
-        } finally {
-            // Tutup koneksi di finally
-            try {
-                if (conn != null && !conn.isClosed()) {
-                    // Coba deallocate lagi sebelum menutup
-                    try (Statement deallocStmt = conn.createStatement()) {
-                        deallocStmt.execute("DEALLOCATE ALL");
-                    } catch (SQLException e) {
-                        // Abaikan
-                    }
-                    
-                    conn.setAutoCommit(true);
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                System.err.println("Error closing connection: " + e.getMessage());
-            }
-        }
-        
-        return transactionData.toString();
-    }
 
     private void updateTotalAmount() {
-        totalAmount = calculateTotal();
+        totalAmount = 0.0;
+        for (CartItem item : cartItems) {
+        totalAmount += item.getPrice() * item.getQuantity();
+        }
         updateTotalDisplay();
     }
 

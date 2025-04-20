@@ -460,6 +460,7 @@ public class CashierController implements Initializable{
         
         Label nameLabel = new Label(item.getName());
         nameLabel.setWrapText(true);
+        nameLabel.setStyle("-fx-font-size: 12px; -fx-pref-width: 300px; -fx-pref-height: 37px;");
         
         Label priceLabel = new Label(formatPrice(item.getPrice()));
         priceLabel.setStyle("-fx-font-weight: bold;");

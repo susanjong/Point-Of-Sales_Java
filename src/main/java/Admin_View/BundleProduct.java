@@ -1,73 +1,92 @@
 package Admin_View;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+
 public class BundleProduct extends Product {
-    private List<Product> bundleItems = new ArrayList<>();
+    private final List<BundleItem> bundleItems = new ArrayList<>();
+    private final StringProperty bundleName = new SimpleStringProperty();
     
     public BundleProduct() {
         super();
     }
     
-    public BundleProduct(String code, String name, double price, int quantity, 
-                       String category, String imagePath) {
-        super(code, name, price, quantity, null, category, imagePath);
+    public BundleProduct(String code, String bundleName, double price, int quantity, String category, String imagePath) {
+        super(code, bundleName, price, quantity, null, category, imagePath);
+        this.bundleName.set(bundleName);
     }
     
-    public BundleProduct(String code, String name, double price, int quantity, 
-                       String category, String imagePath, List<Product> bundleItems) {
-        super(code, name, price, quantity, null, category, imagePath);
-        this.bundleItems = new ArrayList<>(bundleItems);
+    public String getBundleName() {
+        return bundleName.get();
     }
     
-    public List<Product> getBundleItems() {
+    public StringProperty bundleNameProperty() {
+        return bundleName;
+    }
+    
+    public void setBundleName(String bundleName) {
+        this.bundleName.set(bundleName);
+        setName(bundleName);
+    }
+    
+    public List<BundleItem> getBundleItems() {
         return bundleItems;
     }
     
-    public void setBundleItems(List<Product> bundleItems) {
-        this.bundleItems = new ArrayList<>(bundleItems);
+    public void addBundleItem(Product product, int quantity) {
+        bundleItems.add(new BundleItem(product, quantity));
     }
     
-    public void addProductToBundle(Product product) {
-        if (!bundleItems.contains(product)) {
-            bundleItems.add(product);
-        }
+    public void removeBundleItem(Product product) {
+        bundleItems.removeIf(item -> item.getProduct().getCode().equals(product.getCode()));
     }
     
-    public void removeProductFromBundle(Product product) {
-        bundleItems.remove(product);
-    }
-    
-    /**
-     * Calculate the price difference between buying the products as a bundle versus individually
-     * @return the discount amount (difference between individual item total and bundle price)
-     */
-    public double getDiscountedPrice() {
-        double totalIndividualPrice = 0;
-        
-        for (Product product : bundleItems) {
-            totalIndividualPrice += product.getPrice();
-        }
-        
-        // The discount is the difference between sum of individual prices and the bundle price
-        return totalIndividualPrice - getPrice();
-    }
-    
-    /**
-     * Get the total value of products if purchased individually
-     * @return sum of the prices of all products in the bundle
-     */
+    // Calculate total price of individual products
     public double getTotalIndividualPrice() {
-        double totalIndividualPrice = 0;
+        double total = 0;
+        for (BundleItem item : bundleItems) {
+            total += item.getProduct().getPrice() * item.getQuantity();
+        }
+        return total;
+    }
+    
+    // Calculate discount amount
+    public double getDiscountedPrice() {
+        double individualTotal = getTotalIndividualPrice();
+        double bundlePrice = getPrice();
+        return individualTotal - bundlePrice;
+    }
+    
+    // Inner class to represent bundle items
+    public class BundleItem {
+        private final Product product;
+        private final IntegerProperty quantity = new SimpleIntegerProperty();
         
-        for (Product product : bundleItems) {
-            totalIndividualPrice += product.getPrice();
+        public BundleItem(Product product, int quantity) {
+            this.product = product;
+            this.quantity.set(quantity);
         }
         
-        return totalIndividualPrice;
+        public Product getProduct() {
+            return product;
+        }
+        
+        public int getQuantity() {
+            return quantity.get();
+        }
+        
+        public IntegerProperty quantityProperty() {
+            return quantity;
+        }
+        
+        public void setQuantity(int quantity) {
+            this.quantity.set(quantity);
+        }
     }
 }
+

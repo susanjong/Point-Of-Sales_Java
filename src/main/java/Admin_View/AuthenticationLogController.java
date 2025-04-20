@@ -1,5 +1,6 @@
 package Admin_View;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -19,6 +20,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.ResourceBundle;
+
+import com.example.uts_pbo.NavigationAuthorizer;
+import com.example.uts_pbo.UserSession;
 
 public class AuthenticationLogController implements Initializable {
 
@@ -79,6 +83,21 @@ public class AuthenticationLogController implements Initializable {
         productModButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> showProductModificationLogs());
         sellingModButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> showSellingModificationLogs());
         transDetailButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> showTransactionDetailLogs());
+
+         // Redirect non‑admins away immediately
+        Platform.runLater(() -> {
+            if (!UserSession.isAdmin()) {
+                NavigationAuthorizer.navigateTo(
+                  profileBtn,
+                  "/Admin_View/Profile.fxml",
+                  NavigationAuthorizer.USER_VIEW
+                );
+                showAlert(Alert.AlertType.WARNING,
+                    "Access Denied",
+                    "You don't have permission to access Authentication Logs. Admin access required."
+                );
+            }
+        });
         
         // Set up filter buttons
         if (filterButton != null) {
@@ -183,58 +202,31 @@ public class AuthenticationLogController implements Initializable {
     }
     
     @FXML
-    void handleNavigation(ActionEvent event) {
-        Object source = event.getSource();
+    private void handleNavigation(ActionEvent event) {
+        Button btn = (Button) event.getSource();
+        String fxmlPath;
+        int viewType;
         
-        try {
-            String fxmlFile = "";
-            
-            if (source == profileBtn) {
-                fxmlFile = "Profile.fxml";
-            } else if (source == cashierBtn) {
-                fxmlFile = "Cashier.fxml";
-            } else if (source == usersBtn) {
-                fxmlFile = "UserManagement.fxml";
-            } else if (source == productsBtn) {
-                fxmlFile = "ProductManagement.fxml";
-            } else if (source == adminLogBtn) {
-                return;
-            }
-            
-            if (!fxmlFile.isEmpty()) {
-                URL url = getClass().getResource(fxmlFile);
-                
-                if (url == null) {
-                    // Try alternative path format if the first attempt fails
-                    String altPath = fxmlFile.replace("/com/example/uts_pbo/", "/");
-                    url = getClass().getResource(altPath);
-                    
-                    if (url == null) {
-                        // Try one more alternative - without leading slash
-                        String noSlashPath = fxmlFile.substring(1);
-                        url = getClass().getClassLoader().getResource(noSlashPath);
-                        
-                        if (url == null) {
-                            showAlert(Alert.AlertType.ERROR, "Navigation Error", 
-                                "Could not find FXML file: " + fxmlFile + 
-                                "\nPlease check if the file exists in the resources folder.");
-                            return;
-                        }
-                    }
-                }
-                
-                Parent root = FXMLLoader.load(url);
-                Stage stage = (Stage) ((Button) source).getScene().getWindow();
-                Scene scene = new Scene(root);
-                stage.setScene(scene);
-                stage.show();
-            }
-            
-        } catch (IOException e) {
-            showAlert(Alert.AlertType.ERROR, "Navigation Error", 
-                    "Could not navigate to the requested page: " + e.getMessage());
-            e.printStackTrace();
+        if (btn == profileBtn) {
+            fxmlPath = "/Admin_View/Profile.fxml";
+            viewType = NavigationAuthorizer.USER_VIEW;
+        } else if (btn == cashierBtn) {
+            fxmlPath = "/Admin_View/Cashier.fxml";
+            viewType = NavigationAuthorizer.USER_VIEW;
+        } else if (btn == productsBtn) {
+            fxmlPath = "/Admin_View/ProductManagement.fxml";
+            viewType = NavigationAuthorizer.ADMIN_VIEW;
+        } else if (btn == usersBtn) {
+            fxmlPath = "/Admin_View/UserManagement.fxml";
+            viewType = NavigationAuthorizer.ADMIN_VIEW;
+        } else if (btn == adminLogBtn) {
+            // Already here
+            return;
+        } else {
+            return;
         }
+        
+        NavigationAuthorizer.navigateTo(btn, fxmlPath, viewType);
     }
     
     private void showAlert(Alert.AlertType alertType, String title, String message) {

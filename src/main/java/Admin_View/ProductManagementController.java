@@ -2,7 +2,10 @@ package Admin_View;
 
 import com.example.uts_pbo.DatabaseConnection;
 import com.example.uts_pbo.Main;
+import com.example.uts_pbo.NavigationAuthorizer;
+import com.example.uts_pbo.UserSession;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -68,26 +71,44 @@ public class ProductManagementController implements Initializable {
     private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy");
 
     @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        codeColumn.setCellValueFactory(new PropertyValueFactory<>("code"));
-        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-        priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
-        qtyColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
-        expDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
-        categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
-        
-        loadProductsFromDatabase();
-        
-        categoryComboBox.setItems(categories);
-        
-        productTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+public void initialize(URL url, ResourceBundle resourceBundle) {
+    codeColumn.setCellValueFactory(new PropertyValueFactory<>("code"));
+    nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+    priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
+    qtyColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+    expDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
+    categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
+    
+    loadProductsFromDatabase();
+    
+    categoryComboBox.setItems(categories);
+    
+    // === fix: close the listener lambda properly ===
+    productTable.getSelectionModel().selectedItemProperty().addListener(
+        (obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 populateForm(newSelection);
             }
-        });
-        
-        resetProductImage();
-    }
+        }  // end of lambda block
+    );   // end of addListener(...)
+    
+    // Check admin access on initialization
+    Platform.runLater(() -> {
+        if (!UserSession.isAdmin()) {
+            // redirect non‑admins to PROFILE
+            NavigationAuthorizer.navigateTo(
+              profileBtn,
+              "/Admin_View/Profile.fxml",
+              NavigationAuthorizer.USER_VIEW
+            );
+            showAlert(Alert.AlertType.WARNING,
+                      "Access Denied",
+                      "Admin access required.");
+        }
+    });
+    
+    resetProductImage();
+}
     
     private void loadProductsFromDatabase() {
         ObservableList<Product> productList = FXCollections.observableArrayList();
@@ -177,61 +198,23 @@ public class ProductManagementController implements Initializable {
         System.out.println("cashierBtn: " + (cashierBtn != null ? "found" : "NOT FOUND"));
         
     }
-    
+
     @FXML
     void handleNavigation(ActionEvent event) {
-        Object source = event.getSource();
+        Button btn = (Button) event.getSource();
+        String path;
+        int   type;
         
-        try {
-            String fxmlFile = "";
-            
-            if (source == profileBtn) {
-                fxmlFile = "Profile.fxml";
-            } else if (source == cashierBtn) {
-                fxmlFile = "Cashier.fxml";
-            } else if (source == usersBtn) {
-                fxmlFile = "UserManagement.fxml";
-            } else if (source == adminLogBtn) {
-                fxmlFile = "AuthenticationLog.fxml";
-            } else if (source == productsBtn) {
-                return;
-            }
-            
-            if (!fxmlFile.isEmpty()) {
-                URL url = getClass().getResource(fxmlFile);
-                
-                if (url == null) {
-                    // Try alternative path format if the first attempt fails
-                    String altPath = fxmlFile.replace("/com/example/uts_pbo/", "/");
-                    url = getClass().getResource(altPath);
-                    
-                    if (url == null) {
-                        // Try one more alternative - without leading slash
-                        String noSlashPath = fxmlFile.substring(1);
-                        url = getClass().getClassLoader().getResource(noSlashPath);
-                        
-                        if (url == null) {
-                            showAlert(Alert.AlertType.ERROR, "Navigation Error", 
-                                "Could not find FXML file: " + fxmlFile + 
-                                "\nPlease check if the file exists in the resources folder.");
-                            return;
-                        }
-                    }
-                }
-                
-                Parent root = FXMLLoader.load(url);
-                Stage stage = (Stage) ((Button) source).getScene().getWindow();
-                Scene scene = new Scene(root);
-                stage.setScene(scene);
-                stage.show();
-            }
-            
-        } catch (IOException e) {
-            showAlert(Alert.AlertType.ERROR, "Navigation Error", 
-                    "Could not navigate to the requested page: " + e.getMessage());
-            e.printStackTrace();
-        }
+        if      (btn == profileBtn)  { path = "/Admin_View/Profile.fxml";             type = NavigationAuthorizer.USER_VIEW;  }
+        else if (btn == cashierBtn)  { path = "/Admin_View/Cashier.fxml";             type = NavigationAuthorizer.USER_VIEW;  }
+        else if (btn == productsBtn) { /* already here → no op */ return;                                 }
+        else if (btn == usersBtn)    { path = "/Admin_View/UserManagement.fxml";     type = NavigationAuthorizer.ADMIN_VIEW; }
+        else if (btn == adminLogBtn) { path = "/Admin_View/AuthenticationLog.fxml"; type = NavigationAuthorizer.ADMIN_VIEW; }
+        else                         { return; }
+        
+        NavigationAuthorizer.navigateTo(btn, path, type);
     }
+
 
     
     @FXML

@@ -65,7 +65,7 @@
                 <columns>
                     <TableColumn fx:id="bundlecodeColumn" text="Code" prefWidth="100.0" />
                     <TableColumn fx:id="nameColumn" text="Bundle Name" prefWidth="180.0" />
-                    <TableColumn fx:id="codeColumn" text="Code" prefWidth="100.0" />
+                    <TableColumn fx:id="codeColumn" text="Product Code" prefWidth="180.0" />
                     <TableColumn fx:id="priceColumn" text="Price" prefWidth="100.0" />
                     <TableColumn fx:id="qtyColumn" text="Qty" prefWidth="70.0" />
                 </columns>

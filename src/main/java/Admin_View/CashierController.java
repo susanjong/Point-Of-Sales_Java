@@ -7,6 +7,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -382,24 +383,62 @@ public class CashierController implements Initializable, Payable {
     }
     
     private void handleAddToCartFromDisplay(Product product) {
-        boolean productFound = false;
-        for (CartItem item : cartItems) {
-            if (item.getName().equals(product.getName())) {
-                item.setQuantity(item.getQuantity() + 1);
-                productFound = true;
-                break;
+        // Check available stock in the database
+        int availableQty = 0;
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = DatabaseConnection.getConnection();
+            String query = "SELECT qty FROM product WHERE code = ?";
+            pst = conn.prepareStatement(query);
+            pst.setString(1, product.getCode());
+            rs = pst.executeQuery();
+            
+            if (rs.next()) {
+                availableQty = rs.getInt("qty");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error checking stock: " + e.getMessage());
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (pst != null) pst.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                System.err.println("Error closing resources: " + e.getMessage());
             }
         }
         
-        if (!productFound) {
-            CartItem productItem = new CartItem(product.getName(), product.getPrice(), 1);
-            cartItems.add(productItem);
+        boolean productFound = false;
+        for (CartItem item : cartItems) {
+            if (item.getName().equals(product.getName())) {
+                // Check if current quantity + 1 exceeds available
+                if (item.getQuantity() + 1 <= availableQty) {
+                    item.setQuantity(item.getQuantity() + 1);
+                    item.setMaxQuantity(availableQty); // Update max quantity in case it changed
+                    productFound = true;
+                    refreshCartView();
+                    updateTotalAmount();
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Product added to cart!");
+                } else {
+                    showAlert(Alert.AlertType.WARNING, "Stock Limit", 
+                        "Cannot add more. Maximum available stock is " + availableQty);
+                }
+                return;
+            }
         }
         
-        refreshCartView();
-        updateTotalAmount();
-        
-        showAlert(Alert.AlertType.INFORMATION, "Success", "Product added to cart!");
+        if (!productFound && availableQty > 0) {
+            CartItem productItem = new CartItem(product.getName(), product.getPrice(), 1, availableQty);
+            cartItems.add(productItem);
+            refreshCartView();
+            updateTotalAmount();
+            showAlert(Alert.AlertType.INFORMATION, "Success", "Product added to cart!");
+        } else if (!productFound) {
+            showAlert(Alert.AlertType.WARNING, "Out of Stock", "Sorry, this product is out of stock.");
+        }
     }
 
     private void refreshCartView() {
@@ -557,13 +596,44 @@ public class CashierController implements Initializable, Payable {
 
     @FXML
     void handleAddToCart(ActionEvent event) {
-        if (currentProduct != null) {
-            String productName = currentProduct.getName();
-            double productPrice = currentProduct.getPrice();
+    if (currentProduct != null) {
+        String productName = currentProduct.getName();
+        double productPrice = currentProduct.getPrice();
+        int availableQty = 0;
+        
+        // Get available quantity from database again to ensure it's current
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = DatabaseConnection.getConnection();
+            String query = "SELECT qty FROM product WHERE code = ?";
+            pst = conn.prepareStatement(query);
+            pst.setString(1, currentProduct.getCode());
+            rs = pst.executeQuery();
             
-            // Check if product already exists in cart
-            for (CartItem item : cartItems) {
-                if (item.getName().equals(productName)) {
+            if (rs.next()) {
+                availableQty = rs.getInt("qty");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error checking stock: " + e.getMessage());
+            availableQty = 0;  // Be conservative if we can't check
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (pst != null) pst.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                System.err.println("Error closing resources: " + e.getMessage());
+            }
+        }
+        
+        // Check if product already exists in cart
+        for (CartItem item : cartItems) {
+            if (item.getName().equals(productName)) {
+                // Check if current quantity + cart quantity exceeds available
+                if (item.getQuantity() + 1 <= availableQty) {
                     item.setQuantity(item.getQuantity() + 1);
                     refreshCartView();
                     updateTotalAmount();
@@ -576,12 +646,17 @@ public class CashierController implements Initializable, Payable {
                     addToCartBtn.setDisable(true);
                     
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Product quantity increased!");
-                    return;
+                } else {
+                    showAlert(Alert.AlertType.WARNING, "Stock Limit", 
+                        "Cannot add more. Maximum available stock is " + availableQty);
                 }
+                return;
             }
-            
-            // Add new product to cart
-            CartItem newItem = new CartItem(productName, productPrice, 1);
+        }
+        
+        // Add new product to cart if stock is available
+        if (availableQty > 0) {
+            CartItem newItem = new CartItem(productName, productPrice, 1, availableQty);
             cartItems.add(newItem);
             refreshCartView();
             updateTotalAmount();
@@ -595,10 +670,10 @@ public class CashierController implements Initializable, Payable {
             
             showAlert(Alert.AlertType.INFORMATION, "Success", "Product added to cart!");
         } else {
-            showAlert(Alert.AlertType.WARNING, "Warning", "Please search for a valid product first.");
+            showAlert(Alert.AlertType.WARNING, "Out of Stock", "Sorry, this product is out of stock.");
         }
     }
-
+}
     /**
      * Add event listener for search field
      * Add this to your initialize method
@@ -723,9 +798,55 @@ public class CashierController implements Initializable, Payable {
     }
     
     private void handleIncreaseQuantity(CartItem item) {
-        item.setQuantity(item.getQuantity() + 1);
-        refreshCartView();
-        updateTotalAmount();
+        // Re-check available stock in database for latest quantity
+        int availableQty = 0;
+        Connection conn = null;
+        PreparedStatement pst = null;
+        ResultSet rs = null;
+        
+        // Find the product code first
+        String productCode = "";
+        for (Product product : products) {
+            if (product.getName().equals(item.getName())) {
+                productCode = product.getCode();
+                break;
+            }
+        }
+    
+        if (!productCode.isEmpty()) {
+            try {
+                conn = DatabaseConnection.getConnection();
+                String query = "SELECT qty FROM product WHERE code = ?";
+                pst = conn.prepareStatement(query);
+                pst.setString(1, productCode);
+                rs = pst.executeQuery();
+                
+                if (rs.next()) {
+                    availableQty = rs.getInt("qty");
+                }
+            } catch (SQLException e) {
+                System.err.println("Error checking stock: " + e.getMessage());
+            } finally {
+                try {
+                    if (rs != null) rs.close();
+                    if (pst != null) pst.close();
+                    if (conn != null) conn.close();
+                } catch (SQLException e) {
+                    System.err.println("Error closing resources: " + e.getMessage());
+                }
+            }
+        }
+        
+        // Update the maximum quantity and check if we can increase
+        item.setMaxQuantity(availableQty);
+        if (item.getQuantity() < item.getMaxQuantity()) {
+            item.setQuantity(item.getQuantity() + 1);
+            refreshCartView();
+            updateTotalAmount();
+        } else {
+            showAlert(Alert.AlertType.WARNING, "Stock Limit", 
+                "Cannot add more. Maximum available stock is " + item.getMaxQuantity());
+        }
     }
     
     @FXML
@@ -829,14 +950,12 @@ public class CashierController implements Initializable, Payable {
 
     @Override
     public void processTransaction() {
-        // Jika transaksi belum disimpan, simpan dulu
         if (!transactionSaved) {
             serializeTransaction();
         }
 
         processingComplete = true;
-        
-        // Gunakan transaction ID yang sudah dihasilkan
+
         System.out.println("Transaksi dengan ID " + transactionId + " telah diproses");
 
         transactionId = 0;
@@ -858,16 +977,26 @@ public class CashierController implements Initializable, Payable {
 
         StringBuilder transactionData = new StringBuilder();
         Connection conn = null;
-        PreparedStatement pst = null;
-        ResultSet rs = null;
         
         try {
+            // Dapatkan koneksi dan tambahkan parameter untuk menonaktifkan prepared statements
             conn = DatabaseConnection.getConnection();
             if (conn == null) {
                 System.err.println("Database connection is null");
                 showAlert(Alert.AlertType.ERROR, "Database Error", "Could not connect to database");
                 return "Error: Database connection failed";
             }
+            
+            // Coba deallocate semua prepared statements yang ada
+            try (Statement deallocStmt = conn.createStatement()) {
+                deallocStmt.execute("DEALLOCATE ALL");
+            } catch (SQLException e) {
+                // Abaikan error ini, hanya mencoba membersihkan
+                System.out.println("Info: Deallocate all statements: " + e.getMessage());
+            }
+            
+            // Set autocommit false untuk memulai transaksi database
+            conn.setAutoCommit(false);
             
             // Get current date and time
             java.util.Date currentDate = new java.util.Date();
@@ -879,7 +1008,7 @@ public class CashierController implements Initializable, Payable {
                 totalItems += item.getQuantity();
             }
             
-            // Create products string (list of products in cart)
+            // Create products string
             StringBuilder productsStr = new StringBuilder();
             for (CartItem item : cartItems) {
                 productsStr.append(item.getName())
@@ -887,50 +1016,98 @@ public class CashierController implements Initializable, Payable {
                         .append(item.getQuantity())
                         .append("), ");
             }
-            // Remove trailing comma and space
             if (productsStr.length() > 2) {
                 productsStr.setLength(productsStr.length() - 2);
             }
 
             String username = "guest"; // Default value
-        
-            // Get the current user from LoginController
             User currentUser = LoginController.getCurrentUser();
             if (currentUser != null) {
                 username = currentUser.getUsername();
             }
             
-            // Insert into transaksi table dengan RETURNING clause untuk mendapatkan ID
+            // Gunakan try-with-resources untuk setiap statement
             String query = "INSERT INTO transaction (date, username, products, total_item, total_price) VALUES (?, ?, ?, ?, ?) RETURNING transaction_id";
-            pst = conn.prepareStatement(query);
-            pst.setTimestamp(1, timestamp);
-            pst.setString(2, username);
-            pst.setString(3, productsStr.toString());
-            pst.setInt(4, totalItems);
-            pst.setDouble(5, totalAmount);
             
-            // Execute dan ambil ID yang dibuat Supabase
-            rs = pst.executeQuery();
+            // Gunakan nama unik untuk setiap prepared statement
+            String uniqueId = System.currentTimeMillis() + "_" + new Random().nextInt(1000);
             
-            if (rs.next()) {
-                transactionId = rs.getInt(1);
-            } else {
-                // Fallback jika tidak bisa mendapatkan ID
-                transactionId = new Random().nextInt(100000000);
+            try (PreparedStatement pst = conn.prepareStatement(query)) {
+                pst.setTimestamp(1, timestamp);
+                pst.setString(2, username);
+                pst.setString(3, productsStr.toString());
+                pst.setInt(4, totalItems);
+                pst.setDouble(5, totalAmount);
+                
+                try (ResultSet rs = pst.executeQuery()) {
+                    if (rs.next()) {
+                        transactionId = rs.getInt(1);
+                    } else {
+                        transactionId = new Random().nextInt(100000000);
+                    }
+                }
             }
-            
-            System.out.println("Transaction saved to database with ID: " + transactionId);
-            
-            // Build transaction summary for return value
+
+            // Build transaction summary
             transactionData.append("Transaction ID: ").append(transactionId).append("\n");
             transactionData.append("Date: ").append(new java.util.Date()).append("\n");
-            transactionData.append("Total Amount: ").append(formatPrice(totalAmount));
-            transactionData.append("User: ").append(username).append("\n");
+            transactionData.append("Products: ").append(productsStr.toString()).append("\n");
+            transactionData.append("Total Items: ").append(totalItems).append("\n");
+            transactionData.append("Total Price: ").append(formatPrice(totalAmount)).append("\n");
+            transactionData.append("User: ").append(username);
+            
+            // Print transaction details
+            System.out.println("====================== TRANSACTION DETAIL ======================");
+            System.out.println(transactionData.toString());
+            System.out.println("===============================================================");
+            
+            // Update stok produk - gunakan Statement biasa bukan PreparedStatement
+            for (CartItem item : cartItems) {
+                String productCode = "";
+                for (Product product : products) {
+                    if (product.getName().equals(item.getName())) {
+                        productCode = product.getCode();
+                        break;
+                    }
+                }
+                
+                if (!productCode.isEmpty()) {
+                    int quantity = item.getQuantity();
+                    
+                    // Gunakan statement biasa untuk mengurangi risiko prepared statement
+                    try (Statement stmt = conn.createStatement()) {
+                        String updateSQL = "UPDATE product SET qty = qty - " + quantity + " WHERE code = '" + productCode + "'";
+                        int rowsAffected = stmt.executeUpdate(updateSQL);
+                        
+                        if (rowsAffected == 0) {
+                            System.err.println("Warning: No stock updated for product: " + item.getName() + " (Code: " + productCode + ")");
+                        } else {
+                            System.out.println("- Updated stock for: " + item.getName() + " (Code: " + productCode + "), reduced by: " + quantity);
+                        }
+                    }
+                } else {
+                    System.err.println("Warning: Could not find product code for: " + item.getName());
+                }
+            }
+            
+            // Commit transaksi jika semua operasi berhasil
+            conn.commit();
             transactionSaved = true;
             
         } catch (SQLException e) {
             System.err.println("SQL Error while serializing transaction: " + e.getMessage());
             e.printStackTrace();
+            
+            // Rollback jika terjadi error
+            try {
+                if (conn != null && !conn.isClosed()) {
+                    conn.rollback();
+                    System.out.println("Transaction rolled back due to error");
+                }
+            } catch (SQLException rollbackEx) {
+                System.err.println("Error during rollback: " + rollbackEx.getMessage());
+            }
+            
             showAlert(Alert.AlertType.ERROR, "Database Error", 
                     "Could not save transaction data: " + e.getMessage());
             
@@ -939,16 +1116,24 @@ public class CashierController implements Initializable, Payable {
                 transactionId = new Random().nextInt(100000000);
             }
         } finally {
+            // Tutup koneksi di finally
             try {
-                if (rs != null) rs.close();
-                if (pst != null) pst.close();
-                if (conn != null) conn.close();
+                if (conn != null && !conn.isClosed()) {
+                    // Coba deallocate lagi sebelum menutup
+                    try (Statement deallocStmt = conn.createStatement()) {
+                        deallocStmt.execute("DEALLOCATE ALL");
+                    } catch (SQLException e) {
+                        // Abaikan
+                    }
+                    
+                    conn.setAutoCommit(true);
+                    conn.close();
+                }
             } catch (SQLException e) {
-                System.err.println("Error closing resources: " + e.getMessage());
+                System.err.println("Error closing connection: " + e.getMessage());
             }
         }
         
-        // Return the string representation of the transaction summary
         return transactionData.toString();
     }
 
@@ -1040,16 +1225,32 @@ public class CashierController implements Initializable, Payable {
 
     
     public static class CartItem {
+        private String code;
         private String name;
         private double price;
         private int quantity;
-        
+        private int maxQuantity;
+
         public CartItem(String name, double price, int quantity) {
+            this.code = "";
             this.name = name;
             this.price = price;
             this.quantity = quantity;
+            this.maxQuantity = Integer.MAX_VALUE; 
+        }
+
+        public CartItem(String name, double price, int quantity, int maxQuantity) {
+            this.code = "";
+            this.name = name;
+            this.price = price;
+            this.quantity = quantity;
+            this.maxQuantity = Integer.MAX_VALUE; 
         }
         
+        public String getCode() {
+            return code;
+        }
+
         public String getName() {
             return name;
         }
@@ -1063,7 +1264,17 @@ public class CashierController implements Initializable, Payable {
         }
         
         public void setQuantity(int quantity) {
-            this.quantity = quantity;
+            if (quantity <= maxQuantity) {
+                this.quantity = quantity;
+            }
+        }
+
+        public int getMaxQuantity() {
+            return maxQuantity;
+        }
+        
+        public void setMaxQuantity(int maxQuantity) {
+            this.maxQuantity = maxQuantity;
         }
         
         public double getTotal() {

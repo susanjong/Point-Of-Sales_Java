@@ -29,18 +29,20 @@ public class UserManagementController implements Initializable {
     
     // Table view and columns
     @FXML private TableView<User> UserTable;
-    @FXML private TableColumn<User, Integer> UserIDColumn;
-    @FXML private TableColumn<User, String> nameColumn;
-    @FXML private TableColumn<User, String> UsernameColumn;
-    @FXML private TableColumn<User, String> EmailColumn;
-    @FXML private TableColumn<User, String> PasswordColumn;
-    @FXML private TableColumn<User, String> RoleColumn;
+    @FXML private TableColumn<User, Integer> userIdColumn;
+    @FXML private TableColumn<User, String> firstNameColumn;
+    @FXML private TableColumn<User, String> lastNameColumn;
+    @FXML private TableColumn<User, String> usernameColumn;
+    @FXML private TableColumn<User, String> emailColumn;
+    @FXML private TableColumn<User, String> passwordColumn;
+    @FXML private TableColumn<User, String> roleColumn;
     
     // Form fields
-    @FXML private TextField codeField;
-    @FXML private TextField nameField;
-    @FXML private TextField UsernameField;
-    @FXML private TextField EmailField;
+    @FXML private TextField idField;
+    @FXML private TextField firstNameField;
+    @FXML private TextField lastNameField;
+    @FXML private TextField usernameField;
+    @FXML private TextField emailField;
     @FXML private PasswordField passwordField;
     @FXML private ComboBox<String> roleComboBox;
     
@@ -51,26 +53,22 @@ public class UserManagementController implements Initializable {
     // Observable list to hold user data
     private ObservableList<User> userList = FXCollections.observableArrayList();
     
-    // Database connection details
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/simplemart";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "password";
-    
-    // SQL queries
+    // SQL queries for the updated table structure
     private static final String SQL_SELECT_ALL_USERS = "SELECT * FROM users";
-    private static final String SQL_INSERT_USER = "INSERT INTO users (name, username, email, password, role) VALUES (?, ?, ?, ?, ?)";
-    private static final String SQL_UPDATE_USER = "UPDATE users SET name = ?, username = ?, email = ?, password = ?, role = ? WHERE user_id = ?";
-    private static final String SQL_DELETE_USER = "DELETE FROM users WHERE user_id = ?";
+    private static final String SQL_INSERT_USER = "INSERT INTO users (email, first_name, last_name, username, password, role, salt) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    private static final String SQL_UPDATE_USER = "UPDATE users SET email = ?, first_name = ?, last_name = ?, username = ?, password = ?, role = ?, salt = ? WHERE id = ?";
+    private static final String SQL_DELETE_USER = "DELETE FROM users WHERE id = ?";
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         // Initialize table columns
-        UserIDColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
-        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-        UsernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
-        EmailColumn.setCellValueFactory(new PropertyValueFactory<>("email"));
-        PasswordColumn.setCellValueFactory(new PropertyValueFactory<>("password"));
-        RoleColumn.setCellValueFactory(new PropertyValueFactory<>("role"));
+        userIdColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
+        firstNameColumn.setCellValueFactory(new PropertyValueFactory<>("firstName"));
+        lastNameColumn.setCellValueFactory(new PropertyValueFactory<>("lastName"));
+        usernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
+        emailColumn.setCellValueFactory(new PropertyValueFactory<>("email"));
+        passwordColumn.setCellValueFactory(new PropertyValueFactory<>("password"));
+        roleColumn.setCellValueFactory(new PropertyValueFactory<>("role"));
         
         // Load data from database
         loadUsersFromDatabase();
@@ -80,33 +78,27 @@ public class UserManagementController implements Initializable {
         
         // Add listener for table row selection
         UserTable.getSelectionModel().selectedItemProperty().addListener(
-            (obs, oldSelection, newSelection) -> {
-                if (newSelection != null) {
-                    displayUserDetails(newSelection);
+            (observable, oldValue, newValue) -> {
+                if (newValue != null) {
+                    displayUserDetails(newValue);
                 }
             }
         );
         
         // Initialize combo box if not already populated
         if (roleComboBox.getItems().isEmpty()) {
-            roleComboBox.setItems(FXCollections.observableArrayList("Admin", "Cashier", "Staff"));
+            roleComboBox.setItems(FXCollections.observableArrayList("admin", "user"));
         }
         
         // Set auto-generated ID field as disabled
-        codeField.setDisable(true);
+        idField.setDisable(true);
     }
     
     /**
      * Establishes a connection to the database
      */
     private Connection getConnection() throws SQLException {
-        try {
-            // Load the MySQL JDBC driver
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-        } catch (ClassNotFoundException e) {
-            throw new SQLException("MySQL JDBC Driver not found", e);
-        }
+        return com.example.uts_pbo.DatabaseConnection.getConnection();
     }
     
     /**
@@ -120,14 +112,16 @@ public class UserManagementController implements Initializable {
              ResultSet rs = stmt.executeQuery(SQL_SELECT_ALL_USERS)) {
             
             while (rs.next()) {
-                int id = rs.getInt("user_id");
-                String name = rs.getString("name");
-                String username = rs.getString("username");
+                int id = rs.getInt("id");
                 String email = rs.getString("email");
+                String firstName = rs.getString("first_name");
+                String lastName = rs.getString("last_name");
+                String username = rs.getString("username");
                 String password = rs.getString("password");
                 String role = rs.getString("role");
+                String salt = rs.getString("salt");
                 
-                userList.add(new User(id, name, username, email, password, role));
+                userList.add(new User(id, email, firstName, lastName, username, password, role, salt));
             }
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Database Error", 
@@ -138,15 +132,22 @@ public class UserManagementController implements Initializable {
     /**
      * Inserts a new user into the database
      */
-    private boolean insertUser(String name, String username, String email, String password, String role) {
+    private boolean insertUser(String email, String firstName, String lastName, String username, String password, String role) {
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SQL_INSERT_USER, Statement.RETURN_GENERATED_KEYS)) {
             
-            pstmt.setString(1, name);
-            pstmt.setString(2, username);
-            pstmt.setString(3, email);
-            pstmt.setString(4, password);
-            pstmt.setString(5, role);
+            // Generate a salt for the new user
+            String salt = PasswordUtils.generateSalt();
+            // Hash the password with the salt
+            String hashedPassword = PasswordUtils.hashPassword(password, salt);
+            
+            pstmt.setString(1, email);
+            pstmt.setString(2, firstName);
+            pstmt.setString(3, lastName);
+            pstmt.setString(4, username);
+            pstmt.setString(5, hashedPassword);
+            pstmt.setString(6, role);
+            pstmt.setString(7, salt);
             
             int affectedRows = pstmt.executeUpdate();
             
@@ -157,7 +158,13 @@ public class UserManagementController implements Initializable {
             try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     int id = generatedKeys.getInt(1);
-                    userList.add(new User(id, name, username, email, password, role));
+                    userList.add(new User(id, email, firstName, lastName, username, hashedPassword, role, salt));
+                    
+                    // Log account creation - FIX: Use proper constructor
+                    com.example.uts_pbo.AuthLogger.logAccountCreation(
+                        new com.example.uts_pbo.User(id, email, firstName, lastName, username, hashedPassword, salt, role)
+                    );
+                    
                     return true;
                 } else {
                     return false;
@@ -173,21 +180,70 @@ public class UserManagementController implements Initializable {
     /**
      * Updates an existing user in the database
      */
-    private boolean updateUser(int id, String name, String username, String email, String password, String role) {
+    private boolean updateUser(int id, String email, String firstName, String lastName, String username, String password, String role) {
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(SQL_UPDATE_USER)) {
             
-            pstmt.setString(1, name);
-            pstmt.setString(2, username);
-            pstmt.setString(3, email);
-            pstmt.setString(4, password);
-            pstmt.setString(5, role);
-            pstmt.setInt(6, id);
+            // Get the current user to check if password change occurred
+            User currentUser = null;
+            for (User user : userList) {
+                if (user.getId() == id) {
+                    currentUser = user;
+                    break;
+                }
+            }
+            
+            String salt = currentUser != null ? currentUser.getSalt() : PasswordUtils.generateSalt();
+            String hashedPassword;
+            
+            // Check if password was changed
+            boolean passwordChanged = false;
+            if (currentUser != null && !password.equals(currentUser.getPassword())) {
+                // User changed their password - generate new salt and hash
+                salt = PasswordUtils.generateSalt();
+                hashedPassword = PasswordUtils.hashPassword(password, salt);
+                passwordChanged = true;
+            } else if (currentUser != null) {
+                // Password not changed - use existing hash
+                hashedPassword = currentUser.getPassword();
+            } else {
+                // Fallback if currentUser is null
+                hashedPassword = PasswordUtils.hashPassword(password, salt);
+            }
+            
+            pstmt.setString(1, email);
+            pstmt.setString(2, firstName);
+            pstmt.setString(3, lastName);
+            pstmt.setString(4, username);
+            pstmt.setString(5, hashedPassword);
+            pstmt.setString(6, role);
+            pstmt.setString(7, salt);
+            pstmt.setInt(8, id);
             
             int affectedRows = pstmt.executeUpdate();
             
             if (affectedRows > 0) {
-                // Update succeeded, refresh the list
+                // Update succeeded
+                
+                // Check if role was changed
+                if (currentUser != null && !role.equals(currentUser.getRole())) {
+                    // FIX: Use proper constructor for User class
+                    com.example.uts_pbo.AuthLogger.logRoleChange(
+                        new com.example.uts_pbo.User(id, email, firstName, lastName, username, hashedPassword, salt, role),
+                        currentUser.getRole(),
+                        role
+                    );
+                }
+                
+                // Log password change if applicable
+                if (passwordChanged) {
+                    // FIX: Use proper constructor for User class
+                    com.example.uts_pbo.AuthLogger.logPasswordChange(
+                        new com.example.uts_pbo.User(id, email, firstName, lastName, username, hashedPassword, salt, role)
+                    );
+                }
+                
+                // Refresh the list
                 loadUsersFromDatabase();
                 return true;
             } else {
@@ -204,19 +260,48 @@ public class UserManagementController implements Initializable {
      * Deletes a user from the database
      */
     private boolean deleteUser(int id) {
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(SQL_DELETE_USER)) {
+        try {
+            // First get the user information for logging
+            User userToDelete = null;
+            for (User user : userList) {
+                if (user.getId() == id) {
+                    userToDelete = user;
+                    break;
+                }
+            }
             
-            pstmt.setInt(1, id);
-            
-            int affectedRows = pstmt.executeUpdate();
-            
-            if (affectedRows > 0) {
-                // Update succeeded, refresh the list
-                loadUsersFromDatabase();
-                return true;
-            } else {
-                return false;
+            // Then delete from database
+            try (Connection conn = getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(SQL_DELETE_USER)) {
+                
+                pstmt.setInt(1, id);
+                
+                int affectedRows = pstmt.executeUpdate();
+                
+                if (affectedRows > 0) {
+                    // Log account deletion
+                    if (userToDelete != null) {
+                        // FIX: Use proper constructor for User class
+                        com.example.uts_pbo.AuthLogger.logAccountDeletion(
+                            new com.example.uts_pbo.User(
+                                userToDelete.getId(),
+                                userToDelete.getEmail(),
+                                userToDelete.getFirstName(),
+                                userToDelete.getLastName(),
+                                userToDelete.getUsername(),
+                                userToDelete.getPassword(),
+                                userToDelete.getSalt(),
+                                userToDelete.getRole()
+                            )
+                        );
+                    }
+                    
+                    // Update succeeded, refresh the list
+                    loadUsersFromDatabase();
+                    return true;
+                } else {
+                    return false;
+                }
             }
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Database Error", 
@@ -285,15 +370,16 @@ public class UserManagementController implements Initializable {
 
     @FXML
     private void handleSaveUser() {
-        String name = nameField.getText();
-        String username = UsernameField.getText();
-        String email = EmailField.getText();
+        String firstName = firstNameField.getText();
+        String lastName = lastNameField.getText();
+        String username = usernameField.getText();
+        String email = emailField.getText();
         String password = passwordField.getText();
         String role = roleComboBox.getValue();
         
         // Validate inputs
-        if (name.isEmpty() || username.isEmpty() || email.isEmpty() || 
-            password.isEmpty() || role == null) {
+        if (firstName.isEmpty() || lastName.isEmpty() || username.isEmpty() || 
+            email.isEmpty() || password.isEmpty() || role == null) {
             showAlert(Alert.AlertType.WARNING, "Invalid Input", 
                     "Please fill in all fields", null);
             return;
@@ -302,11 +388,11 @@ public class UserManagementController implements Initializable {
         boolean success;
         
         // Check if we're updating or creating
-        if (!codeField.getText().isEmpty()) {
+        if (!idField.getText().isEmpty()) {
             // Updating existing user
             try {
-                int userId = Integer.parseInt(codeField.getText());
-                success = updateUser(userId, name, username, email, password, role);
+                int userId = Integer.parseInt(idField.getText());
+                success = updateUser(userId, email, firstName, lastName, username, password, role);
                 
                 if (success) {
                     showAlert(Alert.AlertType.INFORMATION, "Success", 
@@ -322,7 +408,7 @@ public class UserManagementController implements Initializable {
             }
         } else {
             // Creating new user
-            success = insertUser(name, username, email, password, role);
+            success = insertUser(email, firstName, lastName, username, password, role);
             
             if (success) {
                 showAlert(Alert.AlertType.INFORMATION, "Success", 
@@ -353,7 +439,8 @@ public class UserManagementController implements Initializable {
         confirmDialog.setTitle("Confirm Deletion");
         confirmDialog.setHeaderText("Delete User");
         confirmDialog.setContentText("Are you sure you want to delete user: " + 
-                selectedUser.getName() + " (" + selectedUser.getUsername() + ")?");
+                selectedUser.getFirstName() + " " + selectedUser.getLastName() + 
+                " (" + selectedUser.getUsername() + ")?");
         
         Optional<ButtonType> result = confirmDialog.showAndWait();
         
@@ -376,10 +463,11 @@ public class UserManagementController implements Initializable {
      * Display selected user details in form
      */
     private void displayUserDetails(User user) {
-        codeField.setText(String.valueOf(user.getId()));
-        nameField.setText(user.getName());
-        UsernameField.setText(user.getUsername());
-        EmailField.setText(user.getEmail());
+        idField.setText(String.valueOf(user.getId()));
+        firstNameField.setText(user.getFirstName());
+        lastNameField.setText(user.getLastName());
+        usernameField.setText(user.getUsername());
+        emailField.setText(user.getEmail());
         passwordField.setText(user.getPassword());
         roleComboBox.setValue(user.getRole());
     }
@@ -388,10 +476,11 @@ public class UserManagementController implements Initializable {
      * Clear the form fields
      */
     private void clearForm() {
-        codeField.clear();
-        nameField.clear();
-        UsernameField.clear();
-        EmailField.clear();
+        idField.clear();
+        firstNameField.clear();
+        lastNameField.clear();
+        usernameField.clear();
+        emailField.clear();
         passwordField.clear();
         roleComboBox.setValue(null);
     }
@@ -412,39 +501,78 @@ public class UserManagementController implements Initializable {
         alert.showAndWait();
     }
 
+    // Utility class for password operations
+    private static class PasswordUtils {
+        public static String generateSalt() {
+            // Simple implementation - in production, use a secure random generator
+            return java.util.UUID.randomUUID().toString();
+        }
+        
+        public static String hashPassword(String password, String salt) {
+            // Simple implementation - in production, use a secure hashing algorithm
+            try {
+                java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+                String passwordWithSalt = password + salt;
+                byte[] hashedBytes = md.digest(passwordWithSalt.getBytes());
+                
+                StringBuilder sb = new StringBuilder();
+                for (byte b : hashedBytes) {
+                    sb.append(String.format("%02x", b));
+                }
+                return sb.toString();
+            } catch (java.security.NoSuchAlgorithmException e) {
+                e.printStackTrace();
+                // Fallback to a simple representation if hashing fails
+                return password + "-" + salt;
+            }
+        }
+    }
+    
+    // Updated User class to match the new table structure
     public static class User {
         private final int id;
-        private String name;
-        private String username;
         private String email;
+        private String firstName;
+        private String lastName;
+        private String username;
         private String password;
         private String role;
+        private String salt;
         
-        public User(int id, String name, String username, String email, String password, String role) {
+        public User(int id, String email, String firstName, String lastName, 
+                   String username, String password, String role, String salt) {
             this.id = id;
-            this.name = name;
-            this.username = username;
             this.email = email;
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.username = username;
             this.password = password;
             this.role = role;
+            this.salt = salt;
         }
         
         // Getters and setters
         public int getId() { return id; }
         
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        
+        public String getFirstName() { return firstName; }
+        public void setFirstName(String firstName) { this.firstName = firstName; }
+        
+        public String getLastName() { return lastName; }
+        public void setLastName(String lastName) { this.lastName = lastName; }
         
         public String getUsername() { return username; }
         public void setUsername(String username) { this.username = username; }
-        
-        public String getEmail() { return email; }
-        public void setEmail(String email) { this.email = email; }
         
         public String getPassword() { return password; }
         public void setPassword(String password) { this.password = password; }
         
         public String getRole() { return role; }
         public void setRole(String role) { this.role = role; }
+        
+        public String getSalt() { return salt; }
+        public void setSalt(String salt) { this.salt = salt; }
     }
 }

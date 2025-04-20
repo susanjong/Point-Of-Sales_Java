@@ -65,7 +65,7 @@ public class AuthenticationLogController implements Initializable {
         
         // Update the activity filter combo box initialization
         activityFilterComboBox.setItems(FXCollections.observableArrayList(
-            "All", "Login", "Logout", "Failed Login", "Failed Password Attempt", "Password Change", "Password Reset", "Account Creation"
+            "All", "Login", "Failed Login", "Failed Password Attempt", "Password Change", "Account Creation", "Role Change"
         ));
         activityFilterComboBox.setValue("All");
         
@@ -101,10 +101,10 @@ public class AuthenticationLogController implements Initializable {
     private void showAuthenticationLogs() {
         setButtonSelected(authButton);
         List<AuthenticationLogEntry> logs = AuthenticationLogDAO.getLogsByActivity("Login");
-        logs.addAll(AuthenticationLogDAO.getLogsByActivity("Logout"));
         logs.addAll(AuthenticationLogDAO.getLogsByActivity("Failed Login"));
         logs.addAll(AuthenticationLogDAO.getLogsByActivity("Password Change"));
         logs.addAll(AuthenticationLogDAO.getLogsByActivity("Failed Password Attempt"));
+        logs.addAll(AuthenticationLogDAO.getLogsByActivity("Role Change"));
         logs.addAll(AuthenticationLogDAO.getLogsByActivity("Account Creation")); // Add this line
         logEntries = FXCollections.observableArrayList(logs);
         logTableView.setItems(logEntries);

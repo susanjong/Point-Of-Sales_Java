@@ -365,11 +365,4 @@ public class UserDAO {
         User adminUser = new User(firstName, lastName, email, username, password, "admin");
         return createUser(adminUser);
     }
-    
-    // Log user logout - call this when user logs out
-    public static void logUserLogout(User user) {
-        if (user != null) {
-            AuthLogger.logLogout(user);
-        }
-    }
 }

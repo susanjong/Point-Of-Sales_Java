@@ -140,6 +140,33 @@ public class Main extends Application {
         }
     }
 
+    public static void showBundleProducts() {
+        try {
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("/Admin_View/BundleProducts.fxml"));
+            Parent root = loader.load();
+            Scene scene = new Scene(root);
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
+            primaryStage.setTitle("SimpleMart - Profile");
+            primaryStage.setScene(scene);
+            primaryStage.setX(screenBounds.getMinX());
+            primaryStage.setY(screenBounds.getMinY());
+            primaryStage.setWidth(screenBounds.getWidth());
+            primaryStage.setHeight(screenBounds.getHeight());
+        
+            // (Opsional) Atur ukuran minimal jika ingin tetap bisa resize ke kecil
+            primaryStage.setMinWidth(800);  
+            primaryStage.setMinHeight(600);
+            
+            primaryStage.show();
+            
+        } catch (IOException e) {
+            System.err.println("Error loading Profile.fxml: " + e.getMessage());
+            e.printStackTrace();
+            showAlert("Loading Error", "Could not load the profile screen: " + e.getMessage());
+        }
+    }
+
     // Add this method to your Main class
     public static void showDataDiriSignUp(String username) {
         try {

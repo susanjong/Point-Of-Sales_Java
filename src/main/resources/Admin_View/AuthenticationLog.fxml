@@ -31,6 +31,7 @@
             <Button fx:id="profileBtn" onAction="#handleNavigation" styleClass="nav-button" text="PROFILE" />
             <Button fx:id="cashierBtn" onAction="#handleNavigation" styleClass="nav-button" text="CASHIER" />
             <Button fx:id="productsBtn" onAction="#handleNavigation" styleClass="nav-button" text="PRODUCTS" />
+            <Button fx:id="bundleproductsBtn" onAction="#handleNavigation" styleClass="nav-button" text="BUNDLE PRODUCTS" />
             <Button fx:id="usersBtn" onAction="#handleNavigation" styleClass="nav-button" text="USERS" />
             <Button fx:id="adminLogBtn" onAction="#handleNavigation" styleClass="nav-button" text="ADMIN LOG" style="-fx-background-color: #5b8336; -fx-text-fill: white;" />
          </children>

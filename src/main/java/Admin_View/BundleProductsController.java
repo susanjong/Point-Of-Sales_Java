@@ -12,7 +12,10 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 import com.example.uts_pbo.DatabaseConnection;
+import com.example.uts_pbo.NavigationAuthorizer;
+import com.example.uts_pbo.UserSession;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -68,6 +71,21 @@ public class BundleProductsController implements Initializable {
         codeColumn.setCellValueFactory(new PropertyValueFactory<>("productCode"));
         priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
         qtyColumn.setCellValueFactory(new PropertyValueFactory<>("qty"));
+
+         // Redirect non‑admins away immediately
+        Platform.runLater(() -> {
+            if (!UserSession.isAdmin()) {
+                NavigationAuthorizer.navigateTo(
+                  profileBtn,
+                  "/Admin_View/Profile.fxml",
+                  NavigationAuthorizer.USER_VIEW
+                );
+                showAlert(Alert.AlertType.WARNING,
+                    "Access Denied",
+                    "You don't have permission to access Authentication Logs. Admin access required."
+                );
+            }
+        });
 
         // Load data from database
         loadBundleProducts();

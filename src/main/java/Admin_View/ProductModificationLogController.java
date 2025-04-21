@@ -50,7 +50,6 @@ public class ProductModificationLogController implements Initializable {
     @FXML private Button transactionButton;
     @FXML private Button productModButton;
     @FXML private Button sellingModButton;
-    @FXML private Button transDetailButton;
 
     // Filter controls
     @FXML private DatePicker startDatePicker;
@@ -151,17 +150,6 @@ public class ProductModificationLogController implements Initializable {
             }
         });
         
-        transDetailButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/TransactionDetailLog.fxml"));
-                Parent root = loader.load();
-                Stage stage = (Stage) transDetailButton.getScene().getWindow();
-                stage.setScene(new Scene(root));
-                stage.show();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        });
         // Redirect non-admins away immediately
         Platform.runLater(() -> {
             if (!UserSession.isAdmin()) {
@@ -395,36 +383,6 @@ public class ProductModificationLogController implements Initializable {
                     "Could not navigate to the requested page: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-    
-    private void navigateToAuthLog() {
-        try {
-            URL url = getClass().getResource("AuthenticationLog.fxml");
-            Parent root = FXMLLoader.load(url);
-            Stage stage = (Stage) authButton.getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.show();
-        } catch (IOException e) {
-            showAlert(Alert.AlertType.ERROR, "Navigation Error", 
-                    "Could not navigate to Authentication Log: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-    
-    private void navigateToTransactionLog() {
-        showAlert(Alert.AlertType.INFORMATION, "Navigation", 
-                "Transaction Log page not implemented yet.");
-    }
-    
-    private void navigateToSellingModLog() {
-        showAlert(Alert.AlertType.INFORMATION, "Navigation", 
-                "Selling Modification Log page not implemented yet.");
-    }
-    
-    private void navigateToTransDetailLog() {
-        showAlert(Alert.AlertType.INFORMATION, "Navigation", 
-                "Transaction Detail Log page not implemented yet.");
     }
     
     private void showAlert(Alert.AlertType alertType, String title, String message) {

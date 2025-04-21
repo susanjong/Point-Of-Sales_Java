@@ -43,7 +43,6 @@ public class TransactionLogController implements Initializable {
     @FXML private Button transactionButton;
     @FXML private Button productModButton;
     @FXML private Button sellingModButton;
-    @FXML private Button transDetailButton;
     
     @FXML private TableView<TransactionLogEntry> logTableView;
     @FXML private TableColumn<TransactionLogEntry, Integer> noColumn;
@@ -149,17 +148,6 @@ public class TransactionLogController implements Initializable {
             }
         });
         
-        transDetailButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/TransactionDetailLog.fxml"));
-                Parent root = loader.load();
-                Stage stage = (Stage) transDetailButton.getScene().getWindow();
-                stage.setScene(new Scene(root));
-                stage.show();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        });
         // Redirect non-admins away immediately
         Platform.runLater(() -> {
             if (!UserSession.isAdmin()) {

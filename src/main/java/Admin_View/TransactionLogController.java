@@ -36,6 +36,7 @@ public class TransactionLogController implements Initializable {
     @FXML private Button cashierBtn;
     @FXML private Button productsBtn;
     @FXML private Button bundleproductsBtn;
+    @FXML private Button refundproductsBtn;
     @FXML private Button usersBtn;
     @FXML private Button adminLogBtn;
     @FXML private Button transLogBtn;
@@ -304,6 +305,8 @@ public class TransactionLogController implements Initializable {
                 fxmlFile = "Cashier.fxml";
             } else if (source == bundleproductsBtn) {
                 fxmlFile = "BundleProducts.fxml";
+            } else if (source == refundproductsBtn) {
+                fxmlFile = "RefundProducts.fxml";
             } else if (source == usersBtn) {
                 fxmlFile = "UserManagement.fxml";
             } else if (source == adminLogBtn) {

@@ -68,11 +68,12 @@
             </Label>
             <TableView fx:id="refundproductTable" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="refundcodeColumn" text="Code" prefWidth="100.0" />
+                    <TableColumn fx:id="codeColumn" text="Code" prefWidth="100.0" />
                     <TableColumn fx:id="nameColumn" text="Product Name" prefWidth="180.0" />
-                    <TableColumn fx:id="codeColumn" text="Product Code" prefWidth="180.0" />
                     <TableColumn fx:id="priceColumn" text="Price" prefWidth="100.0" />
                     <TableColumn fx:id="qtyColumn" text="Qty" prefWidth="70.0" />
+                    <TableColumn fx:id="expDateColumn" text="Exp Date" prefWidth="100.0" />
+                    <TableColumn fx:id="categoryColumn" text="Category" prefWidth="120.0" />
                 </columns>
             </TableView>
             <HBox alignment="CENTER_RIGHT" spacing="10.0">
@@ -107,10 +108,8 @@
             </columnConstraints>
             <Label style="-fx-font-weight: bold; -fx-font-size: 16px;" text="Total" GridPane.columnIndex="0" GridPane.rowIndex="0" />
             <Label fx:id="totalAmountLabel" style="-fx-background-color: #E0E0E0; -fx-padding: 5.0; -fx-font-size: 14px;" text="Rp 0" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-            <Label style="-fx-font-weight: bold; -fx-font-size: 16px;" text="Paid" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-            <TextField fx:id="paidField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-            <Label style="-fx-font-weight: bold; -fx-font-size: 16px;" text="Balance" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-            <Label fx:id="balanceLabel" style="-fx-background-color: #E0E0E0; -fx-padding: 5.0; -fx-font-size: 14px;" text="Rp 0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <Label style="-fx-font-weight: bold; -fx-font-size: 16px;" text="Transaction ID" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+            <TextField fx:id="TransactionIDField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
             <VBox.margin>
                 <Insets bottom="15.0" />
             </VBox.margin>

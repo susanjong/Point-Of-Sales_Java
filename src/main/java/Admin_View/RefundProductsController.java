@@ -1,19 +1,40 @@
 package Admin_View;
 
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
+import java.io.IOException;
+import java.net.URL;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.example.uts_pbo.DatabaseConnection;
+import com.example.uts_pbo.LoginController;
+import com.example.uts_pbo.User;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.SelectionMode;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 public class RefundProductsController {
     
@@ -25,30 +46,32 @@ public class RefundProductsController {
     @FXML private Button usersBtn;
     @FXML private Button adminLogBtn;
     
-    @FXML private TableView<Refund> refundproductTable;
-    @FXML private TableColumn<Refund, String> refundcodeColumn;
-    @FXML private TableColumn<Refund, String> nameColumn;
-    @FXML private TableColumn<Refund, String> codeColumn;
-    @FXML private TableColumn<Refund, Double> priceColumn;
-    @FXML private TableColumn<Refund, Integer> qtyColumn;
+    @FXML private TableView<Product> refundproductTable;
+    @FXML private TableColumn<Product, String> codeColumn;
+    @FXML private TableColumn<Product, String> nameColumn;
+    @FXML private TableColumn<Product, Double> priceColumn;
+    @FXML private TableColumn<Product, Integer> qtyColumn;
+    @FXML private TableColumn<Product, String> expDateColumn;
+    @FXML private TableColumn<Product, String> categoryColumn;
     
     @FXML private VBox refundItemsContainer;
     @FXML private Label totalAmountLabel;
-    @FXML private TextField paidField;
+    @FXML private TextField TransactionIDField;
     @FXML private Label balanceLabel;
     
-    private ObservableList<Refund> refundList = FXCollections.observableArrayList();
-    private List<Refund> selectedRefunds = new ArrayList<>();
+    private ObservableList<Product> refundList = FXCollections.observableArrayList();
+    private List<Product> selectedRefunds = new ArrayList<>();
     private double totalAmount = 0.0;
     
     @FXML
     public void initialize() {
-        // Initialize table columns
-        refundcodeColumn.setCellValueFactory(cellData -> cellData.getValue().refundCodeProperty());
-        nameColumn.setCellValueFactory(cellData -> cellData.getValue().productNameProperty());
-        codeColumn.setCellValueFactory(cellData -> cellData.getValue().productCodeProperty());
-        priceColumn.setCellValueFactory(cellData -> cellData.getValue().priceProperty().asObject());
-        qtyColumn.setCellValueFactory(cellData -> cellData.getValue().quantityProperty().asObject());
+        codeColumn.setCellValueFactory(new PropertyValueFactory<>("code"));
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
+        qtyColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+        expDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
+        categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
+    
         
         // Load refund data
         loadRefundData();
@@ -62,27 +85,73 @@ public class RefundProductsController {
         });
         
         // Set up paid field listener for calculating balance
-        paidField.textProperty().addListener((observable, oldValue, newValue) -> {
-            calculateBalance();
+        TransactionIDField.textProperty().addListener((observable, oldValue, newValue) -> {
         });
     }
     
     private void loadRefundData() {
-        // Mock data for demonstration purposes
-        // In a real application, this would load from a database or other data source
-        refundList.add(new Refund("RF001", "Product A", "P001", 15000.0, 2));
-        refundList.add(new Refund("RF002", "Product B", "P002", 25000.0, 1));
-        refundList.add(new Refund("RF003", "Product C", "P003", 10000.0, 3));
-        refundList.add(new Refund("RF004", "Product D", "P004", 30000.0, 1));
+        // Clear the existing list
+        refundList.clear();
         
+        try {
+            // Create database connection (assuming you have a DBConnection class)
+            Connection conn = DatabaseConnection.getConnection();
+            String query = "SELECT code, product_name, price, qty, exp_date, category FROM product";
+            PreparedStatement pstmt = conn.prepareStatement(query);
+            ResultSet rs = pstmt.executeQuery();
+            
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            
+            while (rs.next()) {
+                String code = rs.getString("code");
+                String name = rs.getString("product_name");
+                double price = rs.getDouble("price");
+                int qty = rs.getInt("qty");
+                
+                // Handle exp_date properly - can be null
+                String expDate = null;
+                Date sqlDate = rs.getDate("exp_date");
+                if (sqlDate != null) {
+                    expDate = dateFormat.format(sqlDate);
+                }
+                
+                String category = rs.getString("category");
+                
+                // Create a Product object and add it to the list
+                Product product = new Product(code, name, price, qty, expDate, category);
+                refundList.add(product);
+            }
+            
+            // Close resources
+            rs.close();
+            pstmt.close();
+            conn.close();
+            
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "Database Error", 
+                    "Failed to load product data: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        // Set the items in the table
         refundproductTable.setItems(refundList);
     }
     
-    private void addToRefundList(Refund refund) {
-        if (!selectedRefunds.contains(refund)) {
-            selectedRefunds.add(refund);
+    private void addToRefundList(Product product) {
+        // Check if product is already in the selected list
+        if (!selectedRefunds.contains(product)) {
+            // Create a new product instance with quantity set to 1
+            Product refundProduct = new Product(
+                product.getCode(),
+                product.getName(),
+                product.getPrice(),
+                1,  // Set default quantity to 1
+                product.getExpirationDate(),
+                product.getCategory()
+            );
+            
+            selectedRefunds.add(refundProduct);
             updateRefundItemsContainer();
-            calculateTotal();
         }
     }
     
@@ -90,47 +159,75 @@ public class RefundProductsController {
         refundItemsContainer.getChildren().clear();
         
         for (int i = 0; i < selectedRefunds.size(); i++) {
-            Refund refund = selectedRefunds.get(i);
-            final int index = i;
-            
-            // Create a display for each selected refund item
-            Label itemLabel = new Label(refund.getProductName() + " - " + 
-                                      refund.getQuantity() + " x Rp " + 
-                                      refund.getPrice() + " = Rp " + 
-                                      (refund.getPrice() * refund.getQuantity()));
-            
-            Button removeButton = new Button("Remove");
-            removeButton.setOnAction(e -> {
-                selectedRefunds.remove(index);
-                updateRefundItemsContainer();
-                calculateTotal();
-            });
-            
-            // Add components to a row
-            javafx.scene.layout.HBox row = new javafx.scene.layout.HBox(10);
-            row.getChildren().addAll(itemLabel, removeButton);
+            Product product = selectedRefunds.get(i);
+            HBox row = createRefundItemView(product, i);
             refundItemsContainer.getChildren().add(row);
         }
+        
+        calculateTotal();
+    }
+
+    private HBox createRefundItemView(Product product, int index) {
+        HBox itemRow = new HBox(10);
+        itemRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        
+        VBox productInfo = new VBox();
+        HBox.setHgrow(productInfo, javafx.scene.layout.Priority.ALWAYS);
+        
+        Label nameLabel = new Label(product.getName());
+        nameLabel.setWrapText(true);
+        nameLabel.setStyle("-fx-font-size: 12px; -fx-pref-width: 250px;");
+        
+        Label priceLabel = new Label("Rp " + product.getPrice());
+        priceLabel.setStyle("-fx-font-weight: bold;");
+        
+        productInfo.getChildren().addAll(nameLabel, priceLabel);
+        
+        Button deleteBtn = new Button("Delete");
+        deleteBtn.setStyle("-fx-background-color: #9A030F; -fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;");
+        deleteBtn.setPrefWidth(70.0);
+        deleteBtn.setOnAction(e -> {
+            selectedRefunds.remove(index);
+            updateRefundItemsContainer();
+        });
+        
+        HBox quantityControls = new HBox(5);
+        quantityControls.setAlignment(javafx.geometry.Pos.CENTER);
+        
+        Button minusBtn = new Button("-");
+        minusBtn.setPrefWidth(25.0);
+        minusBtn.setOnAction(e -> {
+            if (product.getQuantity() > 1) {
+                product.setQuantity(product.getQuantity() - 1);
+                updateRefundItemsContainer();
+            }
+        });
+        
+        Label quantityLabel = new Label(String.valueOf(product.getQuantity()));
+        quantityLabel.setStyle("-fx-font-weight: bold;");
+        
+        Button plusBtn = new Button("+");
+        plusBtn.setPrefWidth(25.0);
+        plusBtn.setOnAction(e -> {
+            product.setQuantity(product.getQuantity() + 1);
+            updateRefundItemsContainer();
+        });
+        
+        quantityControls.getChildren().addAll(minusBtn, quantityLabel, plusBtn);
+        
+        itemRow.getChildren().addAll(productInfo, quantityControls, deleteBtn);
+        
+        return itemRow;
     }
     
     private void calculateTotal() {
         totalAmount = 0.0;
-        for (Refund refund : selectedRefunds) {
-            totalAmount += refund.getPrice() * refund.getQuantity();
+        for (Product product : selectedRefunds) {  // Changed from Refund to Product
+            totalAmount += product.getPrice() * product.getQuantity();
         }
         totalAmountLabel.setText("Rp " + totalAmount);
-        calculateBalance();
     }
     
-    private void calculateBalance() {
-        try {
-            double paidAmount = Double.parseDouble(paidField.getText());
-            double balance = paidAmount - totalAmount;
-            balanceLabel.setText("Rp " + balance);
-        } catch (NumberFormatException e) {
-            balanceLabel.setText("Rp 0");
-        }
-    }
     
     @FXML
     private void handlerefund() {
@@ -138,31 +235,212 @@ public class RefundProductsController {
             showAlert("Error", "No items selected for refund.");
             return;
         }
+
+        // Validate transaction ID is a number
+        String transactionIDText = TransactionIDField.getText().trim();
+        if (transactionIDText.isEmpty()) {
+            showAlert("Error", "Please enter a Transaction ID.");
+            return;
+        }
+        
+        int transactionID;
+        try {
+            transactionID = Integer.parseInt(transactionIDText);
+        } catch (NumberFormatException e) {
+            showAlert("Error", "Transaction ID must be a number.");
+            return;
+        }
+
+        // Check if products exist in this transaction and quantities are valid
+        if (!validateProductsInTransaction(transactionID, selectedRefunds)) {
+            showAlert("Error", "One or more products are not found in the specified transaction or have insufficient quantities.");
+            return;
+        }
         
         try {
-            double paidAmount = Double.parseDouble(paidField.getText());
-            if (paidAmount < totalAmount) {
-                showAlert("Error", "Paid amount must be at least equal to the total amount.");
-                return;
-            }
+            // Process refund in database
+            processRefundInDatabase(transactionID, selectedRefunds);
             
-            // Process refund
-            // In a real application, this would update the database and create records
-            showAlert("Success", "Refund processed successfully!");
+            // Show success message
+            showAlert("Success", "Refund processed successfully for Transaction ID: " + transactionID);
             
             // Clear the refund after processing
             selectedRefunds.clear();
             refundItemsContainer.getChildren().clear();
             totalAmount = 0.0;
             totalAmountLabel.setText("Rp 0");
-            paidField.setText("");
-            balanceLabel.setText("Rp 0");
+            TransactionIDField.setText("");
             
-        } catch (NumberFormatException e) {
-            showAlert("Error", "Invalid paid amount.");
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to process refund: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+
+    // Enhance the validation method to check quantities as well
+    private boolean validateProductsInTransaction(int transactionID, List<Product> products) {
+        try {
+            Connection conn = DatabaseConnection.getConnection();
+            
+            // Query to get the products string from the transaction
+            String query = "SELECT products FROM transaction WHERE transaction_id = ?";
+            PreparedStatement pstmt = conn.prepareStatement(query);
+            pstmt.setInt(1, transactionID);
+            
+            ResultSet rs = pstmt.executeQuery();
+            if (!rs.next()) {
+                // Transaction not found
+                conn.close();
+                showAlert("Error", "Transaction ID not found.");
+                return false;
+            }
+            
+            String productsStr = rs.getString("products");
+            rs.close();
+            pstmt.close();
+            conn.close();
+            
+            // Parse the products string to get product names and quantities
+            Map<String, Integer> transactionProducts = parseProductsString(productsStr);
+            
+            // Check if each refund product is in the transaction with sufficient quantity
+            for (Product refundProduct : products) {
+                boolean productFound = false;
+                
+                // Look for the product in the transaction products
+                for (Map.Entry<String, Integer> entry : transactionProducts.entrySet()) {
+                    String productName = entry.getKey();
+                    int purchasedQty = entry.getValue();
+                    
+                    // Check if this product name matches the refund product
+                    if (productName.equals(refundProduct.getName())) {
+                        productFound = true;
+                        
+                        // Check if there's sufficient quantity
+                        if (refundProduct.getQuantity() > purchasedQty) {
+                            showAlert("Error", "Cannot refund more than purchased quantity for " + productName);
+                            return false;
+                        }
+                        break;
+                    }
+                }
+                
+                if (!productFound) {
+                    showAlert("Error", "Product '" + refundProduct.getName() + "' not found in transaction.");
+                    return false;
+                }
+            }
+            
+            return true;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Database Error", 
+                    "Error validating products in transaction: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Helper method to parse the products string
+    private Map<String, Integer> parseProductsString(String productsStr) {
+        Map<String, Integer> result = new HashMap<>();
+        
+        // Split by comma and space to get individual product entries
+        String[] productEntries = productsStr.split(", ");
+        
+        for (String entry : productEntries) {
+            // Extract product name and quantity
+            int openParenIndex = entry.lastIndexOf(" (");
+            int closeParenIndex = entry.lastIndexOf(")");
+            
+            if (openParenIndex > 0 && closeParenIndex > openParenIndex) {
+                String productName = entry.substring(0, openParenIndex);
+                String qtyStr = entry.substring(openParenIndex + 2, closeParenIndex);
+                
+                try {
+                    int quantity = Integer.parseInt(qtyStr);
+                    result.put(productName, quantity);
+                } catch (NumberFormatException e) {
+                    // Skip invalid quantity format
+                    System.err.println("Invalid quantity format in: " + entry);
+                }
+            }
+        }
+        
+        return result;
+    }
     
+    private void processRefundInDatabase(int transactionID, List<Product> products) throws SQLException {
+        Connection conn = null;
+        
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false); // Start transaction
+            
+            // Get current timestamp
+            java.sql.Timestamp timestamp = new java.sql.Timestamp(new java.util.Date().getTime());
+            
+            // Get username from the session
+            String username = getCurrentUsername(); 
+            
+            // Process each product as a separate refund record
+            for (Product product : products) {
+                // Calculate total refund amount for this product
+                double productRefundAmount = product.getPrice() * product.getQuantity();
+                
+                // Insert into refund table
+                String refundInsertQuery = "INSERT INTO refund (timestamp, transaction_id, username, product_code, qty, total_refund) VALUES (?, ?, ?, ?, ?, ?)";
+                PreparedStatement refundStmt = conn.prepareStatement(refundInsertQuery);
+                refundStmt.setTimestamp(1, timestamp);
+                refundStmt.setInt(2, transactionID);
+                refundStmt.setString(3, username);
+                refundStmt.setString(4, product.getCode());
+                refundStmt.setInt(5, product.getQuantity());
+                refundStmt.setDouble(6, productRefundAmount);
+                refundStmt.executeUpdate();
+                refundStmt.close();
+                
+                // Update product quantity (adding back the refunded items to inventory)
+                String updateStockQuery = "UPDATE product SET qty = qty + ? WHERE code = ?";
+                PreparedStatement updateStmt = conn.prepareStatement(updateStockQuery);
+                updateStmt.setInt(1, product.getQuantity());
+                updateStmt.setString(2, product.getCode());
+                int updatedRows = updateStmt.executeUpdate();
+                updateStmt.close();
+                
+                // Check if product was updated successfully
+                if (updatedRows == 0) {
+                    throw new SQLException("Failed to update quantity for product code: " + product.getCode());
+                }
+            }
+            
+            conn.commit(); // Commit transaction
+            
+        } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback(); // Rollback in case of error
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                } 
+            }
+            throw e;
+        } finally {
+            if (conn != null) {
+                conn.setAutoCommit(true);
+                conn.close();
+            }
+        }
+    }
+
+    private String getCurrentUsername() {
+        User currentUser = LoginController.getCurrentUser();
+        if (currentUser != null) {
+            return currentUser.getUsername();
+        }
+        return "unknown"; // Fallback value if no user is logged in
+    }
+    
+
     // Fixed method with consistent signature
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);

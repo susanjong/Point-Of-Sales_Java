@@ -31,6 +31,7 @@ public class UserManagementController implements Initializable {
     @FXML private Button bundleproductsBtn;
     @FXML private Button usersBtn;
     @FXML private Button adminLogBtn;
+    @FXML private Button refundproductsBtn;
     
     // Table view and columns
     @FXML private TableView<User> UserTable;
@@ -346,6 +347,8 @@ public class UserManagementController implements Initializable {
                 fxmlFile = "Cashier.fxml";
             } else if (source == bundleproductsBtn) {
                 fxmlFile = "BundleProducts.fxml";
+            } else if (source == refundproductsBtn) {
+                fxmlFile = "RefundProducts.fxml";
             } else if (source == productsBtn) {
                 fxmlFile = "ProductManagement.fxml";
             } else if (source == adminLogBtn) {

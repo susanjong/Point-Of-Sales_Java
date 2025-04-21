@@ -45,6 +45,7 @@ public class ProductManagementController implements Initializable {
     @FXML private Button bundleproductsBtn;
     @FXML private Button usersBtn;
     @FXML private Button adminLogBtn;
+    @FXML private Button refundproductsBtn;
     
     // Product table and columns
     @FXML private TableView<Product> productTable;
@@ -186,6 +187,8 @@ public void initialize(URL url, ResourceBundle resourceBundle) {
                 fxmlFile = "Cashier.fxml";
             } else if (source == bundleproductsBtn) {
                 fxmlFile = "BundleProducts.fxml";
+            } else if (source == refundproductsBtn) {
+                fxmlFile = "RefundProducts.fxml";
             } else if (source == usersBtn) {
                 fxmlFile = "UserManagement.fxml";
             } else if (source == adminLogBtn) {

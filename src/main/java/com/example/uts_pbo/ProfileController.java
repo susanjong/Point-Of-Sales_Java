@@ -21,6 +21,7 @@ public class ProfileController implements Initializable {
      @FXML private Button bundleproductsBtn;
      @FXML private Button usersBtn;
      @FXML private Button adminLogBtn;
+     @FXML private Button refundproductsBtn;
 
     @FXML private TextField firstNameField;
     @FXML private TextField lastNameField;
@@ -136,6 +137,8 @@ public class ProfileController implements Initializable {
                 fxmlFile = "/Admin_View/ProductManagement.fxml";
             } else if (source == bundleproductsBtn) {
                 fxmlFile = "/Admin_View/BundleProducts.fxml";
+            } else if (source == refundproductsBtn) {
+                fxmlFile = "/Admin_View/RefundProducts.fxml";
             } else if (source == cashierBtn) {
                 fxmlFile = "/Admin_View/Cashier.fxml";
             } else if (source == usersBtn) {

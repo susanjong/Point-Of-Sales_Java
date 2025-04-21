@@ -1,107 +1,89 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import com.gluonhq.charm.glisten.control.Avatar?>
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Hyperlink?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.shape.Rectangle?>
-<?import javafx.scene.text.Font?>
-<?import javafx.scene.text.Text?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
+<BorderPane xmlns="http://javafx.com/javafx/8"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="Admin_View.TransactionDetailLogController"
+            prefWidth="1000" prefHeight="700">
 
-<AnchorPane prefHeight="651.0" prefWidth="1039.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Admin View.TransactionDetailLog">
-   <children>
-      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#204200" height="86.0" stroke="WHITE" strokeType="INSIDE" width="1558.0" />
-      <Text fill="WHITE" layoutX="35.0" layoutY="54.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Simple" wrappingWidth="118.93670654296875">
-         <font>
-            <Font name="Lucida Sans Demibold Italic" size="30.0" />
-         </font>
-      </Text>
-      <Text fill="#5b8336" layoutX="137.0" layoutY="54.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Mart">
-         <font>
-            <Font name="Lucida Sans Demibold Italic" size="30.0" />
-         </font>
-      </Text>
-      <Text fill="#71766d" layoutX="221.0" layoutY="54.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Admin">
-         <font>
-            <Font name="Lucida Sans Demibold Italic" size="30.0" />
-         </font>
-      </Text>
-      <HBox layoutX="258.0" layoutY="166.0" prefHeight="54.0" prefWidth="1002.0">
-         <children>
-            <Button mnemonicParsing="false" prefHeight="38.0" prefWidth="155.0" style="-fx-background-radius: 50px;" text="AUTHENTICATION">
-               <HBox.margin>
-                  <Insets left="10.0" right="10.0" />
-               </HBox.margin>
-            </Button>
-            <Button mnemonicParsing="false" prefHeight="38.0" prefWidth="155.0" style="-fx-background-radius: 50px;" text="TRANSACTION">
-               <HBox.margin>
-                  <Insets left="10.0" right="10.0" />
-               </HBox.margin>
-            </Button>
-            <Button mnemonicParsing="false" prefHeight="38.0" prefWidth="194.0" style="-fx-background-radius: 50px;" text="PRODUCT MODIFICATION">
-               <HBox.margin>
-                  <Insets left="10.0" right="10.0" />
-               </HBox.margin>
-            </Button>
-            <Button mnemonicParsing="false" prefHeight="38.0" prefWidth="194.0" style="-fx-background-radius: 50px;" text="SELLING MODIFICATION">
-               <HBox.margin>
-                  <Insets left="10.0" right="10.0" />
-               </HBox.margin>
-               <opaqueInsets>
-                  <Insets right="10.0" />
-               </opaqueInsets>
-            </Button>
-            <Button mnemonicParsing="false" prefHeight="38.0" prefWidth="202.0" style="-fx-background-radius: 50px;" text="TRANSACTION DETAIL">
-               <HBox.margin>
-                  <Insets left="10.0" right="10.0" />
-               </HBox.margin>
-               <opaqueInsets>
-                  <Insets left="5.0" right="5.0" />
-               </opaqueInsets>
-            </Button>
-         </children>
-         <padding>
-            <Insets left="5.0" right="5.0" />
-         </padding>
-      </HBox>
-      <Hyperlink layoutX="1160.0" layoutY="15.0" prefHeight="54.0" prefWidth="99.0" text="PRODUCT &#10;CATALOG" textAlignment="CENTER" textFill="WHITE">
-         <font>
-            <Font name="System Bold" size="15.0" />
-         </font>
-      </Hyperlink>
-      <Hyperlink layoutX="1303.0" layoutY="16.0" prefHeight="54.0" prefWidth="99.0" text="ADMIN&#10;LOG" textAlignment="CENTER" textFill="WHITE">
-         <font>
-            <Font name="System Bold" size="15.0" />
-         </font>
-      </Hyperlink>
-      <Avatar layoutX="1414.0" layoutY="25.0">
-         <image>
-            <Image url="@../../../../../istockphoto-1332100919-612x612.jpg" />
-         </image>
-      </Avatar>
-      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#204200" height="36.0" layoutX="290.0" layoutY="238.0" stroke="WHITE" strokeType="INSIDE" width="947.0" />
-      <Text fill="#fffefb" layoutX="644.0" layoutY="265.0" strokeType="OUTSIDE" strokeWidth="0.0" text="TRANSACTION PRODUCTS DETAIL" textAlignment="CENTER">
-         <font>
-            <Font size="24.0" />
-         </font>
-      </Text>
-      <AnchorPane layoutX="320.0" layoutY="334.0" prefHeight="200.0" prefWidth="200.0" />
-      <TableView layoutX="290.0" layoutY="272.0" prefHeight="510.0" prefWidth="947.0">
-         <columns>
-            <TableColumn prefWidth="40.000030517578125" text="No" />
-            <TableColumn prefWidth="185.60000610351562" text="Date/Time" />
-            <TableColumn prefWidth="108.0" text="Transaction ID " />
-            <TableColumn prefWidth="123.20001220703125" text="Username" />
-            <TableColumn prefWidth="217.60003662109375" text="Products" />
-            <TableColumn prefWidth="89.59991455078125" text="Total Item" />
-            <TableColumn prefWidth="187.19989013671875" text="Total Price" />
-         </columns>
-      </TableView>
-   </children>
-</AnchorPane>
+    <!-- LEFT NAVIGATION -->
+    <left>
+        <VBox spacing="10" style="-fx-background-color: #2f3e46;" prefWidth="200" alignment="TOP_CENTER">
+            <children>
+                <Label text="Navigation" textFill="white" style="-fx-font-size: 18px;" />
+                <Button fx:id="profileBtn" text="Profile" onAction="#handleNavigation" prefWidth="180" />
+                <Button fx:id="cashierBtn" text="Cashier" onAction="#handleNavigation" prefWidth="180" />
+                <Button fx:id="productsBtn" text="Products" onAction="#handleNavigation" prefWidth="180" />
+                <Button fx:id="bundleproductsBtn" text="Bundle Products" onAction="#handleNavigation" prefWidth="180" />
+                <Button fx:id="usersBtn" text="Users" onAction="#handleNavigation" prefWidth="180" />
+                <Button fx:id="adminLogBtn" text="Admin Log" onAction="#handleNavigation" 
+                        style="-fx-background-color: #5b8336; -fx-text-fill: white;" prefWidth="180" />
+            </children>
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10" />
+            </padding>
+        </VBox>
+    </left>
+
+    <top>
+        <VBox style="-fx-background-color: #5b8336;" spacing="5">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10" /> <!-- Fixed padding here -->
+            </padding>
+            <Text text="Transaction Detail Log" fill="white" style="-fx-font-size: 24px;" />
+        </VBox>
+    </top>
+
+    <center>
+    <VBox spacing="20">
+        <padding>
+            <Insets top="20" right="20" bottom="20" left="20" />
+        </padding>
+            <!-- CATEGORY BUTTONS -->
+            <HBox spacing="15" alignment="CENTER">
+                <Button fx:id="authButton" text="AUTHENTICATION" 
+                        style="-fx-background-radius: 50px; -fx-background-color: lightgray;"
+                        prefWidth="160" />
+                <Button fx:id="transactionButton" text="TRANSACTION" 
+                        style="-fx-background-radius: 50px; -fx-background-color: lightgray;" 
+                        prefWidth="160" />
+                <Button fx:id="productModButton" text="PRODUCT MODIFICATION" 
+                        style="-fx-background-radius: 50px; -fx-background-color: lightgray;" 
+                        prefWidth="180" />
+                <Button fx:id="sellingModButton" text="SELLING MODIFICATION" 
+                        style="-fx-background-radius: 50px; -fx-background-color: lightgray;" 
+                        prefWidth="180" />
+                <Button fx:id="transDetailButton" text="TRANSACTION DETAIL" 
+                        style="-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;"
+                        prefWidth="180" />
+            </HBox>
+
+            <!-- FILTER SECTION -->
+            <HBox spacing="10" alignment="CENTER">
+                <DatePicker fx:id="startDatePicker" promptText="Start Date" />
+                <DatePicker fx:id="endDatePicker" promptText="End Date" />
+                <TextField fx:id="searchField" promptText="Search username or product" prefWidth="250" />
+                <Button fx:id="filterButton" text="Filter" onAction="#applyFilters" 
+                        style="-fx-background-color: #5b8336; -fx-text-fill: white;" />
+                <Button fx:id="resetButton" text="Reset" onAction="#resetFilters" 
+                        style="-fx-background-color: #5b8336; -fx-text-fill: white;" />
+            </HBox>
+
+            <!-- TABLE VIEW -->
+            <TableView fx:id="transactionTable" prefHeight="400" prefWidth="960">
+                <columns>
+                    <TableColumn fx:id="transactionIdCol" text="Transaction ID" prefWidth="120" />
+                    <TableColumn fx:id="dateCol" text="Date" prefWidth="150" />
+                    <TableColumn fx:id="usernameCol" text="Username" prefWidth="120" />
+                    <TableColumn fx:id="productsCol" text="Products" prefWidth="250" />
+                    <TableColumn fx:id="totalPriceCol" text="Total Price" prefWidth="120" />
+                    <TableColumn fx:id="totalItemCol" text="Total Item" prefWidth="100" />
+                </columns>
+            </TableView>
+        </VBox>
+    </center>
+</BorderPane>

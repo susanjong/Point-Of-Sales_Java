@@ -38,6 +38,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import Admin_View.TransactionLogger;
 
 public class CashierController implements Initializable{
 
@@ -74,6 +75,8 @@ public class CashierController implements Initializable{
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         System.out.println("Initializing CashierController...");
+
+        TransactionLogger.initialize();
         
         // Set up currency format
         currencyFormat.setMaximumFractionDigits(0);
@@ -717,6 +720,7 @@ public class CashierController implements Initializable{
         
         Label nameLabel = new Label(item.getName());
         nameLabel.setWrapText(true);
+        nameLabel.setStyle("-fx-font-size: 12px; -fx-pref-width: 300px; -fx-pref-height: 37px;");
         
         Label priceLabel = new Label(formatPrice(item.getPrice()));
         priceLabel.setStyle("-fx-font-weight: bold;");
@@ -1104,46 +1108,57 @@ public class CashierController implements Initializable{
 
     private PurchaseTransaction currentTransaction;
     
+    
     @FXML
-    void handlePayment(ActionEvent event) {
-        String paidText = paidField.getText().trim();
-        if (paidText.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Warning", "Please enter the paid amount.");
+void handlePayment(ActionEvent event) {
+    String paidText = paidField.getText().trim();
+    if (paidText.isEmpty()) {
+        showAlert(Alert.AlertType.WARNING, "Warning", "Please enter the paid amount.");
+        return;
+    }
+    
+    // Check if cart is empty
+    if (cartItems.isEmpty()) {
+        showAlert(Alert.AlertType.WARNING, "Warning", "Cart is empty. Please add products first.");
+        return;
+    }
+    
+    try {
+        paidText = paidText.replaceAll("[^\\d]", "");
+        double paidAmount = Double.parseDouble(paidText);
+        
+        if (paidAmount < totalAmount) {
+            showAlert(Alert.AlertType.WARNING, "Warning", "Paid amount is less than the total.");
             return;
         }
         
-        // Check if cart is empty
-        if (cartItems.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Warning", "Cart is empty. Please add products first.");
-            return;
+        String username = "guest"; // Default value
+        User currentUser = LoginController.getCurrentUser();
+        if (currentUser != null) {
+            username = currentUser.getUsername();
         }
+        
+        // Create PurchaseTransaction instance
+        PurchaseTransaction transaction = new PurchaseTransaction(
+            new java.sql.Date(System.currentTimeMillis()),
+            0, // transactionId will be set during serialization
+            cartItems,
+            username
+        );
+        
+        // Process transaction using PurchaseTransaction methods
+        String transactionData = transaction.serializeTransaction();
         
         try {
-            paidText = paidText.replaceAll("[^\\d]", "");
-            double paidAmount = Double.parseDouble(paidText);
-            
-            if (paidAmount < totalAmount) {
-                showAlert(Alert.AlertType.WARNING, "Warning", "Paid amount is less than the total.");
-                return;
-            }
-            
-            String username = "guest"; // Default value
-            User currentUser = LoginController.getCurrentUser();
-            if (currentUser != null) {
-                username = currentUser.getUsername();
-            }
-            
-            // Create PurchaseTransaction instance
-            PurchaseTransaction transaction = new PurchaseTransaction(
-                new java.sql.Date(System.currentTimeMillis()),
-                0, // transactionId will be set during serialization
-                cartItems,
-                username
-            );
-            
-            // Process transaction using PurchaseTransaction methods
-            String transactionData = transaction.serializeTransaction();
             transaction.processTransaction();
+            
+            // Log the successful transaction
+            int itemCount = getTotalItemCount();
+            String paymentMethod = "Cash"; // You may need to add payment method selection to your UI
+            
+            // Log the transaction
+            TransactionLogger.logSale(transaction.getTransactionId(), transaction.getTotalAmount(), 
+                                    itemCount, paymentMethod);
             
             double change = paidAmount - transaction.getTotalAmount();
             
@@ -1160,11 +1175,29 @@ public class CashierController implements Initializable{
             balanceLabel.setText("");
             refreshCartView();
             updateTotalDisplay();
-            
-        } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Error", "Invalid payment amount.");
+        } catch (Exception e) {
+            // Log failed transaction
+            int itemCount = getTotalItemCount();
+            String paymentMethod = "Cash";
+            TransactionLogger.logCanceledSale(transaction.getTransactionId(), transaction.getTotalAmount(), 
+                                            itemCount, paymentMethod);
+                                            
+            showAlert(Alert.AlertType.ERROR, "Error", "Transaction processing failed: " + e.getMessage());
         }
+        
+    } catch (NumberFormatException e) {
+        showAlert(Alert.AlertType.ERROR, "Error", "Invalid payment amount.");
     }
+}
+
+// Helper method to count total items in cart
+private int getTotalItemCount() {
+    int count = 0;
+    for (CartItem item : cartItems) {
+        count += item.getQuantity();
+    }
+    return count;
+}
 
     private void updateTotalAmount() {
         totalAmount = 0.0;

@@ -5,6 +5,7 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -191,9 +192,36 @@ public class TransactionLogController implements Initializable {
     @FXML
     private void showReturnTransactions() {
         setButtonSelected(returnsButton);
-        List<TransactionLogEntry> logs = TransactionLogDAO.getLogsByTransactionType("Return");
-        logEntries = FXCollections.observableArrayList(logs);
-        logTableView.setItems(logEntries);
+        
+        List<TransactionLogEntry> logEntries = convertRefundsToLogEntries();
+        this.logEntries = FXCollections.observableArrayList(logEntries);
+        logTableView.setItems(this.logEntries);
+    }
+
+    private List<TransactionLogEntry> convertRefundsToLogEntries() {
+        List<TransactionLogEntry> entries = new ArrayList<>();
+        List<RefundEntry> refunds = RefundDAO.getAllRefunds();
+        
+        int id = 1; // Start with ID 1 for display purposes
+        for (RefundEntry refund : refunds) {
+          
+            TransactionLogEntry entry = new TransactionLogEntry(
+                id++,                 
+                refund.getTimestamp(), 
+                refund.getTransactionId(), 
+                0,                     
+                refund.getUsername(),  
+                "Customer",           
+                refund.getTotalRefund(), 
+                refund.getQty(),       
+                "Cash",                 
+                "Return",              
+                "Completed"            
+            );
+            entries.add(entry);
+        }
+        
+        return entries;
     }
     
     @FXML

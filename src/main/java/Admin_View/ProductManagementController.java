@@ -77,43 +77,43 @@ public class ProductManagementController implements Initializable {
     private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy");
 
     @Override
-public void initialize(URL url, ResourceBundle resourceBundle) {
-    codeColumn.setCellValueFactory(new PropertyValueFactory<>("code"));
-    nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-    priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
-    qtyColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
-    expDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
-    categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
-    
-    loadProductsFromDatabase();
-    
-    categoryComboBox.setItems(categories);
-    
-    // === fix: close the listener lambda properly ===
-    productTable.getSelectionModel().selectedItemProperty().addListener(
-        (obs, oldSelection, newSelection) -> {
-            if (newSelection != null) {
-                populateForm(newSelection);
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        codeColumn.setCellValueFactory(new PropertyValueFactory<>("code"));
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
+        qtyColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+        expDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
+        categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
+        
+        loadProductsFromDatabase();
+        
+        categoryComboBox.setItems(categories);
+        
+        // === fix: close the listener lambda properly ===
+        productTable.getSelectionModel().selectedItemProperty().addListener(
+            (obs, oldSelection, newSelection) -> {
+                if (newSelection != null) {
+                    populateForm(newSelection);
+                }
+            }  // end of lambda block
+        );   // end of addListener(...)
+        
+        // Check admin access on initialization
+        Platform.runLater(() -> {
+            if (!UserSession.isAdmin()) {
+                // redirect non‑admins to PROFILE
+                NavigationAuthorizer.navigateTo(
+                profileBtn,
+                "/Admin_View/Profile.fxml",
+                NavigationAuthorizer.USER_VIEW
+                );
+                showAlert(Alert.AlertType.WARNING,
+                        "Access Denied",
+                        "Admin access required.");
             }
-        }  // end of lambda block
-    );   // end of addListener(...)
-    
-    // Check admin access on initialization
-    Platform.runLater(() -> {
-        if (!UserSession.isAdmin()) {
-            // redirect non‑admins to PROFILE
-            NavigationAuthorizer.navigateTo(
-              profileBtn,
-              "/Admin_View/Profile.fxml",
-              NavigationAuthorizer.USER_VIEW
-            );
-            showAlert(Alert.AlertType.WARNING,
-                      "Access Denied",
-                      "Admin access required.");
-        }
-    });
+        });
 
-}
+    }
     
     private void loadProductsFromDatabase() {
         ObservableList<Product> productList = FXCollections.observableArrayList();

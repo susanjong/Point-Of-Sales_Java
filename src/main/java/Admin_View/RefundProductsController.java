@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.uts_pbo.DatabaseConnection;
-import com.example.uts_pbo.LoginController;
-import com.example.uts_pbo.User;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -61,7 +59,6 @@ public class RefundProductsController {
     
     private ObservableList<Product> refundList = FXCollections.observableArrayList();
     private List<Product> selectedRefunds = new ArrayList<>();
-    private double totalAmount = 0.0;
     
     @FXML
     public void initialize() {
@@ -72,7 +69,6 @@ public class RefundProductsController {
         expDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
         categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
     
-        
         // Load refund data
         loadRefundData();
         
@@ -94,7 +90,7 @@ public class RefundProductsController {
         refundList.clear();
         
         try {
-            // Create database connection (assuming you have a DBConnection class)
+            // Create database connection
             Connection conn = DatabaseConnection.getConnection();
             String query = "SELECT code, product_name, price, qty, exp_date, category FROM product";
             PreparedStatement pstmt = conn.prepareStatement(query);
@@ -164,7 +160,11 @@ public class RefundProductsController {
             refundItemsContainer.getChildren().add(row);
         }
         
-        calculateTotal();
+        // Create temporary RefundTransaction to calculate total
+        RefundTransaction tempTransaction = new RefundTransaction();
+        tempTransaction.setRefundProducts(selectedRefunds);
+        double totalAmount = tempTransaction.calculateTotal();
+        totalAmountLabel.setText("Rp " + totalAmount);
     }
 
     private HBox createRefundItemView(Product product, int index) {
@@ -220,15 +220,6 @@ public class RefundProductsController {
         return itemRow;
     }
     
-    private void calculateTotal() {
-        totalAmount = 0.0;
-        for (Product product : selectedRefunds) {  // Changed from Refund to Product
-            totalAmount += product.getPrice() * product.getQuantity();
-        }
-        totalAmountLabel.setText("Rp " + totalAmount);
-    }
-    
-    
     @FXML
     private void handlerefund() {
         if (selectedRefunds.isEmpty()) {
@@ -258,16 +249,27 @@ public class RefundProductsController {
         }
         
         try {
-            // Process refund in database
-            processRefundInDatabase(transactionID, selectedRefunds);
+            // Create a RefundTransaction object
+            RefundTransaction refundTx = new RefundTransaction(
+                new java.util.Date(),
+                transactionID,
+                new ArrayList<>(selectedRefunds)
+            );
             
-            // Show success message
-            showAlert("Success", "Refund processed successfully for Transaction ID: " + transactionID);
+            // Process the refund
+            refundTx.processTransaction();
+            
+            // Serialize and save the transaction data to database
+            String transactionData = refundTx.serializeTransaction();
+            System.out.println(transactionData); // For debugging
+            
+            // Show success message using the calculateTotal method from RefundTransaction
+            showAlert("Success", "Refund processed successfully for Transaction ID: " + transactionID +
+                     "\nTotal refund amount: Rp " + refundTx.calculateTotal());
             
             // Clear the refund after processing
             selectedRefunds.clear();
             refundItemsContainer.getChildren().clear();
-            totalAmount = 0.0;
             totalAmountLabel.setText("Rp 0");
             TransactionIDField.setText("");
             
@@ -277,7 +279,6 @@ public class RefundProductsController {
         }
     }
 
-    // Enhance the validation method to check quantities as well
     private boolean validateProductsInTransaction(int transactionID, List<Product> products) {
         try {
             Connection conn = DatabaseConnection.getConnection();
@@ -368,78 +369,6 @@ public class RefundProductsController {
         
         return result;
     }
-    
-    private void processRefundInDatabase(int transactionID, List<Product> products) throws SQLException {
-        Connection conn = null;
-        
-        try {
-            conn = DatabaseConnection.getConnection();
-            conn.setAutoCommit(false); // Start transaction
-            
-            // Get current timestamp
-            java.sql.Timestamp timestamp = new java.sql.Timestamp(new java.util.Date().getTime());
-            
-            // Get username from the session
-            String username = getCurrentUsername(); 
-            
-            // Process each product as a separate refund record
-            for (Product product : products) {
-                // Calculate total refund amount for this product
-                double productRefundAmount = product.getPrice() * product.getQuantity();
-                
-                // Insert into refund table
-                String refundInsertQuery = "INSERT INTO refund (timestamp, transaction_id, username, product_code, qty, total_refund) VALUES (?, ?, ?, ?, ?, ?)";
-                PreparedStatement refundStmt = conn.prepareStatement(refundInsertQuery);
-                refundStmt.setTimestamp(1, timestamp);
-                refundStmt.setInt(2, transactionID);
-                refundStmt.setString(3, username);
-                refundStmt.setString(4, product.getCode());
-                refundStmt.setInt(5, product.getQuantity());
-                refundStmt.setDouble(6, productRefundAmount);
-                refundStmt.executeUpdate();
-                refundStmt.close();
-                
-                // Update product quantity (adding back the refunded items to inventory)
-                String updateStockQuery = "UPDATE product SET qty = qty + ? WHERE code = ?";
-                PreparedStatement updateStmt = conn.prepareStatement(updateStockQuery);
-                updateStmt.setInt(1, product.getQuantity());
-                updateStmt.setString(2, product.getCode());
-                int updatedRows = updateStmt.executeUpdate();
-                updateStmt.close();
-                
-                // Check if product was updated successfully
-                if (updatedRows == 0) {
-                    throw new SQLException("Failed to update quantity for product code: " + product.getCode());
-                }
-            }
-            
-            conn.commit(); // Commit transaction
-            
-        } catch (SQLException e) {
-            if (conn != null) {
-                try {
-                    conn.rollback(); // Rollback in case of error
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                } 
-            }
-            throw e;
-        } finally {
-            if (conn != null) {
-                conn.setAutoCommit(true);
-                conn.close();
-            }
-        }
-    }
-
-    private String getCurrentUsername() {
-        User currentUser = LoginController.getCurrentUser();
-        if (currentUser != null) {
-            return currentUser.getUsername();
-        }
-        return "unknown"; // Fallback value if no user is logged in
-    }
-    
 
     // Fixed method with consistent signature
     private void showAlert(String title, String message) {

@@ -106,6 +106,35 @@ public class ProfileController implements Initializable {
     }
 
     @FXML
+    private void handleLogout(ActionEvent event) {
+        System.out.println("[DEBUG] handleLogout() invoked");
+        
+        // Tampilkan dialog konfirmasi
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+                "Are you sure you want to logout? You will need to login again to continue.");
+        confirm.setTitle("Logout Confirmation");
+        confirm.setHeaderText(null);
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                System.out.println("[DEBUG] Logout confirmed by user");
+                
+                // Log the logout action
+                if (UserSession.isLoggedIn()) {
+                    User currentUser = UserSession.getCurrentUser();
+                    AuthLogger.logLogout(currentUser);
+                }
+                
+                // Clear session dan redirect
+                UserSession.logout();
+                showAlert(Alert.AlertType.INFORMATION, "You have been logged out.");
+                redirectToLogin();
+            } else {
+                System.out.println("[DEBUG] Logout cancelled by user");
+            }
+        });
+    }
+
+    @FXML
     private void handleDeleteAccount(ActionEvent event) {
         System.out.println("[DEBUG] handleDeleteAccount() invoked");
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
@@ -187,10 +216,28 @@ public class ProfileController implements Initializable {
     private void redirectToLogin() {
         System.out.println("[DEBUG] redirectToLogin() invoked");
         try {
-            Parent root = FXMLLoader.load(getClass().getResource("signin.fxml"));
+            // Use the correct path to Login.fxml
+            URL loginUrl = getClass().getResource("/com/example/uts_pbo/Login.fxml");
+            
+            if (loginUrl == null) {
+                // Try alternative paths if the first attempt fails
+                loginUrl = getClass().getResource("Login.fxml");
+                
+                if (loginUrl == null) {
+                    loginUrl = getClass().getClassLoader().getResource("com/example/uts_pbo/Login.fxml");
+                    
+                    if (loginUrl == null) {
+                        System.err.println("[ERROR] Could not find Login.fxml file!");
+                        return;
+                    }
+                }
+            }
+            
+            Parent root = FXMLLoader.load(loginUrl);
             Stage stage = (Stage) firstNameField.getScene().getWindow();
             stage.setScene(new Scene(root));
         } catch (IOException e) {
+            System.err.println("[ERROR] Failed to load Login.fxml: " + e.getMessage());
             e.printStackTrace();
         }
     }

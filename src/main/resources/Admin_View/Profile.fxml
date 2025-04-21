@@ -94,6 +94,9 @@
                         styleClass="primary-button" />
                 <Button text="Delete Account" onAction="#handleDeleteAccount"
                         style="-fx-text-fill: red; -fx-font-weight: bold;" />
+                <Button fx:id="logoutBtn" text="Logout" onAction="#handleLogout"
+                        style="-fx-background-color: #4285F4; -fx-text-fill: white;"
+                        styleClass="primary-button"/>
             </HBox>
         </GridPane>
     </center>

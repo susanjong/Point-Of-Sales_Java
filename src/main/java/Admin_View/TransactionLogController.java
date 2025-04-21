@@ -1,18 +1,5 @@
 package Admin_View;
 
-import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.fxml.Initializable;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.stage.Stage;
-
 import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
@@ -24,6 +11,25 @@ import java.util.ResourceBundle;
 import com.example.uts_pbo.NavigationAuthorizer;
 import com.example.uts_pbo.UserSession;
 
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Stage;
+
 public class TransactionLogController implements Initializable {
 
     @FXML private Button profileBtn;
@@ -33,6 +39,7 @@ public class TransactionLogController implements Initializable {
     @FXML private Button usersBtn;
     @FXML private Button adminLogBtn;
     @FXML private Button transLogBtn;
+    @FXML private Button authButton;
     
     @FXML private TableView<TransactionLogEntry> logTableView;
     @FXML private TableColumn<TransactionLogEntry, Integer> noColumn;
@@ -109,6 +116,7 @@ public class TransactionLogController implements Initializable {
         
         // Load all transactions by default
         showAllTransactions();
+        authButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> showAuthenticationLogs());
     }
     
     private void loadAllLogs() {
@@ -289,6 +297,24 @@ public class TransactionLogController implements Initializable {
             e.printStackTrace();
         }
     }
+
+    @FXML
+    private void showAuthenticationLogs() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/AuthenticationLog.fxml"));
+            Parent root = loader.load();
+
+            Stage stage = (Stage) authButton.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR,
+                    "Navigation Error",
+                    "Could not open Authentication Logs page.");
+            e.printStackTrace();
+        }
+    }
+
     
     private void showAlert(Alert.AlertType alertType, String title, String message) {
         Alert alert = new Alert(alertType);

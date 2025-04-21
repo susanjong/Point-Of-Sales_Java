@@ -1,83 +1,132 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.DatePicker?>
-<?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Rectangle?>
-<?import javafx.scene.text.Font?>
-<?import javafx.scene.text.Text?>
+<?import javafx.scene.text.*?>
 
-<AnchorPane prefHeight="721.0" prefWidth="1523.0"
-            xmlns="http://javafx.com/fxml/1"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="Admin_View.TransactionLogController">
-
-    <!-- Top background bar -->
-    <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#204200"
-               height="86.0" width="1523.0" />
-
-    <!-- Header Title -->
-    <Text layoutX="30.0" layoutY="52.0" text="TRANSACTION LOG">
-        <font>
+<AnchorPane prefHeight="786.0" prefWidth="1553.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Admin_View.TransactionLogController">
+   <children>
+      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#204200" height="86.0" layoutX="-1.0" layoutY="-1.0" stroke="WHITE" strokeType="INSIDE" width="1553.0" />
+      <Text fill="WHITE" layoutX="33.0" layoutY="52.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Simple" wrappingWidth="118.93670654296875">
+         <font>
             <Font name="Lucida Sans Demibold Italic" size="30.0" />
+         </font>
+      </Text>
+      <Text fill="#5b8336" layoutX="139.0" layoutY="51.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Mart">
+         <font>
+            <Font name="Lucida Sans Demibold Italic" size="30.0" />
+         </font>
+      </Text>
+      <Text fill="#71766d" layoutX="220.0" layoutY="52.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Admin">
+         <font>
+            <Font name="Lucida Sans Demibold Italic" size="30.0" />
+         </font>
+      </Text>
+      
+      <!-- Navigation Buttons -->
+      <HBox alignment="CENTER_RIGHT" layoutX="900.0" layoutY="16.0" spacing="10.0">
+         <children>
+            <Button fx:id="profileBtn" onAction="#handleNavigation" styleClass="nav-button" text="PROFILE" />
+            <Button fx:id="cashierBtn" onAction="#handleNavigation" styleClass="nav-button" text="CASHIER" />
+            <Button fx:id="productsBtn" onAction="#handleNavigation" styleClass="nav-button" text="PRODUCTS" />
+            <Button fx:id="bundleproductsBtn" onAction="#handleNavigation" styleClass="nav-button" text="BUNDLE PRODUCTS" />
+            <Button fx:id="usersBtn" onAction="#handleNavigation" styleClass="nav-button" text="USERS" />
+            <Button fx:id="adminLogBtn" onAction="#handleNavigation" styleClass="nav-button" text="ADMIN LOG" style="-fx-background-color: #5b8336; -fx-text-fill: white;" />
+         </children>
+      </HBox>
+      
+      <!-- Main Category Buttons -->
+      <HBox layoutX="238.0" layoutY="146.0" prefHeight="54.0" prefWidth="1002.0">
+         <children>
+            <Button fx:id="authButton" mnemonicParsing="false" prefHeight="38.0" prefWidth="155.0" style="-fx-background-radius: 50px;" text="AUTHENTICATION">
+               <HBox.margin>
+                  <Insets left="10.0" right="10.0" />
+               </HBox.margin>
+            </Button>
+            <Button fx:id="transactionButton" mnemonicParsing="false" prefHeight="38.0" prefWidth="155.0" style="-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;" text="TRANSACTION">
+               <HBox.margin>
+                  <Insets left="10.0" right="10.0" />
+               </HBox.margin>
+            </Button>
+            <Button fx:id="productModButton" mnemonicParsing="false" prefHeight="38.0" prefWidth="194.0" style="-fx-background-radius: 50px;" text="PRODUCT MODIFICATION">
+               <HBox.margin>
+                  <Insets left="10.0" right="10.0" />
+               </HBox.margin>
+            </Button>
+            <Button fx:id="sellingModButton" mnemonicParsing="false" prefHeight="38.0" prefWidth="194.0" style="-fx-background-radius: 50px;" text="SELLING MODIFICATION">
+               <HBox.margin>
+                  <Insets left="10.0" right="10.0" />
+               </HBox.margin>
+               <opaqueInsets>
+                  <Insets right="10.0" />
+               </opaqueInsets>
+            </Button>
+         </children>
+         <padding>
+            <Insets left="5.0" right="5.0" />
+         </padding>
+      </HBox>
+      
+      <!-- Sub Category Buttons (All, Sales, Returns, etc.) -->
+      <HBox layoutX="270.0" layoutY="235.0" spacing="10.0">
+        <children>
+            <Button fx:id="allTransButton" onAction="#showAllTransactions" mnemonicParsing="false" prefHeight="25.0" prefWidth="80.0" 
+                    style="-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;" text="ALL" />
+            <Button fx:id="salesButton" onAction="#showSalesTransactions" mnemonicParsing="false" prefHeight="25.0" prefWidth="80.0" 
+                    style="-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;" text="SALES" />
+            <Button fx:id="returnsButton" onAction="#showReturnTransactions" mnemonicParsing="false" prefHeight="25.0" prefWidth="80.0" 
+                    style="-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;" text="RETURNS" />
+            <Button fx:id="completedButton" onAction="#showCompletedTransactions" mnemonicParsing="false" prefHeight="25.0" prefWidth="100.0" 
+                    style="-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;" text="COMPLETED" />
+            <Button fx:id="canceledButton" onAction="#showCanceledTransactions" mnemonicParsing="false" prefHeight="25.0" prefWidth="100.0" 
+                    style="-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;" text="CANCELED" />
+        </children>
+        </HBox>
+      
+      <!-- Filter Controls -->
+      <HBox layoutX="270.0" layoutY="100.0" spacing="10.0" alignment="CENTER_LEFT" prefHeight="40.0">
+         <children>
+            <Label text="From:" />
+            <DatePicker fx:id="startDatePicker" />
+            <Label text="To:" />
+            <DatePicker fx:id="endDatePicker" />
+            <Label text="Payment:" />
+            <ComboBox fx:id="paymentMethodComboBox" prefWidth="120.0" />
+            <TextField fx:id="minAmountField" promptText="Min Amount" prefWidth="100.0" />
+            <TextField fx:id="maxAmountField" promptText="Max Amount" prefWidth="100.0" />
+            <TextField fx:id="userSearchField" promptText="User Search" prefWidth="120.0" />
+            <Button fx:id="filterButton" onAction="#applyFilters" text="Apply Filter" />
+            <Button fx:id="resetFilterButton" onAction="#resetFilters" text="Reset" />
+         </children>
+         <padding>
+            <Insets top="5.0" bottom="5.0" />
+         </padding>
+      </HBox>
+
+      <!-- Table View -->
+      <TableView fx:id="logTableView" layoutX="270.0" layoutY="270.0" prefHeight="490.0" prefWidth="924.0">
+      <columns>
+         <TableColumn fx:id="noColumn" prefWidth="40.0" text="No" />
+         <TableColumn fx:id="timestampColumn" prefWidth="150.0" text="Timestamp" />
+         <TableColumn fx:id="transactionIdColumn" prefWidth="100.0" text="Txn ID" />
+         <TableColumn fx:id="userIdColumn" prefWidth="80.0" text="User ID" />
+         <TableColumn fx:id="usernameColumn" prefWidth="120.0" text="Username" />
+         <TableColumn fx:id="roleColumn" prefWidth="80.0" text="Role" />
+         <TableColumn fx:id="amountColumn" prefWidth="80.0" text="Amount" />
+         <TableColumn fx:id="itemCountColumn" prefWidth="70.0" text="Items" />
+         <TableColumn fx:id="paymentMethodColumn" prefWidth="100.0" text="Payment" />
+         <TableColumn fx:id="transactionTypeColumn" prefWidth="60.0" text="Type" />
+         <TableColumn fx:id="statusColumn" prefWidth="90.0" text="Status" />
+      </columns>
+      </TableView>
+
+      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#204200" height="36.0" layoutX="270.0" layoutY="190.0" stroke="WHITE" strokeType="INSIDE" width="924.0" />
+        <Text fill="#fffefb" layoutX="652.0" layoutY="215.0" strokeType="OUTSIDE" strokeWidth="0.0" text="TRANSACTION" textAlignment="CENTER">
+        <font>
+            <Font size="24.0" />
         </font>
-    </Text>
-
-    <!-- Navigation Buttons -->
-    <Button fx:id="profileBtn"       onAction="#handleNavigation" text="PROFILE"       layoutX="1154.0" layoutY="15.0" />
-    <Button fx:id="cashierBtn"       onAction="#handleNavigation" text="CASHIER"       layoutX="1254.0" layoutY="15.0" />
-    <Button fx:id="productsBtn"      onAction="#handleNavigation" text="PRODUCTS"      layoutX="1354.0" layoutY="15.0" />
-    <Button fx:id="bundleproductsBtn" onAction="#handleNavigation" text="BUNDLE PRODUCTS" layoutX="1454.0" layoutY="15.0" />
-    <Button fx:id="usersBtn"         onAction="#handleNavigation" text="USERS"         layoutX="1554.0" layoutY="15.0" />
-    <Button fx:id="adminLogBtn"      onAction="#handleNavigation" text="AUTH LOGS"     layoutX="1654.0" layoutY="15.0" />
-    <Button fx:id="transLogBtn"      onAction="#handleNavigation" text="TRANS LOGS"    layoutX="1754.0" layoutY="15.0" />
-
-    <!-- Category Buttons -->
-    <HBox layoutX="20.0" layoutY="100.0" spacing="10">
-        <children>
-            <Button fx:id="allTransButton"    onAction="#showAllTransactions"      text="All" />
-            <Button fx:id="salesButton"       onAction="#showSalesTransactions"    text="Sales" />
-            <Button fx:id="returnsButton"     onAction="#showReturnTransactions"   text="Returns" />
-            <Button fx:id="completedButton"   onAction="#showCompletedTransactions" text="Completed" />
-            <Button fx:id="canceledButton"    onAction="#showCanceledTransactions"  text="Canceled" />
-        </children>
-    </HBox>
-
-    <!-- Filter Controls -->
-    <AnchorPane layoutX="20.0" layoutY="150.0">
-        <children>
-            <DatePicker fx:id="startDatePicker"        layoutX="0.0"   layoutY="0.0" />
-            <DatePicker fx:id="endDatePicker"          layoutX="150.0" layoutY="0.0" />
-            <ComboBox fx:id="paymentMethodComboBox"    layoutX="300.0" layoutY="0.0" />
-            <TextField fx:id="minAmountField"          layoutX="500.0" layoutY="0.0" promptText="Min Amount" />
-            <TextField fx:id="maxAmountField"          layoutX="650.0" layoutY="0.0" promptText="Max Amount" />
-            <TextField fx:id="userSearchField"         layoutX="800.0" layoutY="0.0" promptText="User Search" />
-            <Button fx:id="filterButton"               onAction="#applyFilters" layoutX="950.0" layoutY="0.0" text="Filter" />
-            <Button fx:id="resetFilterButton"          onAction="#resetFilters" layoutX="1020.0" layoutY="0.0" text="Reset" />
-        </children>
-    </AnchorPane>
-
-    <!-- Transaction Table -->
-    <TableView fx:id="logTableView" layoutX="20.0" layoutY="200.0" prefHeight="500.0" prefWidth="1480.0">
-        <columns>
-            <TableColumn fx:id="noColumn"              text="No." />
-            <TableColumn fx:id="timestampColumn"       text="Timestamp" />
-            <TableColumn fx:id="transactionIdColumn"   text="Txn ID" />
-            <TableColumn fx:id="userIdColumn"          text="User ID" />
-            <TableColumn fx:id="usernameColumn"        text="Username" />
-            <TableColumn fx:id="roleColumn"            text="Role" />
-            <TableColumn fx:id="amountColumn"          text="Amount" />
-            <TableColumn fx:id="itemCountColumn"       text="Items" />
-            <TableColumn fx:id="paymentMethodColumn"   text="Payment Method" />
-            <TableColumn fx:id="transactionTypeColumn" text="Type" />
-            <TableColumn fx:id="statusColumn"          text="Status" />
-        </columns>
-    </TableView>
-
+        </Text>
+   </children>
 </AnchorPane>

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.image.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Admin_View.RefundProductsController">
+    <left>
+        <VBox prefWidth="180.0" style="-fx-background-color: #59812a; -fx-padding: 20 0 0 0;">
+            <Button fx:id="profileBtn" text="Profile" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
+                <VBox.margin>
+                    <Insets top="20.0" bottom="12.0" left="15.0" right="15.0" />
+                </VBox.margin>
+            </Button>
+            <Button fx:id="cashierBtn" text="Cashier" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
+                <VBox.margin>
+                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
+                </VBox.margin>
+            </Button>
+            <Button fx:id="productsBtn" text="Products Management" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
+                <VBox.margin>
+                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
+                </VBox.margin>
+            </Button>
+            <Button fx:id="bundleproductsBtn" text="Bundle Products" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px; -fx-background-radius: 60px">
+                <VBox.margin>
+                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
+                </VBox.margin>
+            </Button>
+            <Button fx:id="refundproductsBtn" text="Refund Products" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: #1d4008; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px; -fx-background-radius: 60px">
+                <VBox.margin>
+                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
+                </VBox.margin>
+            </Button>
+            <Button fx:id="usersBtn" text="User Management" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
+                <VBox.margin>
+                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
+                </VBox.margin>
+            </Button>
+            <Button fx:id="adminLogBtn" text="Admin Log" styleClass="nav-button" prefWidth="150.0" prefHeight="40.0" onAction="#handleNavigation" style="-fx-background-color: none; -fx-font-size: 14px; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-color: #204200; -fx-border-width: 1px; -fx-border-radius: 60px">
+                <VBox.margin>
+                    <Insets top="10.0" bottom="12.0" left="15.0" right="15.0" />
+                </VBox.margin>
+            </Button>
+        </VBox>
+    </left>
+    <top>
+        <HBox alignment="CENTER" style="-fx-background-color: #1d4008;">
+            <Label text="SimpleMart" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold; -fx-font-style: italic;">
+                <HBox.margin>
+                    <Insets top="8.0" bottom="8.0" />
+                </HBox.margin>
+            </Label>
+        </HBox>
+    </top>
+    <center>
+        <VBox spacing="10.0" style ="-fx-font-size: 14px; -fx-background-color: #FFFEFB;">
+            <padding>
+                <Insets top="30.0" bottom="20.0" left="20.0" right="20.0" />
+            </padding>
+            <Label text="Refund Products" 
+                style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 0 0 10 0;">
+                <VBox.margin>
+                    <Insets left="10" top="10" />
+                </VBox.margin>
+            </Label>
+            <TableView fx:id="refundproductTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="refundcodeColumn" text="Code" prefWidth="100.0" />
+                    <TableColumn fx:id="nameColumn" text="Product Name" prefWidth="180.0" />
+                    <TableColumn fx:id="codeColumn" text="Product Code" prefWidth="180.0" />
+                    <TableColumn fx:id="priceColumn" text="Price" prefWidth="100.0" />
+                    <TableColumn fx:id="qtyColumn" text="Qty" prefWidth="70.0" />
+                </columns>
+            </TableView>
+            <HBox alignment="CENTER_RIGHT" spacing="10.0">
+                <VBox.margin><Insets top="20.0" bottom = "15.0"/></VBox.margin>
+            </HBox>
+        </VBox>
+    </center>
+    <right>
+    <VBox prefWidth="500.0" style="-fx-background-color: #F5F5F5;">
+        <padding>
+            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+        </padding>
+        <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <Label style="-fx-font-weight: bold; -fx-font-size: 18px;" text="Refund Products" />
+        </HBox>
+        <ScrollPane fitToWidth="true" minHeight="250.0" prefHeight="300.0" style="-fx-background-color: #D9D9D9" VBox.vgrow="ALWAYS">
+        <content>
+            <VBox fx:id="refundItemsContainer" minHeight="250.0" spacing="10.0" style="-fx-background-color: #D9D9D9; -fx-font-size: 14px;">
+                <padding>
+                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                </padding>
+            </VBox>
+        </content>
+            <VBox.margin>
+                <Insets bottom="15.0" />
+            </VBox.margin>
+        </ScrollPane>
+        <GridPane hgap="30.0" vgap="5.0">
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="80.0" />
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="120.0" />
+            </columnConstraints>
+            <Label style="-fx-font-weight: bold; -fx-font-size: 16px;" text="Total" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+            <Label fx:id="totalAmountLabel" style="-fx-background-color: #E0E0E0; -fx-padding: 5.0; -fx-font-size: 14px;" text="Rp 0" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+            <Label style="-fx-font-weight: bold; -fx-font-size: 16px;" text="Paid" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+            <TextField fx:id="paidField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+            <Label style="-fx-font-weight: bold; -fx-font-size: 16px;" text="Balance" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+            <Label fx:id="balanceLabel" style="-fx-background-color: #E0E0E0; -fx-padding: 5.0; -fx-font-size: 14px;" text="Rp 0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <VBox.margin>
+                <Insets bottom="15.0" />
+            </VBox.margin>
+            <rowConstraints>
+               <RowConstraints />
+               <RowConstraints />
+               <RowConstraints />
+            </rowConstraints>
+        </GridPane>
+        <Button maxWidth="Infinity" onAction="#handlerefund" prefHeight="30.0" style="-fx-background-color: #1d4008; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-border-radius: 40px; -fx-background-radius: 40px; -fx-margin-bottom: 10px;" text="Refund" />
+    </VBox>
+</right>
+</BorderPane>

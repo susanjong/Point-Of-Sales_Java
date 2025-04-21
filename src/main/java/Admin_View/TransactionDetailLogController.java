@@ -100,7 +100,7 @@ public class TransactionDetailLogController implements Initializable {
         
         productModButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/AuthenticationLog.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/ProductModificationLog.fxml"));
                 Parent root = loader.load();
                 Stage stage = (Stage) productModButton.getScene().getWindow();
                 stage.setScene(new Scene(root));
@@ -116,7 +116,7 @@ public class TransactionDetailLogController implements Initializable {
         
         sellingModButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/AuthenticationLog.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/SellingModificationLog.fxml"));
                 Parent root = loader.load();
                 Stage stage = (Stage) sellingModButton.getScene().getWindow();
                 stage.setScene(new Scene(root));

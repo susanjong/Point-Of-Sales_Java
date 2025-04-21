@@ -64,8 +64,15 @@ public class UserManagementController implements Initializable {
         // Check session
         Platform.runLater(() -> {
             if (!UserSession.isAdmin()) {
-                showAlert(Alert.AlertType.WARNING, "Access Denied", "Admin access required.");
-                redirectToLogin();
+                // redirect non‑admins to PROFILE
+                NavigationAuthorizer.navigateTo(
+                  profileBtn,
+                  "/Admin_View/Profile.fxml",
+                  NavigationAuthorizer.USER_VIEW
+                );
+                showAlert(Alert.AlertType.WARNING,
+                          "Access Denied",
+                          "Admin access required.");
             }
         });
 

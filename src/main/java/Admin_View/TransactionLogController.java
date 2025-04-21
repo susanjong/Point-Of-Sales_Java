@@ -40,6 +40,10 @@ public class TransactionLogController implements Initializable {
     @FXML private Button adminLogBtn;
     @FXML private Button transLogBtn;
     @FXML private Button authButton;
+    @FXML private Button transactionButton;
+    @FXML private Button productModButton;
+    @FXML private Button sellingModButton;
+    @FXML private Button transDetailButton;
     
     @FXML private TableView<TransactionLogEntry> logTableView;
     @FXML private TableColumn<TransactionLogEntry, Integer> noColumn;
@@ -96,9 +100,66 @@ public class TransactionLogController implements Initializable {
         startDatePicker.setValue(LocalDate.now().minusWeeks(1));
         endDatePicker.setValue(LocalDate.now());
         
-        // Set up the category buttons
-        // Handlers are linked via FXML onAction, so no need to attach here
+        authButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/AuthenticationLog.fxml"));
+                Parent root = loader.load();
+                Stage stage = (Stage) authButton.getScene().getWindow();
+                stage.setScene(new Scene(root));
+                stage.show();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+        
+        transactionButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/TransactionLog.fxml"));
+                Parent root = loader.load();
+                Stage stage = (Stage) transactionButton.getScene().getWindow();
+                stage.setScene(new Scene(root));
+                stage.show();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+        
+        productModButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/ProductModificationLog.fxml"));
+                Parent root = loader.load();
+                Stage stage = (Stage) productModButton.getScene().getWindow();
+                stage.setScene(new Scene(root));
+                stage.show();
 
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+        
+        sellingModButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/SellingModificationLog.fxml"));
+                Parent root = loader.load();
+                Stage stage = (Stage) sellingModButton.getScene().getWindow();
+                stage.setScene(new Scene(root));
+                stage.show();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+        
+        transDetailButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/TransactionDetailLog.fxml"));
+                Parent root = loader.load();
+                Stage stage = (Stage) transDetailButton.getScene().getWindow();
+                stage.setScene(new Scene(root));
+                stage.show();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
         // Redirect non-admins away immediately
         Platform.runLater(() -> {
             if (!UserSession.isAdmin()) {
@@ -116,7 +177,6 @@ public class TransactionLogController implements Initializable {
         
         // Load all transactions by default
         showAllTransactions();
-        authButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> showAuthenticationLogs());
     }
     
     private void loadAllLogs() {
@@ -294,23 +354,6 @@ public class TransactionLogController implements Initializable {
         } catch (IOException e) {
             showAlert(Alert.AlertType.ERROR, "Navigation Error", 
                     "Could not navigate to the requested page: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    @FXML
-    private void showAuthenticationLogs() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/AuthenticationLog.fxml"));
-            Parent root = loader.load();
-
-            Stage stage = (Stage) authButton.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
-        } catch (IOException e) {
-            showAlert(Alert.AlertType.ERROR,
-                    "Navigation Error",
-                    "Could not open Authentication Logs page.");
             e.printStackTrace();
         }
     }

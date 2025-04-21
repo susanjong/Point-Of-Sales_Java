@@ -102,32 +102,86 @@ public class ProductModificationLogController implements Initializable {
         resetFilterButton.setOnAction(event -> resetFilters());
 
         // Set up category button handlers
-        authButton.setOnAction(event -> navigateToAuthLog());
-        transactionButton.setOnAction(event -> navigateToTransactionLog());
-        productModButton.setOnAction(event -> {}); // Already on this page
-        sellingModButton.setOnAction(event -> navigateToSellingModLog());
-        transDetailButton.setOnAction(event -> navigateToTransDetailLog());
+        authButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/AuthenticationLog.fxml"));
+                Parent root = loader.load();
+                Stage stage = (Stage) authButton.getScene().getWindow();
+                stage.setScene(new Scene(root));
+                stage.show();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+        
+        transactionButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/TransactionLog.fxml"));
+                Parent root = loader.load();
+                Stage stage = (Stage) transactionButton.getScene().getWindow();
+                stage.setScene(new Scene(root));
+                stage.show();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+        
+        productModButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/ProductModificationLog.fxml"));
+                Parent root = loader.load();
+                Stage stage = (Stage) productModButton.getScene().getWindow();
+                stage.setScene(new Scene(root));
+                stage.show();
+
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+        
+        sellingModButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/SellingModificationLog.fxml"));
+                Parent root = loader.load();
+                Stage stage = (Stage) sellingModButton.getScene().getWindow();
+                stage.setScene(new Scene(root));
+                stage.show();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+        
+        transDetailButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/TransactionDetailLog.fxml"));
+                Parent root = loader.load();
+                Stage stage = (Stage) transDetailButton.getScene().getWindow();
+                stage.setScene(new Scene(root));
+                stage.show();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+        // Redirect non-admins away immediately
+        Platform.runLater(() -> {
+            if (!UserSession.isAdmin()) {
+                NavigationAuthorizer.navigateTo(
+                  profileBtn,
+                  "/Admin_View/Profile.fxml",
+                  NavigationAuthorizer.USER_VIEW
+                );
+                showAlert(Alert.AlertType.WARNING,
+                    "Access Denied",
+                    "You don't have permission to access Transaction Logs. Admin access required."
+                );
+            }
+        });
 
         // Set up styles for the current active button
         productModButton.setStyle("-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;");
         
         // Load initial data
         loadLogs();
-
-        // Check admin access on initialization
-        Platform.runLater(() -> {
-            if (!UserSession.isAdmin()) {
-                // Redirect non-admins to PROFILE
-                NavigationAuthorizer.navigateTo(
-                    profileBtn,
-                    "/Admin_View/Profile.fxml",
-                    NavigationAuthorizer.USER_VIEW
-                );
-                showAlert(Alert.AlertType.WARNING,
-                        "Access Denied",
-                        "Admin access required.");
-            }
-        });
     }
 
     public void loadLogs() {

@@ -153,19 +153,28 @@ public class AuthenticationLogController implements Initializable {
     }
     
     private void showProductModificationLogs() {
-        setButtonSelected(productModButton);
-        List<AuthenticationLogEntry> logs = AuthenticationLogDAO.getLogsByActivity("Product Added");
-        logs.addAll(AuthenticationLogDAO.getLogsByActivity("Product Updated"));
-        logs.addAll(AuthenticationLogDAO.getLogsByActivity("Product Deleted"));
-        logEntries = FXCollections.observableArrayList(logs);
-        logTableView.setItems(logEntries);
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/ProductModificationLog.fxml"));
+            Parent root = loader.load();
+            Stage stage = (Stage) productModButton.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
     
     private void showSellingModificationLogs() {
-        setButtonSelected(sellingModButton);
-        List<AuthenticationLogEntry> logs = AuthenticationLogDAO.getLogsByActivity("Selling Modified");
-        logEntries = FXCollections.observableArrayList(logs);
-        logTableView.setItems(logEntries);
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/SellingModificationLog.fxml"));
+            Parent root = loader.load();
+            Stage stage = (Stage) sellingModButton.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
     }
     
     @FXML

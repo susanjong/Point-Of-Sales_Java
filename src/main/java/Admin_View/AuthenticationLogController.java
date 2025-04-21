@@ -50,7 +50,6 @@ public class AuthenticationLogController implements Initializable {
     @FXML private Button transactionButton;
     @FXML private Button productModButton;
     @FXML private Button sellingModButton;
-    @FXML private Button transDetailButton;
     
     @FXML private DatePicker startDatePicker;
     @FXML private DatePicker endDatePicker;
@@ -87,7 +86,6 @@ public class AuthenticationLogController implements Initializable {
         transactionButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> showTransactionLogs());
         productModButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> showProductModificationLogs());
         sellingModButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> showSellingModificationLogs());
-        transDetailButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> showTransactionDetailLogs());
 
          // Redirect non‑admins away immediately
         Platform.runLater(() -> {
@@ -177,26 +175,12 @@ public class AuthenticationLogController implements Initializable {
         }
     }
     
-    @FXML
-    private void showTransactionDetailLogs() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/TransactionDetailLog.fxml"));
-            Parent root = loader.load();
-            Stage stage = (Stage) transDetailButton.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
     private void setButtonSelected(Button selectedButton) {
         // Reset styles
         authButton.setStyle("-fx-background-radius: 50px;");
         transactionButton.setStyle("-fx-background-radius: 50px;");
         productModButton.setStyle("-fx-background-radius: 50px;");
         sellingModButton.setStyle("-fx-background-radius: 50px;");
-        transDetailButton.setStyle("-fx-background-radius: 50px;");
         // Highlight
         selectedButton.setStyle("-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;");
     }
@@ -228,7 +212,6 @@ public class AuthenticationLogController implements Initializable {
         else if (transactionButton.getStyle().contains("#5b8336")) showTransactionLogs();
         else if (productModButton.getStyle().contains("#5b8336")) showProductModificationLogs();
         else if (sellingModButton.getStyle().contains("#5b8336")) showSellingModificationLogs();
-        else if (transDetailButton.getStyle().contains("#5b8336")) showTransactionDetailLogs();
         else loadAllLogs();
     }
     

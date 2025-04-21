@@ -50,7 +50,6 @@ public class ProductModificationLogController implements Initializable {
     @FXML private Button transactionButton;
     @FXML private Button productModButton;
     @FXML private Button sellingModButton;
-    @FXML private Button transDetailButton;
 
     // Filter controls
     @FXML private DatePicker startDatePicker;
@@ -151,17 +150,6 @@ public class ProductModificationLogController implements Initializable {
             }
         });
         
-        transDetailButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/TransactionDetailLog.fxml"));
-                Parent root = loader.load();
-                Stage stage = (Stage) transDetailButton.getScene().getWindow();
-                stage.setScene(new Scene(root));
-                stage.show();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        });
         // Redirect non-admins away immediately
         Platform.runLater(() -> {
             if (!UserSession.isAdmin()) {
@@ -234,33 +222,74 @@ public class ProductModificationLogController implements Initializable {
     }
     
     private void applyFilters() {
-        ObservableList<ProductModificationLog> filteredList = FXCollections.observableArrayList(logsList);
-        
-        // Filter by action type if not "All"
-        String selectedActionType = actionTypeFilterComboBox.getValue();
-        if (selectedActionType != null && !selectedActionType.equals("All")) {
-            filteredList = filteredList.filtered(log -> 
-                log.getActionType().equals(selectedActionType));
+        logsList.clear();
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            String query = "SELECT l.id, l.user_id, l.username, l.product_code, l.product_name, " +
+                           "l.action_type, l.timestamp " +
+                           "FROM product_modification_log l " +
+                           "WHERE l.timestamp BETWEEN ? AND ? " +
+                           "ORDER BY l.timestamp DESC";
+    
+            PreparedStatement pst = conn.prepareStatement(query);
+    
+            LocalDate startDate = startDatePicker.getValue();
+            LocalDate endDate = endDatePicker.getValue();
+    
+            if (startDate != null && endDate != null) {
+                pst.setTimestamp(1, Timestamp.valueOf(startDate.atStartOfDay()));
+                pst.setTimestamp(2, Timestamp.valueOf(endDate.plusDays(1).atStartOfDay()));
+            } else {
+                // Default to last 30 days if not selected
+                pst.setTimestamp(1, Timestamp.valueOf(LocalDate.now().minusDays(30).atStartOfDay()));
+                pst.setTimestamp(2, Timestamp.valueOf(LocalDate.now().plusDays(1).atStartOfDay()));
+            }
+    
+            ResultSet rs = pst.executeQuery();
+            while (rs.next()) {
+                ProductModificationLog log = new ProductModificationLog(
+                    rs.getInt("id"),
+                    rs.getInt("user_id"),
+                    rs.getString("username"),
+                    rs.getString("product_code"),
+                    rs.getString("product_name"),
+                    rs.getString("action_type"),
+                    rs.getTimestamp("timestamp").toLocalDateTime()
+                );
+                logsList.add(log);
+            }
+    
+            ObservableList<ProductModificationLog> filteredList = FXCollections.observableArrayList(logsList);
+    
+            // Action type
+            String selectedActionType = actionTypeFilterComboBox.getValue();
+            if (selectedActionType != null && !selectedActionType.equals("All")) {
+                filteredList = filteredList.filtered(log ->
+                    log.getActionType().equals(selectedActionType));
+            }
+    
+            // Product search
+            String productSearch = productSearchField.getText().trim().toLowerCase();
+            if (!productSearch.isEmpty()) {
+                filteredList = filteredList.filtered(log ->
+                    log.getProductCode().toLowerCase().contains(productSearch) ||
+                    log.getProductName().toLowerCase().contains(productSearch));
+            }
+    
+            // User search
+            String userSearch = userSearchField.getText().trim().toLowerCase();
+            if (!userSearch.isEmpty()) {
+                filteredList = filteredList.filtered(log ->
+                    log.getUsername().toLowerCase().contains(userSearch) ||
+                    String.valueOf(log.getUserId()).contains(userSearch));
+            }
+    
+            logTableView.setItems(filteredList);
+    
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "Database Error", "Could not apply filters: " + e.getMessage());
+            e.printStackTrace();
         }
-        
-        // Filter by product search
-        String productSearch = productSearchField.getText().trim().toLowerCase();
-        if (!productSearch.isEmpty()) {
-            filteredList = filteredList.filtered(log -> 
-                log.getProductCode().toLowerCase().contains(productSearch) || 
-                log.getProductName().toLowerCase().contains(productSearch));
-        }
-        
-        // Filter by user search
-        String userSearch = userSearchField.getText().trim().toLowerCase();
-        if (!userSearch.isEmpty()) {
-            filteredList = filteredList.filtered(log -> 
-                log.getUsername().toLowerCase().contains(userSearch) || 
-                String.valueOf(log.getUserId()).contains(userSearch));
-        }
-        
-        logTableView.setItems(filteredList);
-    }
+    }    
     
     private void resetFilters() {
         // Reset all filter fields
@@ -354,36 +383,6 @@ public class ProductModificationLogController implements Initializable {
                     "Could not navigate to the requested page: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-    
-    private void navigateToAuthLog() {
-        try {
-            URL url = getClass().getResource("AuthenticationLog.fxml");
-            Parent root = FXMLLoader.load(url);
-            Stage stage = (Stage) authButton.getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setScene(scene);
-            stage.show();
-        } catch (IOException e) {
-            showAlert(Alert.AlertType.ERROR, "Navigation Error", 
-                    "Could not navigate to Authentication Log: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-    
-    private void navigateToTransactionLog() {
-        showAlert(Alert.AlertType.INFORMATION, "Navigation", 
-                "Transaction Log page not implemented yet.");
-    }
-    
-    private void navigateToSellingModLog() {
-        showAlert(Alert.AlertType.INFORMATION, "Navigation", 
-                "Selling Modification Log page not implemented yet.");
-    }
-    
-    private void navigateToTransDetailLog() {
-        showAlert(Alert.AlertType.INFORMATION, "Navigation", 
-                "Transaction Detail Log page not implemented yet.");
     }
     
     private void showAlert(Alert.AlertType alertType, String title, String message) {

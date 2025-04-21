@@ -286,7 +286,7 @@ public class PurchaseTransaction extends Transaction implements Payable {
         
         try {
             conn = DatabaseConnection.getConnection();
-            String query = "SELECT code, product_name, price, qty, exp_date, category, image_path FROM product";
+            String query = "SELECT code, product_name, price, qty, exp_date, category FROM product";
             pst = conn.prepareStatement(query);
             rs = pst.executeQuery();
             
@@ -304,9 +304,8 @@ public class PurchaseTransaction extends Transaction implements Payable {
                 }
                 
                 String category = rs.getString("category");
-                String imagePath = rs.getString("image_path");
-                
-                Product product = new Product(code, name, price, qty, expDate, category, imagePath);
+              
+                Product product = new Product(code, name, price, qty, expDate, category);
                 products.add(product);
             }
             

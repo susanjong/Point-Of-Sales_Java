@@ -165,11 +165,17 @@ public class AuthenticationLogController implements Initializable {
         logTableView.setItems(logEntries);
     }
     
+    @FXML
     private void showTransactionDetailLogs() {
-        setButtonSelected(transDetailButton);
-        List<AuthenticationLogEntry> logs = AuthenticationLogDAO.getLogsByActivity("Transaction Detail");
-        logEntries = FXCollections.observableArrayList(logs);
-        logTableView.setItems(logEntries);
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/TransactionDetailLog.fxml"));
+            Parent root = loader.load();
+            Stage stage = (Stage) transDetailButton.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     
     private void setButtonSelected(Button selectedButton) {

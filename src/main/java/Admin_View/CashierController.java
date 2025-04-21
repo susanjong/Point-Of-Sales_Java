@@ -10,12 +10,14 @@ import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import com.example.uts_pbo.DatabaseConnection;
 import com.example.uts_pbo.LoginController;
-import com.example.uts_pbo.NavigationAuthorizer;
 import com.example.uts_pbo.User;
 
 import javafx.collections.FXCollections;
@@ -30,13 +32,10 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import Admin_View.TransactionLogger;
 
 public class CashierController implements Initializable{
 
@@ -47,6 +46,7 @@ public class CashierController implements Initializable{
     @FXML private Button usersBtn;
     @FXML private Button adminLogBtn;
     @FXML private FlowPane productsContainer;
+    @FXML private FlowPane bundleProductsContainer;
     @FXML private TextField searchField;
     @FXML private Button addToCartBtn;
     @FXML private Label productNameLabel;
@@ -58,6 +58,7 @@ public class CashierController implements Initializable{
     @FXML private VBox cartItemsContainer;
     @FXML private Label totalAmountLabel;
     
+    private Map<String, BundleProduct> bundleProductMap = new HashMap<>(); 
     private double totalAmount = 0.0;
     private NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
     private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy");
@@ -85,6 +86,7 @@ public class CashierController implements Initializable{
         // Load initial data
         try {
             loadProductsFromDatabase();
+            loadBundleProducts();
             System.out.println("Loaded " + products.size() + " products from database");
             displayProducts();
             System.out.println("Displayed products in UI");
@@ -159,6 +161,235 @@ public class CashierController implements Initializable{
         }
         addToCartBtn.setDisable(true);
     }
+
+    private void loadBundleProducts() {
+        System.out.println("Loading bundle products...");
+        // Clear the existing map and container
+        bundleProductMap.clear();
+        if (bundleProductsContainer != null) {
+            bundleProductsContainer.getChildren().clear();
+        } else {
+            System.err.println("WARNING: bundleProductsContainer is null!");
+            try {
+                bundleProductsContainer = (FlowPane) cashierBtn.getScene().lookup("#bundleProductsContainer");
+            } catch (Exception e) {
+                System.err.println("Failed to find bundleProductsContainer: " + e.getMessage());
+            }
+        }
+        
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            // First, get all unique bundle codes and their prices
+            String bundleQuery = "SELECT DISTINCT code, price FROM bundle_products";
+            try (PreparedStatement stmt = conn.prepareStatement(bundleQuery);
+                 ResultSet rs = stmt.executeQuery()) {
+                
+                int bundleCount = 0;
+                while (rs.next()) {
+                    bundleCount++;
+                    String bundleCode = rs.getString("code");
+                    double bundlePrice = rs.getDouble("price");
+                    
+                    // Create a new bundle object to store info
+                    BundleProduct bundle = new BundleProduct(bundleCode, bundlePrice);
+                    bundle.setPreserveOriginalPrice(true); // Add this flag to prevent price recalculation
+                    bundleProductMap.put(bundleCode, bundle);
+                    
+                    // Now get all products in this bundle
+                    loadBundleItems(conn, bundle);
+                    
+                    // Create and add the bundle UI element
+                    VBox bundleBox = createBundleProductBox(bundle);
+                    
+                    if (bundleProductsContainer != null) {
+                        bundleProductsContainer.getChildren().add(bundleBox);
+                    } else {
+                        System.err.println("Cannot add bundle to UI, container is null");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("SQL error loading bundles: " + e.getMessage());
+        }
+    }
+
+    
+    private void loadBundleItems(Connection conn, BundleProduct bundle) throws SQLException {
+        String itemsQuery = "SELECT bp.product_code, bp.qty, p.product_name, p.price, p.qty, " +
+                            "p.exp_date, p.category " +
+                            "FROM bundle_products bp " +
+                            "JOIN product p ON bp.product_code = p.code " +
+                            "WHERE bp.code = ?";
+        
+        try (PreparedStatement stmt = conn.prepareStatement(itemsQuery)) {
+            stmt.setString(1, bundle.getCode());
+            try (ResultSet rs = stmt.executeQuery()) {
+                String bundleName = getBundleNameFromDatabase(conn, bundle.getCode());
+                StringBuilder fullBundleName = new StringBuilder(bundleName + ": ");
+                List<String> productNames = new ArrayList<>();
+                
+                while (rs.next()) {
+                    String productCode = rs.getString("product_code");
+                    int qty = rs.getInt("qty");
+                    String productName = rs.getString("product_name");
+                    double productPrice = rs.getDouble("price");
+                    int productQty = rs.getInt("qty");
+                    String expirationDate = rs.getString("exp_date");
+                    String category = rs.getString("category");
+                    
+                    // Create a Product object first
+                    Product product = new Product(
+                        productCode, productName, productPrice, 
+                        productQty, expirationDate, category
+                    );
+                    
+                    // Now add the Product object to the bundle with the quantity
+                    bundle.addProduct(product, qty);
+                    
+                    productNames.add(productName + " (" + qty + ")");
+                }
+                
+                if (!productNames.isEmpty()) {
+                    fullBundleName.append(String.join(", ", productNames));
+                    bundle.setName(fullBundleName.toString());
+                } else {
+                    // If no products found, just use the name from database
+                    bundle.setName(bundleName);
+                }
+            }
+        }
+    }
+
+    private String getBundleNameFromDatabase(Connection conn, String bundleCode) {
+        String defaultName = "Bundle";  // Default fallback name
+        
+        try {
+            String query = "SELECT bundle_name FROM bundle_products WHERE code = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, bundleCode);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getString("bundle_name");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting bundle name: " + e.getMessage());
+        }
+        
+        return defaultName;
+    }
+
+    /**
+ * Creates a UI box for displaying a bundle product that matches your design
+ */
+    private VBox createBundleProductBox(BundleProduct bundle) {
+        // Create the main VBox container with the specified styling
+        VBox bundleBox = new VBox();
+        bundleBox.setStyle("-fx-border-color: #CCCCCC; -fx-border-radius: 8; -fx-padding: 10.0;");
+        bundleBox.setSpacing(5);
+        
+        // Create bundle name label with wrapping text
+        Label nameLabel = new Label(bundle.getName());
+        nameLabel.setMaxWidth(180.0);
+        nameLabel.setMinWidth(180.0);
+        nameLabel.setWrapText(true);
+        nameLabel.setStyle("-fx-font-size: 14px;");
+        
+        // Display the bundle price using getDiscountedPrice method
+        Label priceLabel = new Label(formatPrice(bundle.getDiscountedPrice()));
+        priceLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+        
+        // Use the getSavingsAmount and getSavingsPercentage methods
+        double savings = bundle.getSavingsAmount();
+        double savingsPercentage = bundle.getSavingsPercentage();
+        
+        Label savingsLabel = new Label(String.format("Save %s (%.0f%% off)", 
+                              formatPrice(savings), savingsPercentage));
+        savingsLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px;");
+        
+        // Create add to cart button with green styling
+        Button addToCartBtn = new Button("Add to Cart");
+        addToCartBtn.setStyle("-fx-background-color: #5B8336; -fx-text-fill: white;");
+        addToCartBtn.setUserData(bundle); // Store BundleProduct object with the button
+        addToCartBtn.setOnAction(e -> addBundleToCart(bundle));
+        
+        // Add all elements to the VBox
+        bundleBox.getChildren().addAll(nameLabel, priceLabel, savingsLabel, addToCartBtn);
+        
+        return bundleBox;
+    }
+
+    private void addBundleToCart(BundleProduct bundle) {
+        boolean bundleFound = false;
+        
+        // Check if bundle already exists in cart
+        for (CartItem item : cartItems) {
+            if (item.getName().equals(bundle.getName())) {
+                item.setQuantity(item.getQuantity() + 1);
+                bundleFound = true;
+                break;
+            }
+        }
+        
+        // Add new bundle to cart if not found
+        if (!bundleFound) {
+            CartItem bundleItem = new CartItem(bundle.getName(), bundle.getPrice(), 1);
+            cartItems.add(bundleItem);
+        }
+        
+        refreshCartView();
+        updateTotalAmount();
+        
+        showAlert(Alert.AlertType.INFORMATION, "Success", "Bundle added to cart!");
+    }
+
+    /**
+     * Original method that extracts bundle info from UI elements
+     */
+    private void addBundleToCartFromUI(Button clickedButton) {
+        VBox bundleBox = (VBox) clickedButton.getParent();
+        String bundleName = "";
+        double bundlePrice = 0;
+        
+        // Extract information from the UI elements
+        for (javafx.scene.Node node : bundleBox.getChildren()) {
+            if (node instanceof Label) {
+                Label label = (Label) node;
+                if (label.getStyle().contains("-fx-font-weight: bold")) {
+                    String priceText = label.getText().replace("Rp ", "").replace(".", "");
+                    try {
+                        bundlePrice = Double.parseDouble(priceText);
+                    } catch (NumberFormatException e) {
+                        // Keep default price if parsing fails
+                    }
+                } else if (!label.getText().isEmpty() && !label.getText().startsWith("Rp")) {
+                    bundleName = label.getText();
+                }
+            }
+        }
+        
+        // Check if bundle already exists in cart
+        boolean bundleFound = false;
+        for (CartItem item : cartItems) {
+            if (item.getName().equals(bundleName)) {
+                item.setQuantity(item.getQuantity() + 1);
+                bundleFound = true;
+                break;
+            }
+        }
+        
+        // Add new bundle to cart if not found
+        if (!bundleFound) {
+            CartItem bundleItem = new CartItem(bundleName, bundlePrice, 1);
+            cartItems.add(bundleItem);
+        }
+        
+        refreshCartView();
+        updateTotalAmount();
+        
+        showAlert(Alert.AlertType.INFORMATION, "Success", "Bundle added to cart!");
+    }
     
     private void loadProductsFromDatabase() {
         products.clear();
@@ -174,7 +405,7 @@ public class CashierController implements Initializable{
                 return;
             }
             
-            String query = "SELECT code, product_name, price, qty, exp_date, category, image_path FROM product";
+            String query = "SELECT code, product_name, price, qty, exp_date, category FROM product";
             pst = conn.prepareStatement(query);
             rs = pst.executeQuery();
             
@@ -192,33 +423,9 @@ public class CashierController implements Initializable{
                 }
                 
                 String category = rs.getString("category");
-                String imagePath = rs.getString("image_path");
-                
-                // Normalize image path if needed
-                if (imagePath != null && !imagePath.isEmpty()) {
-                    // If it doesn't already have a leading slash and isn't an absolute path
-                    if (!imagePath.startsWith("/") && !imagePath.contains(":")) {
-                        // Try to normalize it to our expected resource format
-                        if (!imagePath.startsWith("resource/images/")) {
-                            if (imagePath.contains("/")) {
-                                // Just get the filename
-                                String filename = imagePath.substring(imagePath.lastIndexOf('/') + 1);
-                                imagePath = "/resource/images/" + filename;
-                            } else {
-                                // It's just a filename
-                                imagePath = "/resource/images/" + imagePath;
-                            }
-                        } else {
-                            // It already has the right folder structure, just add leading slash
-                            imagePath = "/" + imagePath;
-                        }
-                    }
-                }
-                
-                System.out.println("Loaded product: " + name + " with normalized image path: " + imagePath);
                 
                 // Create product object with all fields from database
-                Product product = new Product(code, name, price, qty, expDate, category, imagePath);
+                Product product = new Product(code, name, price, qty, expDate, category);
                 products.add(product);
             }
             
@@ -266,96 +473,6 @@ public class CashierController implements Initializable{
         VBox productBox = new VBox(5);
         productBox.setStyle("-fx-border-color: #CCCCCC; -fx-border-radius: 8; -fx-padding: 10.0;");
         
-        ImageView imageView = new ImageView();
-        imageView.setFitHeight(120.0);
-        imageView.setFitWidth(120.0);
-        imageView.setPreserveRatio(true);
-        
-        try {
-            // Get image path from the product
-            String imagePath = product.getImagePath();
-            Image image = null;
-            
-            if (imagePath != null && !imagePath.isEmpty()) {
-                // Try different path formats for resources
-                String[] possiblePaths = {
-                    imagePath,                                    // Original path
-                    imagePath.startsWith("/") ? imagePath : "/" + imagePath,  // Add leading slash
-                    "/resources/images/" + getFileName(imagePath),            // Standard resources folder
-                    "/resources/images/" + imagePath,                         // Full path in resources
-                    "resources/images/" + getFileName(imagePath),             // Without leading slash
-                    "/resource/images/" + getFileName(imagePath),             // Alternate spelling
-                    "/resource/images/" + imagePath                           // Full path in alternate spelling
-                };
-                
-                // Try all possible paths
-                for (String path : possiblePaths) {
-                    try {
-                        System.out.println("Trying to load image from: " + path);
-                        image = new Image(getClass().getResourceAsStream(path));
-                        
-                        // Check if image loaded successfully
-                        if (image != null && !image.isError() && image.getWidth() > 0) {
-                            System.out.println("Successfully loaded image from: " + path);
-                            break;  // Exit loop if successful
-                        }
-                    } catch (Exception e) {
-                        // Continue to next path
-                        System.out.println("Failed to load from: " + path);
-                    }
-                }
-                
-                // If all resource loading attempts failed, try file system
-                if (image == null || image.isError() || image.getWidth() == 0) {
-                    try {
-                        System.out.println("Trying to load as file: " + imagePath);
-                        image = new Image("file:" + imagePath);
-                        if (image.isError()) {
-                            throw new Exception("Failed to load from file path");
-                        }
-                    } catch (Exception ex) {
-                        System.out.println("Failed to load as file: " + ex.getMessage());
-                        // Use placeholder if all attempts fail
-                        image = new Image(getClass().getResourceAsStream("/resources/images/placeholder.png"));
-                        if (image == null || image.isError()) {
-                            image = new Image(getClass().getResourceAsStream("/resource/images/placeholder.png"));
-                        }
-                    }
-                }
-            } else {
-                // Use placeholder for null or empty path
-                image = new Image(getClass().getResourceAsStream("/resources/images/placeholder.png"));
-                if (image == null || image.isError()) {
-                    image = new Image(getClass().getResourceAsStream("/resource/images/placeholder.png"));
-                }
-            }
-            
-            // Set the image to ImageView
-            if (image != null && !image.isError() && image.getWidth() > 0) {
-                imageView.setImage(image);
-            } else {
-                throw new Exception("Image could not be loaded");
-            }
-            
-        } catch (Exception e) {
-            System.err.println("Error loading image for " + product.getName() + ": " + e.getMessage());
-            try {
-                // Try both versions of placeholder path
-                Image placeholder = null;
-                try {
-                    placeholder = new Image(getClass().getResourceAsStream("/resources/images/placeholder.png"));
-                } catch (Exception ex) {
-                    placeholder = new Image(getClass().getResourceAsStream("/resource/images/placeholder.png"));
-                }
-                
-                if (placeholder != null && !placeholder.isError()) {
-                    imageView.setImage(placeholder);
-                }
-            } catch (Exception ex) {
-                System.err.println("Error loading placeholder image: " + ex.getMessage());
-            }
-        }
-        
         // Rest of your method remains the same...
         Label nameLabel = new Label(product.getName());
         nameLabel.setMaxWidth(150.0);
@@ -370,7 +487,7 @@ public class CashierController implements Initializable{
         addButton.setStyle("-fx-background-color: #5B8336; -fx-text-fill: white; -fx-font-size: 12px;");
         addButton.setOnAction(e -> handleAddToCartFromDisplay(product));
         
-        productBox.getChildren().addAll(imageView, nameLabel, priceLabel, addButton);
+        productBox.getChildren().addAll(nameLabel, priceLabel, addButton);
         
         return productBox;
     }
@@ -536,7 +653,7 @@ public class CashierController implements Initializable{
                     return;
                 }
                 
-                String query = "SELECT code, product_name, price, qty, exp_date, category, image_path FROM product WHERE code = ?";
+                String query = "SELECT code, product_name, price, qty, exp_date, category FROM product WHERE code = ?";
                 pst = conn.prepareStatement(query);
                 pst.setString(1, code);
                 rs = pst.executeQuery();
@@ -555,10 +672,9 @@ public class CashierController implements Initializable{
                     }
                     
                     String category = rs.getString("category");
-                    String imagePath = rs.getString("image_path");
                     
                     // Create product object with all fields from database
-                    currentProduct = new Product(productCode, name, price, qty, expDate, category, imagePath);
+                    currentProduct = new Product(productCode, name, price, qty, expDate, category);
                     
                     // Display product info
                     productNameLabel.setText(name);
@@ -690,51 +806,7 @@ public class CashierController implements Initializable{
         });
     }
     
-    @FXML
-    void handleAddBundleToCart(ActionEvent event) {
-        Button clickedButton = (Button) event.getSource();
-        VBox bundleBox = (VBox) clickedButton.getParent();
-        String bundleName = "";
-        double bundlePrice = 20400.0;
-        
-        for (javafx.scene.Node node : bundleBox.getChildren()) {
-            if (node instanceof Label) {
-                Label label = (Label) node;
-                if (label.getStyle().contains("-fx-font-weight: bold")) {
-                    String priceText = label.getText().replace("Rp ", "").replace(".", "");
-                    try {
-                        bundlePrice = Double.parseDouble(priceText);
-                    } catch (NumberFormatException e) {
-                    }
-                } else if (!label.getText().isEmpty() && !label.getText().startsWith("Rp")) {
-                    bundleName = label.getText();
-                }
-            }
-        }
-        
-        if (bundleName.isEmpty()) {
-            bundleName = "Bundling Chitato snack cheese flavour, Bango Kecap Manis";
-        }
-        
-        boolean bundleFound = false;
-        for (CartItem item : cartItems) {
-            if (item.getName().equals(bundleName)) {
-                item.setQuantity(item.getQuantity() + 1);
-                bundleFound = true;
-                break;
-            }
-        }
-        
-        if (!bundleFound) {
-            CartItem bundleItem = new CartItem(bundleName, bundlePrice, 1);
-            cartItems.add(bundleItem);
-        }
-        
-        refreshCartView();
-        updateTotalAmount();
-        
-        showAlert(Alert.AlertType.INFORMATION, "Success", "Bundle added to cart!");
-    }
+   
     
     @FXML
     void handleAddProductToCart(ActionEvent event) {

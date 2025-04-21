@@ -63,6 +63,7 @@
             </Label>
             <TableView fx:id="bundleproductTable" VBox.vgrow="ALWAYS">
                 <columns>
+                    <TableColumn fx:id="bundleidColumn" text="Id" prefWidth="100.0" />
                     <TableColumn fx:id="bundlecodeColumn" text="Code" prefWidth="100.0" />
                     <TableColumn fx:id="nameColumn" text="Bundle Name" prefWidth="180.0" />
                     <TableColumn fx:id="codeColumn" text="Product Code" prefWidth="180.0" />
@@ -86,6 +87,7 @@
                 <VBox.margin>
                     <Insets bottom="10.0" />
                 </VBox.margin>
+            <TextField fx:id="idField" visible="false" managed="false" />
             <Label text="Code:" />
             <TextField fx:id="codeField" />
             <Label text="Bundle Name:" />

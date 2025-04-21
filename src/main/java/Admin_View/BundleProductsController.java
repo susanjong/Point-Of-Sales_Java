@@ -1,5 +1,18 @@
 package Admin_View;
 
+import java.io.IOException;
+import java.net.URL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.time.LocalDate;
+import java.util.Optional;
+import java.util.ResourceBundle;
+
+import com.example.uts_pbo.DatabaseConnection;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -8,15 +21,14 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
-
-import java.io.IOException;
-import java.net.URL;
-import java.time.LocalDate;
-import java.util.Optional;
-import java.util.ResourceBundle;
 
 public class BundleProductsController implements Initializable {
 
@@ -30,6 +42,7 @@ public class BundleProductsController implements Initializable {
 
     // Table and columns
     @FXML private TableView<BundleProduct> bundleproductTable;
+    @FXML private TableColumn<BundleProduct, Integer> bundleidColumn;
     @FXML private TableColumn<BundleProduct, String> bundlecodeColumn;
     @FXML private TableColumn<BundleProduct, String> nameColumn;
     @FXML private TableColumn<BundleProduct, String> codeColumn;
@@ -37,6 +50,7 @@ public class BundleProductsController implements Initializable {
     @FXML private TableColumn<BundleProduct, Integer> qtyColumn;
 
     // Form fields
+    @FXML private TextField idField;
     @FXML private TextField codeField;
     @FXML private TextField nameField;
     @FXML private TextField productcodeField;
@@ -53,23 +67,72 @@ public class BundleProductsController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         // Initialize table columns
+        bundleidColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
         bundlecodeColumn.setCellValueFactory(new PropertyValueFactory<>("code"));
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-        codeColumn.setCellValueFactory(new PropertyValueFactory<>("code"));
+        codeColumn.setCellValueFactory(new PropertyValueFactory<>("productCode"));
         priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
         qtyColumn.setCellValueFactory(new PropertyValueFactory<>("qty"));
+
+        // Load data from database
+        loadBundleProducts();
+
+        // Set table items
+        bundleproductTable.setItems(bundleProductList);
 
         // Set up table selection listener
         bundleproductTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
+                System.out.println("Selected bundle product: " + newSelection.getId() + " - " + newSelection.getName());
+                
                 // Fill form fields with selected product data
+                idField.setText(String.valueOf(newSelection.getId()));
                 codeField.setText(newSelection.getCode());
                 nameField.setText(newSelection.getName());
+                productcodeField.setText(newSelection.getProductCode());
                 priceField.setText(String.valueOf(newSelection.getPrice()));
                 qtyField.setText(String.valueOf(newSelection.getQty()));
-                productcodeField.setText(newSelection.getProductCode());
             }
         });
+    }
+
+    // Load bundle products from Supabase
+    private void loadBundleProducts() {
+        String query = "SELECT * FROM bundle_products";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            
+            bundleProductList.clear();
+            
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String code = rs.getString("code");
+                String bundle_name = rs.getString("bundle_name");
+                String productCode = rs.getString("product_code");
+                double price = rs.getDouble("price");
+                int qty = rs.getInt("qty");
+                
+                // Create new BundleProduct object and add to list
+                BundleProduct product = new BundleProduct(
+                    id,
+                    code,
+                    bundle_name,
+                    productCode,
+                    price,
+                    qty,
+                    LocalDate.now().plusMonths(3), // Default expiry date
+                    "Bundle" // Default category
+                );
+                bundleProductList.add(product);
+            }
+            
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "Database Error", 
+                    "Failed to load bundle products: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @FXML
@@ -130,52 +193,110 @@ public class BundleProductsController implements Initializable {
     }
 
     @FXML
-    private void handleSaveProduct() {
-        try {
-            // Validate input fields
-            if (validateFields()) {
-                String code = codeField.getText();
-                String name = nameField.getText();
-                String productCode = productcodeField.getText();
-                double price = Double.parseDouble(priceField.getText());
-                int qty = Integer.parseInt(qtyField.getText());
-                
-                // Check if editing existing product or adding new one
-                boolean isNewProduct = true;
-                for (BundleProduct product : bundleProductList) {
-                    if (product.getCode().equals(code)) {
-                        // Update existing product
-                        product.setName(name);
-                        product.setProductCode(productCode);
-                        product.setPrice(price);
-                        product.setQty(qty);
-                        isNewProduct = false;
-                        break;
-                    }
-                }
-                
-                if (isNewProduct) {
-                    // Create new product and add to list
-                    BundleProduct newProduct = new BundleProduct(
-                        code, name, productCode, price, qty, 
-                        LocalDate.now().plusMonths(3), // Default expiry date
-                        "Bundle" // Default category
-                    );
-                    bundleProductList.add(newProduct);
-                }
-                
-                // Refresh table
-                bundleproductTable.refresh();
-                
-                // Clear form fields
-                clearFields();
-                
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Bundle product saved successfully!");
+private void handleSaveProduct() {
+    try {
+        // Validate input fields
+        if (validateFields()) {
+            String code = codeField.getText().trim();
+            String bundle_name = nameField.getText().trim();
+            String productCode = productcodeField.getText().trim();
+            
+            // Parse numeric values with error handling
+            double price;
+            int qty;
+            
+            try {
+                price = Double.parseDouble(priceField.getText().trim());
+                qty = Integer.parseInt(qtyField.getText().trim());
+            } catch (NumberFormatException e) {
+                showAlert(Alert.AlertType.ERROR, "Input Error", 
+                    "Please enter valid numeric values for price and quantity.");
+                return;
             }
-        } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Input Error", "Please enter valid numeric values for price and quantity.");
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Save Error", "An error occurred while saving the bundle product.");
+            
+            // Check if this is an update or a new record
+            String idText = idField != null ? idField.getText().trim() : "";
+
+            if (idText.isEmpty()) {
+                System.out.println("Inserting new bundle product...");
+                // Insert new record
+                insertBundleProduct(code, bundle_name, productCode, price, qty);
+            } else {
+                try {
+                    int id = Integer.parseInt(idText);
+                    System.out.println("Updating bundle product with ID: " + id);
+                    // Update existing record
+                    updateBundleProduct(id, code, bundle_name, productCode, price, qty);
+                } catch (NumberFormatException e) {
+                    showAlert(Alert.AlertType.ERROR, "Input Error", "Invalid ID format.");
+                    return;
+                }
+            }
+            
+            // Refresh data from database
+            loadBundleProducts();
+            
+            // Clear form fields
+            clearFields();
+            
+            showAlert(Alert.AlertType.INFORMATION, "Success", "Bundle product saved successfully!");
+        }
+    } catch (Exception e) {
+        showAlert(Alert.AlertType.ERROR, "Save Error", 
+            "An error occurred while saving the bundle product: " + e.getMessage());
+        e.printStackTrace();
+    }
+}
+
+    // Insert a new bundle product into the database
+    private void insertBundleProduct(String code, String name, String productCode, double price, int qty) {
+        String sql = "INSERT INTO bundle_products (code, bundle_name, product_code, price, qty) VALUES (?, ?, ?, ?, ?) RETURNING id";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, code);
+            pstmt.setString(2, name);
+            pstmt.setString(3, productCode);
+            pstmt.setDouble(4, price);
+            pstmt.setInt(5, qty);
+            
+            // Execute and get the generated ID
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    int generatedId = rs.getInt("id");
+                    System.out.println("New bundle product ID: " + generatedId);
+                } else {
+                    throw new SQLException("Creating bundle product failed, no ID returned.");
+                }
+            }
+            
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "Database Error", 
+                    "Failed to insert bundle product: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Update an existing bundle product in the database
+    private void updateBundleProduct(int id, String code, String name, String productCode, double price, int qty) {
+        String sql = "UPDATE bundle_products SET code = ?, bundle_name = ?, product_code = ?, price = ?, qty = ? WHERE id = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, code);
+            pstmt.setString(2, name);
+            pstmt.setString(3, productCode);
+            pstmt.setDouble(4, price);
+            pstmt.setInt(5, qty);
+            pstmt.setInt(6, id);
+            
+            pstmt.executeUpdate();
+            
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "Database Error", 
+                    "Failed to update bundle product: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -191,12 +312,36 @@ public class BundleProductsController implements Initializable {
             
             Optional<ButtonType> result = confirmAlert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
-                bundleProductList.remove(selectedProduct);
+                // Delete from database
+                deleteBundleProduct(selectedProduct.getId());
+                
+                // Refresh data
+                loadBundleProducts();
+                
+                // Clear form fields
                 clearFields();
+                
                 showAlert(Alert.AlertType.INFORMATION, "Success", "Bundle product deleted successfully!");
             }
         } else {
             showAlert(Alert.AlertType.WARNING, "No Selection", "Please select a bundle product to delete.");
+        }
+    }
+
+    // Delete a bundle product from the database
+    private void deleteBundleProduct(int id) {
+        String sql = "DELETE FROM bundle_products WHERE id = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+            
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "Database Error", 
+                    "Failed to delete bundle product: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -237,6 +382,18 @@ public class BundleProductsController implements Initializable {
             }
         }
         
+        // Only validate ID if it's not empty (for updates)
+        if (!idField.getText().trim().isEmpty()) {
+            try {
+                int id = Integer.parseInt(idField.getText().trim());
+                if (id < 0) {
+                    errorMessage.append("ID cannot be negative.\n");
+                }
+            } catch (NumberFormatException e) {
+                errorMessage.append("ID must be a valid integer.\n");
+            }
+        }
+        
         if (errorMessage.length() > 0) {
             showAlert(Alert.AlertType.ERROR, "Validation Error", errorMessage.toString());
             return false;
@@ -246,6 +403,7 @@ public class BundleProductsController implements Initializable {
     }
 
     private void clearFields() {
+        idField.clear();
         codeField.clear();
         nameField.clear();
         productcodeField.clear();
@@ -259,48 +417,5 @@ public class BundleProductsController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
-    }
-
-    // Model class for Bundle Product
-    public static class BundleProduct {
-        private String code;
-        private String name;
-        private String productCode;
-        private double price;
-        private int qty;
-        private LocalDate expDate;
-        private String category;
-
-        public BundleProduct(String code, String name, String productCode, double price, int qty, LocalDate expDate, String category) {
-            this.code = code;
-            this.name = name;
-            this.productCode = productCode;
-            this.price = price;
-            this.qty = qty;
-            this.expDate = expDate;
-            this.category = category;
-        }
-
-        // Getters and setters
-        public String getCode() { return code; }
-        public void setCode(String code) { this.code = code; }
-
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-
-        public String getProductCode() { return productCode; }
-        public void setProductCode(String productCode) { this.productCode = productCode; }
-
-        public double getPrice() { return price; }
-        public void setPrice(double price) { this.price = price; }
-
-        public int getQty() { return qty; }
-        public void setQty(int qty) { this.qty = qty; }
-
-        public LocalDate getExpDate() { return expDate; }
-        public void setExpDate(LocalDate expDate) { this.expDate = expDate; }
-
-        public String getCategory() { return category; }
-        public void setCategory(String category) { this.category = category; }
     }
 }

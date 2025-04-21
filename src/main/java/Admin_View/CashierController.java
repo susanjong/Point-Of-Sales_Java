@@ -10,12 +10,14 @@ import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import com.example.uts_pbo.DatabaseConnection;
 import com.example.uts_pbo.LoginController;
-import com.example.uts_pbo.NavigationAuthorizer;
 import com.example.uts_pbo.User;
 
 import javafx.collections.FXCollections;
@@ -46,6 +48,7 @@ public class CashierController implements Initializable{
     @FXML private Button usersBtn;
     @FXML private Button adminLogBtn;
     @FXML private FlowPane productsContainer;
+    @FXML private FlowPane bundleProductsContainer;
     @FXML private TextField searchField;
     @FXML private Button addToCartBtn;
     @FXML private Label productNameLabel;
@@ -57,6 +60,7 @@ public class CashierController implements Initializable{
     @FXML private VBox cartItemsContainer;
     @FXML private Label totalAmountLabel;
     
+    private Map<String, BundleProduct> bundleProductMap = new HashMap<>(); 
     private double totalAmount = 0.0;
     private NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
     private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy");
@@ -82,6 +86,7 @@ public class CashierController implements Initializable{
         // Load initial data
         try {
             loadProductsFromDatabase();
+            loadBundleProducts();
             System.out.println("Loaded " + products.size() + " products from database");
             displayProducts();
             System.out.println("Displayed products in UI");
@@ -155,6 +160,258 @@ public class CashierController implements Initializable{
             }
         }
         addToCartBtn.setDisable(true);
+    }
+
+    private void loadBundleProducts() {
+        System.out.println("Loading bundle products...");
+        // Clear the existing map and container
+        bundleProductMap.clear();
+        if (bundleProductsContainer != null) {
+            bundleProductsContainer.getChildren().clear();
+            System.out.println("Cleared bundle products container");
+        } else {
+            System.err.println("WARNING: bundleProductsContainer is null!");
+            // Get it from the scene graph if it's null
+            try {
+                bundleProductsContainer = (FlowPane) cashierBtn.getScene().lookup("#bundleProductsContainer");
+                System.out.println("Found bundleProductsContainer: " + (bundleProductsContainer != null));
+            } catch (Exception e) {
+                System.err.println("Failed to find bundleProductsContainer: " + e.getMessage());
+            }
+        }
+        
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            // First, get all unique bundle codes and their prices
+            String bundleQuery = "SELECT DISTINCT code, price FROM bundle_products";
+            try (PreparedStatement stmt = conn.prepareStatement(bundleQuery);
+                 ResultSet rs = stmt.executeQuery()) {
+                
+                int bundleCount = 0;
+                while (rs.next()) {
+                    bundleCount++;
+                    String bundleCode = rs.getString("code");
+                    double bundlePrice = rs.getDouble("price");
+                    
+                    System.out.println("Found bundle: " + bundleCode + " with price: " + bundlePrice);
+                    
+                    // Create a new bundle object to store info
+                    BundleProduct bundle = new BundleProduct(bundleCode, bundlePrice);
+                    bundleProductMap.put(bundleCode, bundle);
+                    
+                    // Now get all products in this bundle
+                    loadBundleItems(conn, bundle);
+                    
+                    // Create and add the bundle UI element
+                    VBox bundleBox = createBundleProductBox(bundle);
+                    
+                    if (bundleProductsContainer != null) {
+                        bundleProductsContainer.getChildren().add(bundleBox);
+                        System.out.println("Added bundle to UI: " + bundle.getName());
+                    } else {
+                        System.err.println("Cannot add bundle to UI, container is null");
+                    }
+                }
+                System.out.println("Total bundles found: " + bundleCount);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("SQL error loading bundles: " + e.getMessage());
+            // Handle the exception (show an alert, etc.)
+        }
+    }
+
+    private void loadBundleItems(Connection conn, BundleProduct bundle) throws SQLException {
+        String itemsQuery = "SELECT bp.product_code, bp.qty, p.product_name, p.price, p.qty, " +
+                            "p.exp_date, p.category, p.image_path " +
+                            "FROM bundle_products bp " +
+                            "JOIN product p ON bp.product_code = p.code " +
+                            "WHERE bp.code = ?";
+        
+        try (PreparedStatement stmt = conn.prepareStatement(itemsQuery)) {
+            stmt.setString(1, bundle.getCode());
+            try (ResultSet rs = stmt.executeQuery()) {
+                String bundleName = getBundleNameFromDatabase(conn, bundle.getCode());
+                StringBuilder fullBundleName = new StringBuilder(bundleName + ": ");
+                List<String> productNames = new ArrayList<>();
+                
+                while (rs.next()) {
+                    String productCode = rs.getString("product_code");
+                    int qty = rs.getInt("qty");
+                    String productName = rs.getString("product_name");
+                    double productPrice = rs.getDouble("price");
+                    int productQty = rs.getInt("qty");
+                    String expirationDate = rs.getString("exp_date");
+                    String category = rs.getString("category");
+                    String imagePath = rs.getString("image_path");
+                    
+                    // Create a Product object first
+                    Product product = new Product(
+                        productCode, productName, productPrice, 
+                        productQty, expirationDate, category, imagePath
+                    );
+                    
+                    // Now add the Product object to the bundle with the quantity
+                    bundle.addProduct(product, qty);
+                    
+                    productNames.add(productName + " (" + qty + ")");
+                }
+                
+                if (!productNames.isEmpty()) {
+                    fullBundleName.append(String.join(", ", productNames));
+                    bundle.setName(fullBundleName.toString());
+                } else {
+                    // If no products found, just use the name from database
+                    bundle.setName(bundleName);
+            }
+        }
+    }
+}
+
+    private String getBundleNameFromDatabase(Connection conn, String bundleCode) {
+        String defaultName = "Bundle";  // Default fallback name
+        
+        try {
+            String query = "SELECT bundle_name FROM bundle_products WHERE code = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, bundleCode);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getString("bundle_name");
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting bundle name: " + e.getMessage());
+        }
+        
+        return defaultName;
+    }
+
+    /**
+ * Creates a UI box for displaying a bundle product that matches your design
+ */
+    private VBox createBundleProductBox(BundleProduct bundle) {
+        // Create the main VBox container with the specified styling
+        VBox bundleBox = new VBox();
+        bundleBox.setStyle("-fx-border-color: #CCCCCC; -fx-border-radius: 8; -fx-padding: 10.0;");
+        
+        System.out.println("Creating UI for bundle: " + bundle.getName());
+        
+        // Create bundle name label with wrapping text
+        Label nameLabel = new Label(bundle.getName());
+        nameLabel.setMaxWidth(180.0);
+        nameLabel.setStyle("-fx-font-size: 14px;");
+        nameLabel.setWrapText(true);
+        
+        // Create price label with bold formatting
+        Label priceLabel = new Label(String.format("Rp %.3f", bundle.getPrice()));
+        priceLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+        
+        // Create add to cart button with green styling
+        Button addToCartBtn = new Button("Add to Cart");
+        addToCartBtn.setStyle("-fx-background-color: #5B8336; -fx-text-fill: white;");
+        addToCartBtn.setUserData(bundle); // Store BundleProduct object with the button
+        addToCartBtn.setOnAction(e -> addBundleToCart(bundle));
+        
+        // Add all elements to the VBox
+        bundleBox.getChildren().addAll(nameLabel, priceLabel, addToCartBtn);
+        
+       
+        return bundleBox;
+    }
+
+
+    @FXML
+    void handleAddBundleToCart(ActionEvent event) {
+        // Check if the event comes from a button with a BundleProduct parameter
+        if (event.getSource() instanceof Button) {
+            Button clickedButton = (Button) event.getSource();
+            Object userData = clickedButton.getUserData();
+            
+            // If the button has BundleProduct data attached
+            if (userData instanceof BundleProduct) {
+                BundleProduct bundle = (BundleProduct) userData;
+                addBundleToCart(bundle);
+            } 
+            // Fall back to the original method for static buttons in FXML
+            else {
+                addBundleToCartFromUI(clickedButton);
+            }
+        }
+    }
+
+    /**
+     * Add a bundle to cart directly using the BundleProduct object
+     */
+    private void addBundleToCart(BundleProduct bundle) {
+        boolean bundleFound = false;
+        
+        // Check if bundle already exists in cart
+        for (CartItem item : cartItems) {
+            if (item.getName().equals(bundle.getName())) {
+                item.setQuantity(item.getQuantity() + 1);
+                bundleFound = true;
+                break;
+            }
+        }
+        
+        // Add new bundle to cart if not found
+        if (!bundleFound) {
+            CartItem bundleItem = new CartItem(bundle.getName(), bundle.getPrice(), 1);
+            cartItems.add(bundleItem);
+        }
+        
+        refreshCartView();
+        updateTotalAmount();
+        
+        showAlert(Alert.AlertType.INFORMATION, "Success", "Bundle added to cart!");
+    }
+
+    /**
+     * Original method that extracts bundle info from UI elements
+     */
+    private void addBundleToCartFromUI(Button clickedButton) {
+        VBox bundleBox = (VBox) clickedButton.getParent();
+        String bundleName = "";
+        double bundlePrice = 20400.0;
+        
+        // Extract information from the UI elements
+        for (javafx.scene.Node node : bundleBox.getChildren()) {
+            if (node instanceof Label) {
+                Label label = (Label) node;
+                if (label.getStyle().contains("-fx-font-weight: bold")) {
+                    String priceText = label.getText().replace("Rp ", "").replace(".", "");
+                    try {
+                        bundlePrice = Double.parseDouble(priceText);
+                    } catch (NumberFormatException e) {
+                        // Keep default price if parsing fails
+                    }
+                } else if (!label.getText().isEmpty() && !label.getText().startsWith("Rp")) {
+                    bundleName = label.getText();
+                }
+            }
+        }
+        
+        // Check if bundle already exists in cart
+        boolean bundleFound = false;
+        for (CartItem item : cartItems) {
+            if (item.getName().equals(bundleName)) {
+                item.setQuantity(item.getQuantity() + 1);
+                bundleFound = true;
+                break;
+            }
+        }
+        
+        // Add new bundle to cart if not found
+        if (!bundleFound) {
+            CartItem bundleItem = new CartItem(bundleName, bundlePrice, 1);
+            cartItems.add(bundleItem);
+        }
+        
+        refreshCartView();
+        updateTotalAmount();
+        
+        showAlert(Alert.AlertType.INFORMATION, "Success", "Bundle added to cart!");
     }
     
     private void loadProductsFromDatabase() {
@@ -686,51 +943,7 @@ public class CashierController implements Initializable{
         });
     }
     
-    @FXML
-    void handleAddBundleToCart(ActionEvent event) {
-        Button clickedButton = (Button) event.getSource();
-        VBox bundleBox = (VBox) clickedButton.getParent();
-        String bundleName = "";
-        double bundlePrice = 20400.0;
-        
-        for (javafx.scene.Node node : bundleBox.getChildren()) {
-            if (node instanceof Label) {
-                Label label = (Label) node;
-                if (label.getStyle().contains("-fx-font-weight: bold")) {
-                    String priceText = label.getText().replace("Rp ", "").replace(".", "");
-                    try {
-                        bundlePrice = Double.parseDouble(priceText);
-                    } catch (NumberFormatException e) {
-                    }
-                } else if (!label.getText().isEmpty() && !label.getText().startsWith("Rp")) {
-                    bundleName = label.getText();
-                }
-            }
-        }
-        
-        if (bundleName.isEmpty()) {
-            bundleName = "Bundling Chitato snack cheese flavour, Bango Kecap Manis";
-        }
-        
-        boolean bundleFound = false;
-        for (CartItem item : cartItems) {
-            if (item.getName().equals(bundleName)) {
-                item.setQuantity(item.getQuantity() + 1);
-                bundleFound = true;
-                break;
-            }
-        }
-        
-        if (!bundleFound) {
-            CartItem bundleItem = new CartItem(bundleName, bundlePrice, 1);
-            cartItems.add(bundleItem);
-        }
-        
-        refreshCartView();
-        updateTotalAmount();
-        
-        showAlert(Alert.AlertType.INFORMATION, "Success", "Bundle added to cart!");
-    }
+   
     
     @FXML
     void handleAddProductToCart(ActionEvent event) {

@@ -295,9 +295,18 @@ public void initialize(URL url, ResourceBundle resourceBundle) {
                         updateStmt.setNull(4, Types.DATE);
                     }
                     updateStmt.setString(5, category);
-                    updateStmt.setString(7, code);
+                    updateStmt.setString(6, code);
                     updateStmt.executeUpdate();
-                    
+                
+                    ProductModificationLogController.logProductAction(
+                        UserSession.getUserId(),
+                        UserSession.getUsername(),
+                        code,
+                        name,
+                        "UPDATE"
+                    );
+
+
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Product updated successfully");
                 } else {
                     // Insert new product
@@ -315,6 +324,14 @@ public void initialize(URL url, ResourceBundle resourceBundle) {
                     }
                     insertStmt.setString(6, category);
                     insertStmt.executeUpdate();
+
+                    ProductModificationLogController.logProductAction(
+                        UserSession.getUserId(),
+                        UserSession.getUsername(),
+                        code,
+                        name,
+                        "ADD"
+                    );
                     
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Product added successfully");
                 }
@@ -350,6 +367,15 @@ public void initialize(URL url, ResourceBundle resourceBundle) {
         confirmDialog.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try (Connection conn = DatabaseConnection.getConnection()) {
+                    
+                    ProductModificationLogController.logProductAction(
+                        UserSession.getUserId(),
+                        UserSession.getUsername(),
+                        selectedProduct.getCode(),  // Changed from productCode to selectedProduct.getCode()
+                        selectedProduct.getName(),
+                        "DELETE"
+                    );
+                    
                     String deleteQuery = "DELETE FROM product WHERE code = ?";
                     PreparedStatement pst = conn.prepareStatement(deleteQuery);
                     pst.setString(1, selectedProduct.getCode());

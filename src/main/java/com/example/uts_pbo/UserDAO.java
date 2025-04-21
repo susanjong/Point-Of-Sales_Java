@@ -273,7 +273,7 @@ public class UserDAO {
         String selectSql = "SELECT * FROM users WHERE id = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(selectSql)) {
+            PreparedStatement stmt = conn.prepareStatement(selectSql)) {
             
             stmt.setInt(1, userId);
             ResultSet rs = stmt.executeQuery();
@@ -289,26 +289,25 @@ public class UserDAO {
                     rs.getString("salt"),
                     rs.getString("role")
                 );
+                // Log account deletion BEFORE actual deletion
+                if (user != null) {
+                    AuthLogger.logAccountDeletion(user);
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            return false;
         }
         
         // Now delete the user
         String sql = "DELETE FROM users WHERE id = ?";
         
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
             
             stmt.setInt(1, userId);
             
             int rowsAffected = stmt.executeUpdate();
-            
-            if (rowsAffected > 0 && user != null) {
-                // Log account deletion
-                AuthLogger.logAccountDeletion(user);
-                return true;
-            }
             return rowsAffected > 0;
             
         } catch (SQLException e) {

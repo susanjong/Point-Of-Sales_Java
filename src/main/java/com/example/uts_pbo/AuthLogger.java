@@ -101,4 +101,16 @@ public class AuthLogger {
         );
         AuthenticationLogDAO.recordLog(entry);
     }
+
+    // Add this method to AuthLogger.java
+    public static void logLogout(User user) {
+        AuthenticationLogEntry entry = new AuthenticationLogEntry(
+            user.getId(),
+            user.getUsername(),
+            user.getRole(),
+            user.getEmail(),
+            "Logout"
+        );
+        AuthenticationLogDAO.recordLog(entry);
+    }
 }

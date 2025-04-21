@@ -68,15 +68,14 @@
                     <Insets left="10" top="10" />
                 </VBox.margin>
             </Label>
-            <TableView fx:id="UserTable" VBox.vgrow="ALWAYS">
+            <TableView fx:id="userTable" VBox.vgrow="ALWAYS">
                 <columns>
-                   <TableColumn fx:id="userIdColumn"     text="User ID"    prefWidth="100.0"/>
-                    <TableColumn fx:id="firstNameColumn"  text="First Name" prefWidth="180.0"/>
-                    <TableColumn fx:id="lastNameColumn"   text="Last Name"  prefWidth="180.0"/>
-                    <TableColumn fx:id="usernameColumn"   text="Username"   prefWidth="100.0"/>
-                    <TableColumn fx:id="emailColumn"      text="Email"      prefWidth="150.0"/>
-                    <TableColumn fx:id="passwordColumn"   text="Password"   prefWidth="100.0"/>
-                    <TableColumn fx:id="roleColumn"       text="Role"       prefWidth="120.0"/>
+                   <TableColumn fx:id="userIdCol"     text="User ID"    prefWidth="100.0"/>
+                    <TableColumn fx:id="firstNameCol"  text="First Name" prefWidth="180.0"/>
+                    <TableColumn fx:id="lastNameCol"   text="Last Name"  prefWidth="180.0"/>
+                    <TableColumn fx:id="usernameCol"   text="Username"   prefWidth="100.0"/>
+                    <TableColumn fx:id="emailCol"      text="Email"      prefWidth="150.0"/>
+                    <TableColumn fx:id="roleCol"       text="Role"       prefWidth="120.0"/>
                 </columns>
             </TableView>
             <HBox alignment="CENTER_RIGHT" spacing="10.0">
@@ -88,52 +87,41 @@
         </VBox>
     </center>
     <right>
-  <VBox prefWidth="300.0" style="-fx-background-color: #f0f0f0;" spacing="10.0" alignment="TOP_CENTER">
-    <padding>
-      <Insets top="20.0" bottom="20.0" left="20.0" right="20.0"/>
-    </padding>
+        <VBox prefWidth="300.0" style="-fx-background-color: #f0f0f0;" spacing="10.0" alignment="TOP_CENTER">
+            <padding>
+                <Insets top="20.0" bottom="20.0" left="20.0" right="20.0"/>
+            </padding>
 
-    <!-- User ID (auto-generated) -->
-    <Label text="User ID (auto):"/>
-    <TextField fx:id="idField" disable="true"/>
+            <!-- User ID (auto-generated) -->
+            <Label text="User ID (auto):"/>
+            <TextField fx:id="idField" disable="true"/>
 
-    <!-- First & Last Name -->
-    <Label text="First Name:"/>
-    <TextField fx:id="firstNameField"/>
-    <Label text="Last Name:"/>
-    <TextField fx:id="lastNameField"/>
+            <!-- First & Last Name -->
+            <Label text="First Name:"/>
+            <TextField fx:id="firstNameField"/>
+            <Label text="Last Name:"/>
+            <TextField fx:id="lastNameField"/>
 
-    <!-- Username & Email -->
-    <Label text="Username:"/>
-    <TextField fx:id="usernameField"/>
-    <Label text="Email:"/>
-    <TextField fx:id="emailField"/>
+            <!-- Username & Email -->
+            <Label text="Username:"/>
+            <TextField fx:id="usernameField"/>
+            <Label text="Email:"/>
+            <TextField fx:id="emailField"/>
 
-    <!-- Password -->
-    <Label text="Password:"/>
-    <PasswordField fx:id="passwordField"/>
+            <!-- Password -->
+            <Label text="Password:"/>
+            <PasswordField fx:id="passwordField"/>
 
-    <!-- Role (remove any stray “salt” entry!) -->
-    <Label text="Select Role:"/>
-    <ComboBox fx:id="roleComboBox" promptText="Choose Role" prefWidth="200.0">
-      <items>
-        <FXCollections fx:factory="observableArrayList">
-          <String fx:value="admin"/>
-          <String fx:value="user"/>
-        </FXCollections>
-      </items>
-    </ComboBox>
+            <!-- Role -->
+            <Label text="Select Role:"/>
+            <ComboBox fx:id="roleComboBox" promptText="Choose Role" prefWidth="200.0"/>
 
-    <!-- Action buttons -->
-    <Button fx:id="saveUserBtn"
-            text="Save User"
-            maxWidth="Infinity"
-            onAction="#handleSaveUser"
-            style="…"/>
-    <Button fx:id="deleteUserBtn"
-            text="Delete User"
-            onAction="#handleDeleteUser"
-            style="…"/>
-  </VBox>
-</right>
+            <!-- Action button -->
+            <Button fx:id="saveUserBtn"
+                    text="Save User"
+                    maxWidth="Infinity"
+                    onAction="#handleSaveUser"
+                    style="-fx-background-color: #2e7d32; -fx-text-fill: white; -fx-font-weight: bold; -fx-border-radius: 40px; -fx-background-radius: 40px; -fx-padding: 5 15px;"/>
+        </VBox>
+    </right>
 </BorderPane>

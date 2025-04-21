@@ -36,7 +36,7 @@ public class BundleProduct extends Product {
     // Constructor matching the one used in BundleProductsController
     public BundleProduct(int id, String code, String name, String productCode, double price, int qty, 
                         LocalDate expDate, String category) {
-        super(code, name, price, qty, expDate.toString(), category, "");
+        super(code, name, price, qty, expDate.toString(), category);
         this.id.set(id);
         this.productCode.set(productCode);
         this.qty.set(qty);
@@ -55,9 +55,9 @@ public class BundleProduct extends Product {
     
     // Constructor to match Product's constructor plus our additional fields
     public BundleProduct(String code, String name, double price, int quantity, 
-                        String expirationDate, String category, String imagePath,
+                        String expirationDate, String category,
                         String productCode, int id) {
-        super(code, name, price, quantity, expirationDate, category, imagePath);
+        super(code, name, price, quantity, expirationDate, category);
         this.productCode.set(productCode);
         this.id.set(id);
         this.qty.set(quantity);
@@ -71,9 +71,9 @@ public class BundleProduct extends Product {
     
     // Constructor with discount percentage
     public BundleProduct(String code, String name, double price, int quantity, 
-                        String expirationDate, String category, String imagePath,
+                        String expirationDate, String category,
                         String productCode, int id, double discountPercentage) {
-        this(code, name, price, quantity, expirationDate, category, imagePath, productCode, id);
+        this(code, name, price, quantity, expirationDate, category, productCode, id);
         this.discountPercentage.set(discountPercentage);
     }
     

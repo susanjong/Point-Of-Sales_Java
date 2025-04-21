@@ -1,7 +1,18 @@
 package Admin_View;
 
+import java.io.IOException;
+import java.net.URL;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ResourceBundle;
+
 import com.example.uts_pbo.DatabaseConnection;
-import com.example.uts_pbo.Main;
 import com.example.uts_pbo.NavigationAuthorizer;
 import com.example.uts_pbo.UserSession;
 
@@ -14,20 +25,16 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.sql.*;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ResourceBundle;
 
 public class ProductManagementController implements Initializable {
 
@@ -55,16 +62,13 @@ public class ProductManagementController implements Initializable {
     @FXML private TextField qtyField;
     @FXML private TextField expDateField;
     @FXML private ComboBox<String> categoryComboBox;
-    @FXML private ImageView productImage;
     
     // Action buttons
     @FXML private Button saveProductBtn;
     @FXML private Button deleteProductBtn;
     @FXML private Button updateProductBtn;
     @FXML private Button addCategoryBtn;
-    @FXML private Button addImageBtn;
-    
-    private String currentImagePath = "images";
+
     private ObservableList<String> categories = FXCollections.observableArrayList(
             "Groceries", "Electronics", "Clothing", "Home Goods", "Beauty", "Beverages", "Snacks"
     );
@@ -107,15 +111,14 @@ public void initialize(URL url, ResourceBundle resourceBundle) {
                       "Admin access required.");
         }
     });
-    
-    resetProductImage();
+
 }
     
     private void loadProductsFromDatabase() {
         ObservableList<Product> productList = FXCollections.observableArrayList();
         
         try (Connection conn = DatabaseConnection.getConnection()) {
-            String query = "SELECT code, product_name, price, qty, exp_date, category, image_path FROM product";
+            String query = "SELECT code, product_name, price, qty, exp_date, category FROM product";
             PreparedStatement pst = conn.prepareStatement(query);
             ResultSet rs = pst.executeQuery();
             
@@ -131,9 +134,8 @@ public void initialize(URL url, ResourceBundle resourceBundle) {
                         expDate = dateFormat.format(sqlDate);
                     }
                 String category = rs.getString("category");
-                String imagePath = rs.getString("image_path");
                 
-                Product product = new Product(code, name, price, qty, expDate, category, imagePath);
+                Product product = new Product(code, name, price, qty, expDate, category);
                 productList.add(product);
             }
             
@@ -160,37 +162,8 @@ public void initialize(URL url, ResourceBundle resourceBundle) {
         }
 
         categoryComboBox.setValue(product.getCategory());
-        
-        if (product.getImagePath() != null) {
-            try {
-                Image image;
-                String imagePath = product.getImagePath();
-                
-                if (imagePath.startsWith("/resources/")) {
-                    image = new Image(getClass().getResourceAsStream(imagePath));
-                } else {
-                    image = new Image(new File(imagePath).toURI().toString());
-                }
-                
-                productImage.setImage(image);
-                currentImagePath = product.getImagePath();
-            } catch (Exception e) {
-                resetProductImage();
-            }
-        } else {
-            resetProductImage();
-        }
     }
-    
-    private void resetProductImage() {
-        try {
-            Image placeholder = new Image(getClass().getResourceAsStream("/resources/no-image.png"));
-            productImage.setImage(placeholder);
-        } catch (Exception e) {
-            productImage.setImage(null);
-        }
-        currentImagePath = null;
-    }
+
 
     @FXML
     public void initialize() {
@@ -308,7 +281,7 @@ public void initialize(URL url, ResourceBundle resourceBundle) {
                 
                 if (rs.next()) {
                     // Update existing product
-                    String updateQuery = "UPDATE Product SET product_name = ?, price = ?, qty = ?, exp_date = ?, category = ?, image_path = ? WHERE code = ?";
+                    String updateQuery = "UPDATE Product SET product_name = ?, price = ?, qty = ?, exp_date = ?, category = ? WHERE code = ?";
                     PreparedStatement updateStmt = conn.prepareStatement(updateQuery);
                     updateStmt.setString(1, name);
                     updateStmt.setDouble(2, price);
@@ -319,14 +292,13 @@ public void initialize(URL url, ResourceBundle resourceBundle) {
                         updateStmt.setNull(4, Types.DATE);
                     }
                     updateStmt.setString(5, category);
-                    updateStmt.setString(6, currentImagePath);
                     updateStmt.setString(7, code);
                     updateStmt.executeUpdate();
                     
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Product updated successfully");
                 } else {
                     // Insert new product
-                    String insertQuery = "INSERT INTO Product (code, product_name, price, qty, exp_date, category, image_path) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    String insertQuery = "INSERT INTO Product (code, product_name, price, qty, exp_date, category) VALUES (?, ?, ?, ?, ?, ?)";
                     PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
                     insertStmt.setString(1, code);
                     insertStmt.setString(2, name);
@@ -339,7 +311,6 @@ public void initialize(URL url, ResourceBundle resourceBundle) {
                         insertStmt.setNull(5, Types.DATE);
                     }
                     insertStmt.setString(6, category);
-                    insertStmt.setString(7, currentImagePath);
                     insertStmt.executeUpdate();
                     
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Product added successfully");
@@ -351,7 +322,6 @@ public void initialize(URL url, ResourceBundle resourceBundle) {
                 
             } catch (SQLException e) {
                 showAlert(Alert.AlertType.ERROR, "Database Error", "Could not save product: " + e.getMessage());
-                e.printStackTrace();
             }
             
         } catch (NumberFormatException e) {
@@ -416,7 +386,6 @@ public void initialize(URL url, ResourceBundle resourceBundle) {
         qtyField.clear();
         expDateField.clear();
         categoryComboBox.setValue(null);
-        resetProductImage();
         productTable.getSelectionModel().clearSelection();
     }
     
@@ -428,26 +397,4 @@ public void initialize(URL url, ResourceBundle resourceBundle) {
         alert.showAndWait();
     }
 
-    @FXML
-    private void handleAddImage() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select Product Image");
-        
-        fileChooser.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif")
-        );
-        
-        File selectedFile = fileChooser.showOpenDialog(productImage.getScene().getWindow());
-        
-        if (selectedFile != null) {
-            try {
-                Image image = new Image(selectedFile.toURI().toString());
-                productImage.setImage(image);
-                currentImagePath = selectedFile.getAbsolutePath();
-            } catch (Exception e) {
-                showAlert(Alert.AlertType.ERROR, "Image Error", "Could not load the selected image");
-                resetProductImage();
-            }
-        }
-    }
-}
+   }

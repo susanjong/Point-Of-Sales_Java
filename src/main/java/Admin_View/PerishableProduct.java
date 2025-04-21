@@ -2,9 +2,6 @@ package Admin_View;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PerishableProduct extends Product {
     private LocalDate expiryDate;
@@ -15,9 +12,9 @@ public class PerishableProduct extends Product {
     }
     
     public PerishableProduct(String code, String name, double price, int quantity, 
-                           LocalDate expiryDate, String category, String imagePath) {
+                           LocalDate expiryDate, String category) {
         super(code, name, price, quantity, expiryDate != null ? expiryDate.format(formatter) : null, 
-              category, imagePath);
+              category);
         this.expiryDate = expiryDate;
     }
     

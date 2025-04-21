@@ -1,10 +1,13 @@
 package Admin_View;
 
-import javafx.beans.property.*;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Product {
     private static ObservableList<Product> allProducts = FXCollections.observableArrayList();
@@ -15,19 +18,17 @@ public class Product {
     private final IntegerProperty quantity = new SimpleIntegerProperty();
     private final StringProperty expirationDate = new SimpleStringProperty();
     private final StringProperty category = new SimpleStringProperty();
-    private String imagePath;
     
     public Product() {
     }
     
-    public Product(String code, String name, double price, int quantity, String expirationDate, String category, String imagePath) {
+    public Product(String code, String name, double price, int quantity, String expirationDate, String category) {
         this.code.set(code);
         this.name.set(name);
         this.price.set(price);
         this.quantity.set(quantity);
         this.expirationDate.set(expirationDate);
         this.category.set(category);
-        this.imagePath = imagePath;
     }
     
     public static ObservableList<Product> getAllProducts() {
@@ -112,13 +113,5 @@ public class Product {
     
     public void setCategory(String category) {
         this.category.set(category);
-    }
-    
-    public String getImagePath() {
-        return imagePath;
-    }
-    
-    public void setImagePath(String imagePath) {
-        this.imagePath = imagePath;
     }
 }

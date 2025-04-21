@@ -32,8 +32,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -170,13 +168,10 @@ public class CashierController implements Initializable{
         bundleProductMap.clear();
         if (bundleProductsContainer != null) {
             bundleProductsContainer.getChildren().clear();
-            System.out.println("Cleared bundle products container");
         } else {
             System.err.println("WARNING: bundleProductsContainer is null!");
-            // Get it from the scene graph if it's null
             try {
                 bundleProductsContainer = (FlowPane) cashierBtn.getScene().lookup("#bundleProductsContainer");
-                System.out.println("Found bundleProductsContainer: " + (bundleProductsContainer != null));
             } catch (Exception e) {
                 System.err.println("Failed to find bundleProductsContainer: " + e.getMessage());
             }
@@ -194,8 +189,6 @@ public class CashierController implements Initializable{
                     String bundleCode = rs.getString("code");
                     double bundlePrice = rs.getDouble("price");
                     
-                    System.out.println("Found bundle: " + bundleCode + " with price: " + bundlePrice);
-                    
                     // Create a new bundle object to store info
                     BundleProduct bundle = new BundleProduct(bundleCode, bundlePrice);
                     bundle.setPreserveOriginalPrice(true); // Add this flag to prevent price recalculation
@@ -209,24 +202,21 @@ public class CashierController implements Initializable{
                     
                     if (bundleProductsContainer != null) {
                         bundleProductsContainer.getChildren().add(bundleBox);
-                        System.out.println("Added bundle to UI: " + bundle.getName());
                     } else {
                         System.err.println("Cannot add bundle to UI, container is null");
                     }
                 }
-                System.out.println("Total bundles found: " + bundleCount);
             }
         } catch (SQLException e) {
             e.printStackTrace();
             System.err.println("SQL error loading bundles: " + e.getMessage());
-            // Handle the exception (show an alert, etc.)
         }
     }
 
     
     private void loadBundleItems(Connection conn, BundleProduct bundle) throws SQLException {
         String itemsQuery = "SELECT bp.product_code, bp.qty, p.product_name, p.price, p.qty, " +
-                            "p.exp_date, p.category, p.image_path " +
+                            "p.exp_date, p.category " +
                             "FROM bundle_products bp " +
                             "JOIN product p ON bp.product_code = p.code " +
                             "WHERE bp.code = ?";
@@ -246,12 +236,11 @@ public class CashierController implements Initializable{
                     int productQty = rs.getInt("qty");
                     String expirationDate = rs.getString("exp_date");
                     String category = rs.getString("category");
-                    String imagePath = rs.getString("image_path");
                     
                     // Create a Product object first
                     Product product = new Product(
                         productCode, productName, productPrice, 
-                        productQty, expirationDate, category, imagePath
+                        productQty, expirationDate, category
                     );
                     
                     // Now add the Product object to the bundle with the quantity
@@ -298,9 +287,7 @@ public class CashierController implements Initializable{
         // Create the main VBox container with the specified styling
         VBox bundleBox = new VBox();
         bundleBox.setStyle("-fx-border-color: #CCCCCC; -fx-border-radius: 8; -fx-padding: 10.0;");
-        bundleBox.setSpacing(7);
-
-        System.out.println("Creating UI for bundle: " + bundle.getName());
+        bundleBox.setSpacing(5);
         
         // Create bundle name label with wrapping text
         Label nameLabel = new Label(bundle.getName());
@@ -333,29 +320,6 @@ public class CashierController implements Initializable{
         return bundleBox;
     }
 
-
-    @FXML
-    void handleAddBundleToCart(ActionEvent event) {
-        // Check if the event comes from a button with a BundleProduct parameter
-        if (event.getSource() instanceof Button) {
-            Button clickedButton = (Button) event.getSource();
-            Object userData = clickedButton.getUserData();
-            
-            // If the button has BundleProduct data attached
-            if (userData instanceof BundleProduct) {
-                BundleProduct bundle = (BundleProduct) userData;
-                addBundleToCart(bundle);
-            } 
-            // Fall back to the original method for static buttons in FXML
-            else {
-                addBundleToCartFromUI(clickedButton);
-            }
-        }
-    }
-
-    /**
-     * Add a bundle to cart directly using the BundleProduct object
-     */
     private void addBundleToCart(BundleProduct bundle) {
         boolean bundleFound = false;
         
@@ -441,7 +405,7 @@ public class CashierController implements Initializable{
                 return;
             }
             
-            String query = "SELECT code, product_name, price, qty, exp_date, category, image_path FROM product";
+            String query = "SELECT code, product_name, price, qty, exp_date, category FROM product";
             pst = conn.prepareStatement(query);
             rs = pst.executeQuery();
             
@@ -459,33 +423,9 @@ public class CashierController implements Initializable{
                 }
                 
                 String category = rs.getString("category");
-                String imagePath = rs.getString("image_path");
-                
-                // Normalize image path if needed
-                if (imagePath != null && !imagePath.isEmpty()) {
-                    // If it doesn't already have a leading slash and isn't an absolute path
-                    if (!imagePath.startsWith("/") && !imagePath.contains(":")) {
-                        // Try to normalize it to our expected resource format
-                        if (!imagePath.startsWith("resource/images/")) {
-                            if (imagePath.contains("/")) {
-                                // Just get the filename
-                                String filename = imagePath.substring(imagePath.lastIndexOf('/') + 1);
-                                imagePath = "/resource/images/" + filename;
-                            } else {
-                                // It's just a filename
-                                imagePath = "/resource/images/" + imagePath;
-                            }
-                        } else {
-                            // It already has the right folder structure, just add leading slash
-                            imagePath = "/" + imagePath;
-                        }
-                    }
-                }
-                
-                System.out.println("Loaded product: " + name + " with normalized image path: " + imagePath);
                 
                 // Create product object with all fields from database
-                Product product = new Product(code, name, price, qty, expDate, category, imagePath);
+                Product product = new Product(code, name, price, qty, expDate, category);
                 products.add(product);
             }
             
@@ -533,96 +473,6 @@ public class CashierController implements Initializable{
         VBox productBox = new VBox(5);
         productBox.setStyle("-fx-border-color: #CCCCCC; -fx-border-radius: 8; -fx-padding: 10.0;");
         
-        ImageView imageView = new ImageView();
-        imageView.setFitHeight(120.0);
-        imageView.setFitWidth(120.0);
-        imageView.setPreserveRatio(true);
-        
-        try {
-            // Get image path from the product
-            String imagePath = product.getImagePath();
-            Image image = null;
-            
-            if (imagePath != null && !imagePath.isEmpty()) {
-                // Try different path formats for resources
-                String[] possiblePaths = {
-                    imagePath,                                    // Original path
-                    imagePath.startsWith("/") ? imagePath : "/" + imagePath,  // Add leading slash
-                    "/resources/images/" + getFileName(imagePath),            // Standard resources folder
-                    "/resources/images/" + imagePath,                         // Full path in resources
-                    "resources/images/" + getFileName(imagePath),             // Without leading slash
-                    "/resource/images/" + getFileName(imagePath),             // Alternate spelling
-                    "/resource/images/" + imagePath                           // Full path in alternate spelling
-                };
-                
-                // Try all possible paths
-                for (String path : possiblePaths) {
-                    try {
-                        System.out.println("Trying to load image from: " + path);
-                        image = new Image(getClass().getResourceAsStream(path));
-                        
-                        // Check if image loaded successfully
-                        if (image != null && !image.isError() && image.getWidth() > 0) {
-                            System.out.println("Successfully loaded image from: " + path);
-                            break;  // Exit loop if successful
-                        }
-                    } catch (Exception e) {
-                        // Continue to next path
-                        System.out.println("Failed to load from: " + path);
-                    }
-                }
-                
-                // If all resource loading attempts failed, try file system
-                if (image == null || image.isError() || image.getWidth() == 0) {
-                    try {
-                        System.out.println("Trying to load as file: " + imagePath);
-                        image = new Image("file:" + imagePath);
-                        if (image.isError()) {
-                            throw new Exception("Failed to load from file path");
-                        }
-                    } catch (Exception ex) {
-                        System.out.println("Failed to load as file: " + ex.getMessage());
-                        // Use placeholder if all attempts fail
-                        image = new Image(getClass().getResourceAsStream("/resources/images/placeholder.png"));
-                        if (image == null || image.isError()) {
-                            image = new Image(getClass().getResourceAsStream("/resource/images/placeholder.png"));
-                        }
-                    }
-                }
-            } else {
-                // Use placeholder for null or empty path
-                image = new Image(getClass().getResourceAsStream("/resources/images/placeholder.png"));
-                if (image == null || image.isError()) {
-                    image = new Image(getClass().getResourceAsStream("/resource/images/placeholder.png"));
-                }
-            }
-            
-            // Set the image to ImageView
-            if (image != null && !image.isError() && image.getWidth() > 0) {
-                imageView.setImage(image);
-            } else {
-                throw new Exception("Image could not be loaded");
-            }
-            
-        } catch (Exception e) {
-            System.err.println("Error loading image for " + product.getName() + ": " + e.getMessage());
-            try {
-                // Try both versions of placeholder path
-                Image placeholder = null;
-                try {
-                    placeholder = new Image(getClass().getResourceAsStream("/resources/images/placeholder.png"));
-                } catch (Exception ex) {
-                    placeholder = new Image(getClass().getResourceAsStream("/resource/images/placeholder.png"));
-                }
-                
-                if (placeholder != null && !placeholder.isError()) {
-                    imageView.setImage(placeholder);
-                }
-            } catch (Exception ex) {
-                System.err.println("Error loading placeholder image: " + ex.getMessage());
-            }
-        }
-        
         // Rest of your method remains the same...
         Label nameLabel = new Label(product.getName());
         nameLabel.setMaxWidth(150.0);
@@ -637,7 +487,7 @@ public class CashierController implements Initializable{
         addButton.setStyle("-fx-background-color: #5B8336; -fx-text-fill: white; -fx-font-size: 12px;");
         addButton.setOnAction(e -> handleAddToCartFromDisplay(product));
         
-        productBox.getChildren().addAll(imageView, nameLabel, priceLabel, addButton);
+        productBox.getChildren().addAll(nameLabel, priceLabel, addButton);
         
         return productBox;
     }
@@ -803,7 +653,7 @@ public class CashierController implements Initializable{
                     return;
                 }
                 
-                String query = "SELECT code, product_name, price, qty, exp_date, category, image_path FROM product WHERE code = ?";
+                String query = "SELECT code, product_name, price, qty, exp_date, category FROM product WHERE code = ?";
                 pst = conn.prepareStatement(query);
                 pst.setString(1, code);
                 rs = pst.executeQuery();
@@ -822,10 +672,9 @@ public class CashierController implements Initializable{
                     }
                     
                     String category = rs.getString("category");
-                    String imagePath = rs.getString("image_path");
                     
                     // Create product object with all fields from database
-                    currentProduct = new Product(productCode, name, price, qty, expDate, category, imagePath);
+                    currentProduct = new Product(productCode, name, price, qty, expDate, category);
                     
                     // Display product info
                     productNameLabel.setText(name);

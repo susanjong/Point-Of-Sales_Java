@@ -84,17 +84,6 @@
             <padding>
                 <Insets top="20.0" bottom="20.0" left="20.0" right="20.0" />
             </padding>
-            <Label text="Image" />
-            <ImageView fx:id="productImage" fitWidth="200.0" fitHeight="120.0" preserveRatio="true" style="-fx-border-color: #cccccc; -fx-border-width: 1px;">
-                <VBox.margin>
-                    <Insets bottom="5.0" />
-                </VBox.margin>
-            </ImageView>
-            <Button fx:id="addImageBtn" text="Add Image" onAction="#handleAddImage">
-                <VBox.margin>
-                    <Insets bottom="10.0" />
-                </VBox.margin>
-            </Button>
             <Label text="Code:" />
             <TextField fx:id="codeField" />
             <Label text="Product Name:" />

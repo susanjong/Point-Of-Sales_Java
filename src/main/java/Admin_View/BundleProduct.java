@@ -145,25 +145,6 @@ public class BundleProduct extends Product {
         }
     }
     
-    // Methods to manage bundle items
-    
-    // Add a product to the bundle
-    public void addProduct(Product product, int quantity) {
-        // Check if product already exists in bundle
-        for (BundleItem item : bundleItems) {
-            if (item.getProduct().getCode().equals(product.getCode())) {
-                // Update quantity if product exists
-                item.setQuantity(item.getQuantity() + quantity);
-                updateBundlePrice();
-                return;
-            }
-        }
-        
-        // Add new product to bundle
-        bundleItems.add(new BundleItem(product, quantity));
-        updateBundlePrice();
-    }
-    
     // Remove a product from the bundle
     public boolean removeProduct(String productCode) {
         boolean removed = bundleItems.removeIf(item -> item.getProduct().getCode().equals(productCode));
@@ -184,8 +165,43 @@ public class BundleProduct extends Product {
         updateBundlePrice();
     }
     
-    // Calculate bundle price based on items and discount
+    // Add to BundleProduct.java class
+    private boolean preserveOriginalPrice = false;
+
+    public void setPreserveOriginalPrice(boolean preserveOriginalPrice) {
+        this.preserveOriginalPrice = preserveOriginalPrice;
+    }
+
+    public boolean isPreserveOriginalPrice() {
+        return preserveOriginalPrice;
+    }
+
+    // Then modify the addProduct method
+    public void addProduct(Product product, int quantity) {
+        // Check if product already exists in bundle
+        for (BundleItem item : bundleItems) {
+            if (item.getProduct().getCode().equals(product.getCode())) {
+                // Update quantity if product exists
+                item.setQuantity(item.getQuantity() + quantity);
+                if (!preserveOriginalPrice) {
+                    updateBundlePrice();
+                }
+                return;
+            }
+        }
+        
+        // Add new product to bundle
+        bundleItems.add(new BundleItem(product, quantity));
+        if (!preserveOriginalPrice) {
+            updateBundlePrice();
+        }
+    }
+    
     private void updateBundlePrice() {
+        if (preserveOriginalPrice) {
+            return; // Skip price recalculation if preserveOriginalPrice is true
+        }
+        
         double totalPrice = 0;
         for (BundleItem item : bundleItems) {
             totalPrice += item.getProduct().getPrice() * item.getQuantity();
@@ -195,22 +211,38 @@ public class BundleProduct extends Product {
         double discountedPrice = totalPrice * (1 - (discountPercentage.get() / 100));
         setPrice(discountedPrice);
     }
-    
-    // Getters and setters for discount percentage
-    public double getDiscountPercentage() {
-        return discountPercentage.get();
+
+    public double calculateRegularPrice() {
+        double totalRegularPrice = 0;
+        for (BundleItem item : bundleItems) {
+            totalRegularPrice += item.getProduct().getPrice() * item.getQuantity();
+        }
+        return totalRegularPrice;
+    }
+    // Add this method to BundleProduct.java
+    public double getDiscountedPrice() {
+        // Return the price from the database (which is already the discounted price)
+        return getPrice();
+    }
+
+    // Add this method to calculate the savings amount
+    public double getSavingsAmount() {
+        double regularPrice = calculateRegularPrice();
+        double discountedPrice = getDiscountedPrice();
+        return regularPrice - discountedPrice;
+    }
+
+    // Add this method to calculate the savings percentage
+    public double getSavingsPercentage() {
+        double regularPrice = calculateRegularPrice();
+        double savings = getSavingsAmount();
+        if (regularPrice > 0) {
+            return (savings / regularPrice) * 100;
+        }
+        return 0;
     }
     
-    public void setDiscountPercentage(double discountPercentage) {
-        this.discountPercentage.set(discountPercentage);
-        updateBundlePrice();
-    }
     
-    public DoubleProperty discountPercentageProperty() {
-        return discountPercentage;
-    }
-    
-    // Inner class to represent an item in the bundle with its quantity
     public static class BundleItem {
         private Product product;
         private int quantity;

@@ -57,11 +57,6 @@ public class BundleProductsController implements Initializable {
     @FXML private TextField priceField;
     @FXML private TextField qtyField;
 
-    // Buttons
-    @FXML private Button saveProductBtn;
-    @FXML private Button deleteProductBtn;
-
-    // Observable list to hold the bundle products
     private ObservableList<BundleProduct> bundleProductList = FXCollections.observableArrayList();
 
     @Override
@@ -188,12 +183,11 @@ public class BundleProductsController implements Initializable {
         } catch (IOException e) {
             showAlert(Alert.AlertType.ERROR, "Navigation Error", 
                     "Could not navigate to the requested page: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
     @FXML
-private void handleSaveProduct() {
+    private void handleSaveProduct() {
     try {
         // Validate input fields
         if (validateFields()) {
@@ -244,7 +238,6 @@ private void handleSaveProduct() {
     } catch (Exception e) {
         showAlert(Alert.AlertType.ERROR, "Save Error", 
             "An error occurred while saving the bundle product: " + e.getMessage());
-        e.printStackTrace();
     }
 }
 
@@ -274,7 +267,6 @@ private void handleSaveProduct() {
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Database Error", 
                     "Failed to insert bundle product: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -297,7 +289,6 @@ private void handleSaveProduct() {
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Database Error", 
                     "Failed to update bundle product: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
@@ -341,7 +332,6 @@ private void handleSaveProduct() {
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Database Error", 
                     "Failed to delete bundle product: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 

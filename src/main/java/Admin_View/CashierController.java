@@ -38,7 +38,6 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import Admin_View.TransactionLogger;
 
 public class CashierController implements Initializable{
 
@@ -199,6 +198,7 @@ public class CashierController implements Initializable{
                     
                     // Create a new bundle object to store info
                     BundleProduct bundle = new BundleProduct(bundleCode, bundlePrice);
+                    bundle.setPreserveOriginalPrice(true); // Add this flag to prevent price recalculation
                     bundleProductMap.put(bundleCode, bundle);
                     
                     // Now get all products in this bundle
@@ -223,6 +223,7 @@ public class CashierController implements Initializable{
         }
     }
 
+    
     private void loadBundleItems(Connection conn, BundleProduct bundle) throws SQLException {
         String itemsQuery = "SELECT bp.product_code, bp.qty, p.product_name, p.price, p.qty, " +
                             "p.exp_date, p.category, p.image_path " +
@@ -265,10 +266,10 @@ public class CashierController implements Initializable{
                 } else {
                     // If no products found, just use the name from database
                     bundle.setName(bundleName);
+                }
             }
         }
     }
-}
 
     private String getBundleNameFromDatabase(Connection conn, String bundleCode) {
         String defaultName = "Bundle";  // Default fallback name
@@ -297,18 +298,28 @@ public class CashierController implements Initializable{
         // Create the main VBox container with the specified styling
         VBox bundleBox = new VBox();
         bundleBox.setStyle("-fx-border-color: #CCCCCC; -fx-border-radius: 8; -fx-padding: 10.0;");
-        
+        bundleBox.setSpacing(7);
+
         System.out.println("Creating UI for bundle: " + bundle.getName());
         
         // Create bundle name label with wrapping text
         Label nameLabel = new Label(bundle.getName());
         nameLabel.setMaxWidth(180.0);
-        nameLabel.setStyle("-fx-font-size: 14px;");
+        nameLabel.setMinWidth(180.0);
         nameLabel.setWrapText(true);
+        nameLabel.setStyle("-fx-font-size: 14px;");
         
-        // Create price label with bold formatting
-        Label priceLabel = new Label(String.format("Rp %.3f", bundle.getPrice()));
+        // Display the bundle price using getDiscountedPrice method
+        Label priceLabel = new Label(formatPrice(bundle.getDiscountedPrice()));
         priceLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+        
+        // Use the getSavingsAmount and getSavingsPercentage methods
+        double savings = bundle.getSavingsAmount();
+        double savingsPercentage = bundle.getSavingsPercentage();
+        
+        Label savingsLabel = new Label(String.format("Save %s (%.0f%% off)", 
+                              formatPrice(savings), savingsPercentage));
+        savingsLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px;");
         
         // Create add to cart button with green styling
         Button addToCartBtn = new Button("Add to Cart");
@@ -317,9 +328,8 @@ public class CashierController implements Initializable{
         addToCartBtn.setOnAction(e -> addBundleToCart(bundle));
         
         // Add all elements to the VBox
-        bundleBox.getChildren().addAll(nameLabel, priceLabel, addToCartBtn);
+        bundleBox.getChildren().addAll(nameLabel, priceLabel, savingsLabel, addToCartBtn);
         
-       
         return bundleBox;
     }
 
@@ -376,7 +386,7 @@ public class CashierController implements Initializable{
     private void addBundleToCartFromUI(Button clickedButton) {
         VBox bundleBox = (VBox) clickedButton.getParent();
         String bundleName = "";
-        double bundlePrice = 20400.0;
+        double bundlePrice = 0;
         
         // Extract information from the UI elements
         for (javafx.scene.Node node : bundleBox.getChildren()) {

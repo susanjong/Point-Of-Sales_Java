@@ -74,6 +74,7 @@
                     <TableColumn fx:id="qtyColumn" text="Qty" prefWidth="70.0" />
                     <TableColumn fx:id="expDateColumn" text="Exp Date" prefWidth="100.0" />
                     <TableColumn fx:id="categoryColumn" text="Category" prefWidth="120.0" />
+                    <TableColumn fx:id="typeColumn" text="Product Type" prefWidth="120.0" />
                 </columns>
             </TableView>
             <HBox alignment="CENTER_RIGHT" spacing="10.0">
@@ -97,13 +98,30 @@
             <TextField fx:id="priceField" />
             <Label text="Qty:" />
             <TextField fx:id="qtyField" />
-            <Label text="Exp Date:" />
-            <TextField fx:id="expDateField" />
+
             <Label text="Category:" />
-            <HBox spacing="10.0">
-                <ComboBox fx:id="categoryComboBox" prefWidth="200.0" promptText="Select Category" />
-                <Button fx:id="addCategoryBtn" text="Add" onAction="#handleAddCategory" />
-            </HBox>
+        <HBox spacing="5">
+            <ComboBox fx:id="categoryComboBox" prefWidth="200.0" promptText="Select Category" />
+            <Button text="+" onAction="#addNewCategory" style="-fx-background-color: #5B8336; -fx-text-fill: white;" />
+        </HBox>
+            
+            <Label text="Product Type:" />
+            <ComboBox fx:id="productTypeComboBox" prefWidth="260.0" promptText="Select Product Type" />
+            
+            <!-- Perishable Product Fields -->
+            <VBox fx:id="perishableProductFields" spacing="10.0">
+                <Label text="Expiry Date (dd-MM-yyyy):" />
+                <TextField fx:id="expDateField" promptText="e.g., 31-12-2025" />
+            </VBox>
+            
+            <!-- Digital Product Fields -->
+            <VBox fx:id="digitalProductFields" spacing="10.0">
+                <Label text="URL:" />
+                <TextField fx:id="urlField" promptText="e.g., https://example.com/product" />
+                <Label text="Vendor:" />
+                <TextField fx:id="vendorField" promptText="e.g., Adobe" />
+            </VBox>
+            
             <Button fx:id="saveProductBtn" text="Save Product" maxWidth="Infinity" onAction="#handleSaveProduct" 
                     style="-fx-background-color: #5B8336; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-border-radius: 40px; -fx-background-radius: 40px;">
                 <VBox.margin>

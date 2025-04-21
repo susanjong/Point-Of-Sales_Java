@@ -10,6 +10,8 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
 import com.example.uts_pbo.DatabaseConnection;
@@ -17,6 +19,7 @@ import com.example.uts_pbo.NavigationAuthorizer;
 import com.example.uts_pbo.UserSession;
 
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -29,11 +32,14 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class ProductManagementController implements Initializable {
@@ -55,6 +61,7 @@ public class ProductManagementController implements Initializable {
     @FXML private TableColumn<Product, Integer> qtyColumn;
     @FXML private TableColumn<Product, String> expDateColumn;
     @FXML private TableColumn<Product, String> categoryColumn;
+    @FXML private TableColumn<Product, String> typeColumn;
     
     // Form fields
     @FXML private TextField codeField;
@@ -62,19 +69,31 @@ public class ProductManagementController implements Initializable {
     @FXML private TextField priceField;
     @FXML private TextField qtyField;
     @FXML private TextField expDateField;
+    @FXML private ComboBox<String> productTypeComboBox;
     @FXML private ComboBox<String> categoryComboBox;
+    
+    // Digital product fields
+    @FXML private VBox perishableProductFields;
+    @FXML private VBox digitalProductFields;
+    @FXML private TextField urlField;
+    @FXML private TextField vendorField;
     
     // Action buttons
     @FXML private Button saveProductBtn;
     @FXML private Button deleteProductBtn;
     @FXML private Button updateProductBtn;
-    @FXML private Button addCategoryBtn;
 
+    private ObservableList<String> productTypes = FXCollections.observableArrayList(
+            "Perishable Product", "Non-Perishable Product", "Digital Product"
+    );
+    
     private ObservableList<String> categories = FXCollections.observableArrayList(
-            "Groceries", "Electronics", "Clothing", "Home Goods", "Beauty", "Beverages", "Snacks"
+        "Groceries", "Electronics", "Clothing", "Home Goods", "Beauty", 
+        "Beverages", "Snacks", "Toys", "Office Supplies", "Others"
     );
 
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy");
+    private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -85,41 +104,76 @@ public class ProductManagementController implements Initializable {
         expDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
         categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
         
+        // Setup for the type column
+        typeColumn.setCellValueFactory(cellData -> {
+            Product product = cellData.getValue();
+            String type = "Unknown";
+            if (product instanceof PerishableProduct) {
+                type = "Perishable";
+            } else if (product instanceof NonPerishableProduct) {
+                type = "Non-Perishable";
+            } else if (product instanceof DigitalProduct) {
+                type = "Digital";
+            }
+            return new SimpleStringProperty(type);
+        });
+        
         loadProductsFromDatabase();
         
+        productTypeComboBox.setItems(productTypes);
         categoryComboBox.setItems(categories);
         
-        // === fix: close the listener lambda properly ===
+        // Add listener to show/hide fields based on selected product type
+        productTypeComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            updateFieldVisibility(newVal);
+        });
+        
+        // Selection listener for the product table
         productTable.getSelectionModel().selectedItemProperty().addListener(
             (obs, oldSelection, newSelection) -> {
                 if (newSelection != null) {
                     populateForm(newSelection);
                 }
-            }  // end of lambda block
-        );   // end of addListener(...)
+            }
+        );
         
         // Check admin access on initialization
         Platform.runLater(() -> {
             if (!UserSession.isAdmin()) {
-                // redirect non‑admins to PROFILE
+                // redirect non-admins to PROFILE
                 NavigationAuthorizer.navigateTo(
-                profileBtn,
-                "/Admin_View/Profile.fxml",
-                NavigationAuthorizer.USER_VIEW
+                  profileBtn,
+                  "/Admin_View/Profile.fxml",
+                  NavigationAuthorizer.USER_VIEW
                 );
                 showAlert(Alert.AlertType.WARNING,
-                        "Access Denied",
-                        "Admin access required.");
+                          "Access Denied",
+                          "Admin access required.");
             }
         });
-
+    }
+    
+    private void updateFieldVisibility(String productType) {
+        if (productType == null) return;
+        
+        boolean isPerishable = "Perishable Product".equals(productType);
+        boolean isDigital = "Digital Product".equals(productType);
+        
+        // Show/hide perishable product fields
+        perishableProductFields.setVisible(isPerishable);
+        perishableProductFields.setManaged(isPerishable);
+        
+        // Show/hide digital product fields
+        digitalProductFields.setVisible(isDigital);
+        digitalProductFields.setManaged(isDigital);
     }
     
     private void loadProductsFromDatabase() {
         ObservableList<Product> productList = FXCollections.observableArrayList();
         
         try (Connection conn = DatabaseConnection.getConnection()) {
-            String query = "SELECT code, product_name, price, qty, exp_date, category FROM product";
+            String query = "SELECT code, product_name, price, qty, exp_date, category, " +
+                           "url, vendor_name, product_type FROM product";
             PreparedStatement pst = conn.prepareStatement(query);
             ResultSet rs = pst.executeQuery();
             
@@ -128,15 +182,37 @@ public class ProductManagementController implements Initializable {
                 String name = rs.getString("product_name");
                 double price = rs.getDouble("price");
                 int qty = rs.getInt("qty");
-                //Handle data properly can be null
-                String expDate = null;
-                    Date sqlDate = rs.getDate("exp_date");
-                    if (sqlDate != null) {
-                        expDate = dateFormat.format(sqlDate);
-                    }
                 String category = rs.getString("category");
+                String productType = rs.getString("product_type");
                 
-                Product product = new Product(code, name, price, qty, expDate, category);
+                Product product;
+                
+                if ("Perishable Product".equals(productType)) {
+                    Date sqlDate = rs.getDate("exp_date");
+                    LocalDate expiryDate = null;
+                    if (sqlDate != null) {
+                        expiryDate = sqlDate.toLocalDate();
+                    }
+                    product = new PerishableProduct(code, name, price, qty, expiryDate, category);
+                } 
+                else if ("Digital Product".equals(productType)) {
+                    String urlStr = rs.getString("url");
+                    String vendorName = rs.getString("vendor_name");
+                    URL productUrl = null;
+                    try {
+                        if (urlStr != null && !urlStr.isEmpty()) {
+                            productUrl = new URL(urlStr);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Invalid URL: " + urlStr);
+                    }
+                    product = new DigitalProduct(code, name, price, qty, category, null, productUrl, vendorName);
+                } 
+                else {
+                    // Default to NonPerishableProduct
+                    product = new NonPerishableProduct(code, name, price, qty, category, null);
+                }
+                
                 productList.add(product);
             }
             
@@ -155,23 +231,47 @@ public class ProductManagementController implements Initializable {
         priceField.setText(String.valueOf(product.getPrice()));
         qtyField.setText(String.valueOf(product.getQuantity()));
         
-        // Handle null expiration date
-        if (product.getExpirationDate() != null) {
-            expDateField.setText(product.getExpirationDate());
+        // Set the category in the ComboBox
+        if (product.getCategory() != null && !product.getCategory().isEmpty()) {
+            // If the category exists in our list, select it
+            if (categories.contains(product.getCategory())) {
+                categoryComboBox.setValue(product.getCategory());
+            } else {
+                // If it doesn't exist, add it
+                categories.add(product.getCategory());
+                categoryComboBox.setValue(product.getCategory());
+            }
         } else {
+            categoryComboBox.setValue("Others"); // Default if no category is set
+        }
+        
+        // Determine the product type and set the appropriate field values
+        if (product instanceof PerishableProduct) {
+            productTypeComboBox.setValue("Perishable Product");
+            PerishableProduct perishable = (PerishableProduct) product;
+            if (perishable.getExpiryDate() != null) {
+                expDateField.setText(perishable.getExpiryDate().format(dateFormatter));
+            } else {
+                expDateField.setText("");
+            }
+        } 
+        else if (product instanceof DigitalProduct) {
+            productTypeComboBox.setValue("Digital Product");
+            DigitalProduct digital = (DigitalProduct) product;
+            if (digital.getUrl() != null) {
+                urlField.setText(digital.getUrl().toString());
+            } else {
+                urlField.setText("");
+            }
+            vendorField.setText(digital.getVendorName());
+        } 
+        else {
+            productTypeComboBox.setValue("Non-Perishable Product");
             expDateField.setText("");
         }
-
-        categoryComboBox.setValue(product.getCategory());
-    }
-
-
-    @FXML
-    public void initialize() {
-        System.out.println("Controller initialized!");
-        System.out.println("profileBtn: " + (profileBtn != null ? "found" : "NOT FOUND"));
-        System.out.println("cashierBtn: " + (cashierBtn != null ? "found" : "NOT FOUND"));
         
+        // Update field visibility based on the selected product type
+        updateFieldVisibility(productTypeComboBox.getValue());
     }
 
     @FXML
@@ -233,13 +333,12 @@ public class ProductManagementController implements Initializable {
         }
     }
 
-
-    
     @FXML
     private void handleSaveProduct() {
         try {
             if (codeField.getText().isEmpty() || nameField.getText().isEmpty() || 
-                priceField.getText().isEmpty() || qtyField.getText().isEmpty()) {
+                priceField.getText().isEmpty() || qtyField.getText().isEmpty() ||
+                productTypeComboBox.getValue() == null) {
                 showAlert(Alert.AlertType.ERROR, "Input Error", "Please fill all required fields");
                 return;
             }
@@ -259,20 +358,41 @@ public class ProductManagementController implements Initializable {
                 return;
             }
 
-            String expDateStr = expDateField.getText();
+            String productType = productTypeComboBox.getValue();
             String category = categoryComboBox.getValue();
+            if (category == null || category.isEmpty()) {
+                category = "Others"; // Default if none selected
+            }
             
-            // Handle empty exp_date field - set to null if empty
+            // Process specific fields based on product type
             java.sql.Date sqlDate = null;
-            if (expDateStr != null && !expDateStr.trim().isEmpty()) {
-                try {
-                    java.util.Date parsedDate = dateFormat.parse(expDateStr);
-                    sqlDate = new java.sql.Date(parsedDate.getTime());
-                } catch (ParseException e) {
-                    showAlert(Alert.AlertType.ERROR, "Date Format Error", 
-                              "Please enter the expiration date in YYYY-MM-DD format or leave it empty");
-                    return;
+            URL productUrl = null;
+            String vendorName = null;
+            
+            if ("Perishable Product".equals(productType)) {
+                String expDateStr = expDateField.getText();
+                if (expDateStr != null && !expDateStr.trim().isEmpty()) {
+                    try {
+                        java.util.Date parsedDate = dateFormat.parse(expDateStr);
+                        sqlDate = new java.sql.Date(parsedDate.getTime());
+                    } catch (ParseException e) {
+                        showAlert(Alert.AlertType.ERROR, "Date Format Error", 
+                                  "Please enter the expiration date in dd-MM-yyyy format or leave it empty");
+                        return;
+                    }
                 }
+            } else if ("Digital Product".equals(productType)) {
+                String urlStr = urlField.getText();
+                if (urlStr != null && !urlStr.trim().isEmpty()) {
+                    try {
+                        productUrl = new URL(urlStr);
+                    } catch (Exception e) {
+                        showAlert(Alert.AlertType.ERROR, "URL Format Error", 
+                                  "Please enter a valid URL");
+                        return;
+                    }
+                }
+                vendorName = vendorField.getText();
             }
             
             try (Connection conn = DatabaseConnection.getConnection()) {
@@ -284,18 +404,35 @@ public class ProductManagementController implements Initializable {
                 
                 if (rs.next()) {
                     // Update existing product
-                    String updateQuery = "UPDATE Product SET product_name = ?, price = ?, qty = ?, exp_date = ?, category = ? WHERE code = ?";
+                    String updateQuery = "UPDATE Product SET product_name = ?, price = ?, qty = ?, exp_date = ?, " +
+                                         "category = ?, product_type = ?, url = ?, vendor_name = ? WHERE code = ?";
                     PreparedStatement updateStmt = conn.prepareStatement(updateQuery);
                     updateStmt.setString(1, name);
                     updateStmt.setDouble(2, price);
                     updateStmt.setInt(3, qty);
+                    
                     if (sqlDate != null) {
                         updateStmt.setDate(4, sqlDate);
                     } else {
                         updateStmt.setNull(4, Types.DATE);
                     }
+                    
                     updateStmt.setString(5, category);
-                    updateStmt.setString(6, code);
+                    updateStmt.setString(6, productType);
+                    
+                    if (productUrl != null) {
+                        updateStmt.setString(7, productUrl.toString());
+                    } else {
+                        updateStmt.setNull(7, Types.VARCHAR);
+                    }
+                    
+                    if (vendorName != null && !vendorName.isEmpty()) {
+                        updateStmt.setString(8, vendorName);
+                    } else {
+                        updateStmt.setNull(8, Types.VARCHAR);
+                    }
+                    
+                    updateStmt.setString(9, code);
                     updateStmt.executeUpdate();
                 
                     ProductModificationLogController.logProductAction(
@@ -306,23 +443,40 @@ public class ProductManagementController implements Initializable {
                         "UPDATE"
                     );
 
-
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Product updated successfully");
                 } else {
                     // Insert new product
-                    String insertQuery = "INSERT INTO Product (code, product_name, price, qty, exp_date, category) VALUES (?, ?, ?, ?, ?, ?)";
+                    String insertQuery = "INSERT INTO Product (code, product_name, price, qty, exp_date, " +
+                                        "category, product_type, url, vendor_name) " +
+                                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     PreparedStatement insertStmt = conn.prepareStatement(insertQuery);
                     insertStmt.setString(1, code);
                     insertStmt.setString(2, name);
                     insertStmt.setDouble(3, price);
                     insertStmt.setInt(4, qty);
+                    
                     // Set date as NULL if empty
                     if (sqlDate != null) {
                         insertStmt.setDate(5, sqlDate);
                     } else {
                         insertStmt.setNull(5, Types.DATE);
                     }
+                    
                     insertStmt.setString(6, category);
+                    insertStmt.setString(7, productType);
+                    
+                    if (productUrl != null) {
+                        insertStmt.setString(8, productUrl.toString());
+                    } else {
+                        insertStmt.setNull(8, Types.VARCHAR);
+                    }
+                    
+                    if (vendorName != null && !vendorName.isEmpty()) {
+                        insertStmt.setString(9, vendorName);
+                    } else {
+                        insertStmt.setNull(9, Types.VARCHAR);
+                    }
+                    
                     insertStmt.executeUpdate();
 
                     ProductModificationLogController.logProductAction(
@@ -371,7 +525,7 @@ public class ProductManagementController implements Initializable {
                     ProductModificationLogController.logProductAction(
                         UserSession.getUserId(),
                         UserSession.getUsername(),
-                        selectedProduct.getCode(),  // Changed from productCode to selectedProduct.getCode()
+                        selectedProduct.getCode(),
                         selectedProduct.getName(),
                         "DELETE"
                     );
@@ -394,16 +548,16 @@ public class ProductManagementController implements Initializable {
     }
     
     @FXML
-    private void handleAddCategory() {
+    private void addNewCategory() {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Add Category");
+        dialog.setTitle("New Category");
         dialog.setHeaderText("Add New Category");
         dialog.setContentText("Please enter the new category name:");
-        
-        dialog.showAndWait().ifPresent(categoryName -> {
-            if (!categoryName.isEmpty() && !categories.contains(categoryName)) {
-                categories.add(categoryName);
-                categoryComboBox.setValue(categoryName);
+
+        dialog.showAndWait().ifPresent(newCategory -> {
+            if (!newCategory.isEmpty() && !categories.contains(newCategory)) {
+                categories.add(newCategory);
+                categoryComboBox.setValue(newCategory);
             }
         });
     }
@@ -414,7 +568,12 @@ public class ProductManagementController implements Initializable {
         priceField.clear();
         qtyField.clear();
         expDateField.clear();
+        productTypeComboBox.setValue(null);
         categoryComboBox.setValue(null);
+        
+        if (urlField != null) urlField.clear();
+        if (vendorField != null) vendorField.clear();
+        
         productTable.getSelectionModel().clearSelection();
     }
     
@@ -425,5 +584,4 @@ public class ProductManagementController implements Initializable {
         alert.setContentText(message);
         alert.showAndWait();
     }
-
-   }
+}

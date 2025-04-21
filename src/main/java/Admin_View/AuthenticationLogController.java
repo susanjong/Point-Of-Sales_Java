@@ -12,7 +12,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
-
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
@@ -131,10 +134,19 @@ public class AuthenticationLogController implements Initializable {
     }
     
     private void showTransactionLogs() {
-        setButtonSelected(transactionButton);
-        List<AuthenticationLogEntry> logs = AuthenticationLogDAO.getLogsByActivity("Transaction");
-        logEntries = FXCollections.observableArrayList(logs);
-        logTableView.setItems(logEntries);
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/TransactionLog.fxml"));
+            Parent root = loader.load();
+    
+            Stage stage = (Stage) transactionButton.getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR,
+                      "Navigation Error",
+                      "Could not open Transaction Logs page.");
+            e.printStackTrace();
+        }
     }
     
     private void showProductModificationLogs() {

@@ -42,6 +42,7 @@ public class BundleProductsController implements Initializable {
     @FXML private Button bundleproductsBtn;
     @FXML private Button usersBtn;
     @FXML private Button adminLogBtn;
+    @FXML private Button refundproductsBtn;
 
     // Table and columns
     @FXML private TableView<BundleProduct> bundleproductTable;
@@ -159,6 +160,8 @@ public class BundleProductsController implements Initializable {
                 fxmlFile = "Profile.fxml";
             } else if (source == productsBtn) {
                 fxmlFile = "ProductManagement.fxml";
+            } else if (source == refundproductsBtn) {
+                fxmlFile = "RefundProducts.fxml";
             } else if (source == cashierBtn) {
                 fxmlFile = "cashier.fxml";
             } else if (source == usersBtn) {

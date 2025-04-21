@@ -45,6 +45,7 @@ public class CashierController implements Initializable{
     @FXML private Button bundleproductsBtn;
     @FXML private Button usersBtn;
     @FXML private Button adminLogBtn;
+    @FXML private Button refundproductsBtn;
     @FXML private FlowPane productsContainer;
     @FXML private FlowPane bundleProductsContainer;
     @FXML private TextField searchField;
@@ -1097,6 +1098,8 @@ private int getTotalItemCount() {
                 fxmlFile = "ProductManagement.fxml";
             } else if (source == bundleproductsBtn) {
                 fxmlFile = "BundleProducts.fxml";
+            } else if (source == refundproductsBtn) {
+                fxmlFile = "RefundProducts.fxml";
             } else if (source == usersBtn) {
                 fxmlFile = "UserManagement.fxml";
             } else if (source == adminLogBtn) {

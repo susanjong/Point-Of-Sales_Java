@@ -11,6 +11,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -162,6 +163,7 @@ public class RefundProductsController {
         }
     }
     
+    // Fixed method with consistent signature
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
@@ -170,41 +172,71 @@ public class RefundProductsController {
         alert.showAndWait();
     }
     
+    // Additional overloaded method to handle the AlertType parameter
+    private void showAlert(Alert.AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+    
     @FXML
-    private void handleNavigation(ActionEvent event) {
-        Button clickedButton = (Button) event.getSource();
-        String fxmlFile;
-        
-        // Determine which navigation button was clicked
-        if (clickedButton == profileBtn) {
-            fxmlFile = "profile_view.fxml";
-        } else if (clickedButton == cashierBtn) {
-            fxmlFile = "cashier_view.fxml";
-        } else if (clickedButton == productsBtn) {
-            fxmlFile = "products_view.fxml";
-        } else if (clickedButton == bundleproductsBtn) {
-            fxmlFile = "bundle_products_view.fxml";
-        } else if (clickedButton == refundproductsBtn) {
-            // Already on this page, no need to navigate
-            return;
-        } else if (clickedButton == usersBtn) {
-            fxmlFile = "users_view.fxml";
-        } else if (clickedButton == adminLogBtn) {
-            fxmlFile = "admin_log_view.fxml";
-        } else {
-            return; // Unknown button
-        }
+    void handleNavigation(ActionEvent event) {
+        Object source = event.getSource();
         
         try {
-            System.out.println("Navigate to: " + fxmlFile);
-            Parent root = FXMLLoader.load(getClass().getResource(fxmlFile));
-            Stage stage = (Stage) clickedButton.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
+            String fxmlFile = "";
             
-        } catch (Exception e) {
+            if (source == profileBtn) {
+                fxmlFile = "Profile.fxml";
+            } else if (source == cashierBtn) {
+                fxmlFile = "Cashier.fxml";
+            } else if (source == bundleproductsBtn) {
+                fxmlFile = "BundleProducts.fxml";
+            } else if (source == usersBtn) {
+                fxmlFile = "UserManagement.fxml";
+            } else if (source == productsBtn) {
+                fxmlFile = "ProductManagement.fxml";
+            } else if (source == adminLogBtn) {
+                fxmlFile = "AuthenticationLog.fxml";
+            } else if (source == refundproductsBtn) {
+                return;
+            }
+            
+            if (!fxmlFile.isEmpty()) {
+                URL url = getClass().getResource(fxmlFile);
+                
+                if (url == null) {
+                    // Try alternative path format if the first attempt fails
+                    String altPath = fxmlFile.replace("/com/example/uts_pbo/", "/");
+                    url = getClass().getResource(altPath);
+                    
+                    if (url == null) {
+                        // Try one more alternative - without leading slash
+                        String noSlashPath = fxmlFile.substring(1);
+                        url = getClass().getClassLoader().getResource(noSlashPath);
+                        
+                        if (url == null) {
+                            showAlert(Alert.AlertType.ERROR, "Navigation Error", 
+                                "Could not find FXML file: " + fxmlFile + 
+                                "\nPlease check if the file exists in the resources folder.");
+                            return;
+                        }
+                    }
+                }
+                
+                Parent root = FXMLLoader.load(url);
+                Stage stage = (Stage) ((Button) source).getScene().getWindow();
+                Scene scene = new Scene(root);
+                stage.setScene(scene);
+                stage.show();
+            }
+            
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Navigation Error", 
+                    "Could not navigate to the requested page: " + e.getMessage());
             e.printStackTrace();
-            showAlert("Error", "Navigation error: " + e.getMessage());
         }
     }
 }

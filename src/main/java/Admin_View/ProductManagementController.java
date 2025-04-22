@@ -32,13 +32,11 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -206,11 +204,11 @@ public class ProductManagementController implements Initializable {
                     } catch (Exception e) {
                         System.err.println("Invalid URL: " + urlStr);
                     }
-                    product = new DigitalProduct(code, name, price, qty, category, null, productUrl, vendorName);
+                    product = new DigitalProduct(code, name, price, qty, category, productUrl, vendorName);
                 } 
                 else {
                     // Default to NonPerishableProduct
-                    product = new NonPerishableProduct(code, name, price, qty, category, null);
+                    product = new NonPerishableProduct(code, name, price, qty, category);
                 }
                 
                 productList.add(product);

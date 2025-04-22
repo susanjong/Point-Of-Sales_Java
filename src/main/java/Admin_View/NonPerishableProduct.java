@@ -6,7 +6,7 @@ public class NonPerishableProduct extends Product {
         super();
     }
     
-    public NonPerishableProduct(String code, String name, double price, int quantity, String category, String imagePath) {
+    public NonPerishableProduct(String code, String name, double price, int quantity, String category) {
         super(code, name, price, quantity, null, category);
     }
 }

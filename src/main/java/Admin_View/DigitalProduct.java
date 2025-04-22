@@ -11,7 +11,7 @@ public class DigitalProduct extends Product {
     }
     
     public DigitalProduct(String code, String name, double price, int quantity, 
-                        String category, String imagePath, URL url, String vendorName) {
+                        String category, URL url, String vendorName) {
         super(code, name, price, quantity, null, category);
         this.url = url;
         this.vendorName = vendorName;

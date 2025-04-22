@@ -1,21 +1,5 @@
 package Admin_View;
 
-import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.fxml.Initializable;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.stage.Stage;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
 import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
@@ -26,6 +10,25 @@ import java.util.ResourceBundle;
 
 import com.example.uts_pbo.NavigationAuthorizer;
 import com.example.uts_pbo.UserSession;
+
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Stage;
 
 public class AuthenticationLogController implements Initializable {
 
@@ -49,7 +52,6 @@ public class AuthenticationLogController implements Initializable {
     @FXML private Button authButton;
     @FXML private Button transactionButton;
     @FXML private Button productModButton;
-    @FXML private Button sellingModButton;
     
     @FXML private DatePicker startDatePicker;
     @FXML private DatePicker endDatePicker;
@@ -85,7 +87,6 @@ public class AuthenticationLogController implements Initializable {
         authButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> showAuthenticationLogs());
         transactionButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> showTransactionLogs());
         productModButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> showProductModificationLogs());
-        sellingModButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> showSellingModificationLogs());
 
          // Redirect non‑admins away immediately
         Platform.runLater(() -> {
@@ -163,24 +164,12 @@ public class AuthenticationLogController implements Initializable {
         }
     }
     
-    private void showSellingModificationLogs() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/SellingModificationLog.fxml"));
-            Parent root = loader.load();
-            Stage stage = (Stage) sellingModButton.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
     
     private void setButtonSelected(Button selectedButton) {
         // Reset styles
         authButton.setStyle("-fx-background-radius: 50px;");
         transactionButton.setStyle("-fx-background-radius: 50px;");
         productModButton.setStyle("-fx-background-radius: 50px;");
-        sellingModButton.setStyle("-fx-background-radius: 50px;");
         // Highlight
         selectedButton.setStyle("-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;");
     }
@@ -211,7 +200,6 @@ public class AuthenticationLogController implements Initializable {
         if (authButton.getStyle().contains("#5b8336")) showAuthenticationLogs();
         else if (transactionButton.getStyle().contains("#5b8336")) showTransactionLogs();
         else if (productModButton.getStyle().contains("#5b8336")) showProductModificationLogs();
-        else if (sellingModButton.getStyle().contains("#5b8336")) showSellingModificationLogs();
         else loadAllLogs();
     }
     

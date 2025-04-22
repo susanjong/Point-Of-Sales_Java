@@ -49,7 +49,6 @@ public class ProductModificationLogController implements Initializable {
     @FXML private Button authButton;
     @FXML private Button transactionButton;
     @FXML private Button productModButton;
-    @FXML private Button sellingModButton;
 
     // Filter controls
     @FXML private DatePicker startDatePicker;
@@ -133,18 +132,6 @@ public class ProductModificationLogController implements Initializable {
                 stage.setScene(new Scene(root));
                 stage.show();
 
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        });
-        
-        sellingModButton.setOnAction((@SuppressWarnings("unused") ActionEvent e) -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/Admin_View/SellingModificationLog.fxml"));
-                Parent root = loader.load();
-                Stage stage = (Stage) sellingModButton.getScene().getWindow();
-                stage.setScene(new Scene(root));
-                stage.show();
             } catch (IOException ex) {
                 ex.printStackTrace();
             }

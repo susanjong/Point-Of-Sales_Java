@@ -10,6 +10,8 @@ public class TransactionEntry {
     private String products;
     private double totalPrice;
     private int totalItem;
+    
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public TransactionEntry(int transactionId, LocalDateTime date, String username, String products, double totalPrice, int totalItem) {
         this.transactionId = transactionId;
@@ -24,8 +26,12 @@ public class TransactionEntry {
         return transactionId;
     }
 
+    public LocalDateTime getDate() {
+        return date;
+    }
+
     public String getFormattedDate() {
-        return date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        return date.format(formatter);
     }
 
     public String getUsername() {
@@ -36,15 +42,15 @@ public class TransactionEntry {
         return products;
     }
 
+    public double getTotalPrice() {
+        return totalPrice;
+    }
+
     public String getFormattedTotalPrice() {
-        return String.format("Rp %.0f", totalPrice);
+        return String.format("%,.2f", totalPrice);
     }
 
     public int getTotalItem() {
         return totalItem;
     }
-
-    public LocalDateTime getDateTime() {
-        return date;
-    }    
 }

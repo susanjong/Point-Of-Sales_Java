@@ -73,8 +73,6 @@ public class CashierController implements Initializable{
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         System.out.println("Initializing CashierController...");
-
-        TransactionLogger.initialize();
         
         // Set up currency format
         currencyFormat.setMaximumFractionDigits(0);
@@ -1019,9 +1017,6 @@ void handlePayment(ActionEvent event) {
             int itemCount = getTotalItemCount();
             String paymentMethod = "Cash"; // You may need to add payment method selection to your UI
             
-            // Log the transaction
-            TransactionLogger.logSale(transaction.getTransactionId(), transaction.getTotalAmount(), 
-                                    itemCount, paymentMethod);
             
             double change = paidAmount - transaction.getTotalAmount();
             
@@ -1042,8 +1037,6 @@ void handlePayment(ActionEvent event) {
             // Log failed transaction
             int itemCount = getTotalItemCount();
             String paymentMethod = "Cash";
-            TransactionLogger.logCanceledSale(transaction.getTransactionId(), transaction.getTotalAmount(), 
-                                            itemCount, paymentMethod);
                                             
             showAlert(Alert.AlertType.ERROR, "Error", "Transaction processing failed: " + e.getMessage());
         }

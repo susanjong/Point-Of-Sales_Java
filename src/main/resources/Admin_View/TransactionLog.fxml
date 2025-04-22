@@ -35,6 +35,7 @@
             <Button fx:id="refundproductsBtn" onAction="#handleNavigation" styleClass="nav-button" text="REFUND PRODUCTS" />
             <Button fx:id="usersBtn" onAction="#handleNavigation" styleClass="nav-button" text="USERS" />
             <Button fx:id="adminLogBtn" onAction="#handleNavigation" styleClass="nav-button" text="ADMIN LOG" style="-fx-background-color: #5b8336; -fx-text-fill: white;" />
+            <Button fx:id="transLogBtn" onAction="#handleNavigation" styleClass="nav-button" text="TRANSACTION LOG" style="-fx-background-color: #5b8336; -fx-text-fill: white;" />
          </children>
       </HBox>
       
@@ -68,18 +69,18 @@
             <Button fx:id="allTransButton" onAction="#showAllTransactions" mnemonicParsing="false" prefHeight="25.0" prefWidth="80.0" 
                     style="-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;" text="ALL" />
             <Button fx:id="salesButton" onAction="#showSalesTransactions" mnemonicParsing="false" prefHeight="25.0" prefWidth="80.0" 
-                    style="-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;" text="SALES" />
+                    style="-fx-background-radius: 50px;" text="SALES" />
             <Button fx:id="returnsButton" onAction="#showReturnTransactions" mnemonicParsing="false" prefHeight="25.0" prefWidth="80.0" 
-                    style="-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;" text="RETURNS" />
+                    style="-fx-background-radius: 50px;" text="RETURNS" />
             <Button fx:id="completedButton" onAction="#showCompletedTransactions" mnemonicParsing="false" prefHeight="25.0" prefWidth="100.0" 
-                    style="-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;" text="COMPLETED" />
+                    style="-fx-background-radius: 50px;" text="COMPLETED" />
             <Button fx:id="canceledButton" onAction="#showCanceledTransactions" mnemonicParsing="false" prefHeight="25.0" prefWidth="100.0" 
-                    style="-fx-background-radius: 50px; -fx-background-color: #5b8336; -fx-text-fill: white;" text="CANCELED" />
+                    style="-fx-background-radius: 50px;" text="CANCELED" />
         </children>
-        </HBox>
+      </HBox>
       
       <!-- Filter Controls -->
-      <HBox layoutX="270.0" layoutY="100.0" spacing="10.0" alignment="CENTER_LEFT" prefHeight="40.0">
+      <HBox layoutX="270.0" layoutY="100.0" spacing="10.0" alignment="CENTER_LEFT">
          <children>
             <Label text="From:" />
             <DatePicker fx:id="startDatePicker" />
@@ -87,36 +88,34 @@
             <DatePicker fx:id="endDatePicker" />
             <Label text="Payment:" />
             <ComboBox fx:id="paymentMethodComboBox" prefWidth="120.0" />
-            <TextField fx:id="minAmountField" promptText="Min Amount" prefWidth="100.0" />
-            <TextField fx:id="maxAmountField" promptText="Max Amount" prefWidth="100.0" />
+            <Label text="Amount:" />
+            <TextField fx:id="minAmountField" promptText="Min" prefWidth="70.0" />
+            <Label text="to" />
+            <TextField fx:id="maxAmountField" promptText="Max" prefWidth="70.0" />
             <TextField fx:id="userSearchField" promptText="User Search" prefWidth="120.0" />
-            <Button fx:id="filterButton" onAction="#applyFilters" text="Apply Filter" />
+            <Button fx:id="filterButton" onAction="#applyFilters" text="Apply" />
             <Button fx:id="resetFilterButton" onAction="#resetFilters" text="Reset" />
          </children>
-         <padding>
-            <Insets top="5.0" bottom="5.0" />
-         </padding>
       </HBox>
 
       <!-- Table View -->
-      <TableView fx:id="logTableView" layoutX="270.0" layoutY="270.0" prefHeight="490.0" prefWidth="924.0">
+      <TableView fx:id="logTableView" layoutX="270.0" layoutY="270.0" prefHeight="490.0" prefWidth="1000.0">
       <columns>
          <TableColumn fx:id="noColumn" prefWidth="40.0" text="No" />
          <TableColumn fx:id="timestampColumn" prefWidth="150.0" text="Timestamp" />
-         <TableColumn fx:id="transactionIdColumn" prefWidth="100.0" text="Txn ID" />
-         <TableColumn fx:id="userIdColumn" prefWidth="80.0" text="User ID" />
+         <TableColumn fx:id="transactionIdColumn" prefWidth="100.0" text="Transaction ID" />
          <TableColumn fx:id="usernameColumn" prefWidth="120.0" text="Username" />
-         <TableColumn fx:id="roleColumn" prefWidth="80.0" text="Role" />
-         <TableColumn fx:id="amountColumn" prefWidth="80.0" text="Amount" />
+         <TableColumn fx:id="productsColumn" prefWidth="220.0" text="Products" />
+         <TableColumn fx:id="amountColumn" prefWidth="100.0" text="Amount (Rp)" />
          <TableColumn fx:id="itemCountColumn" prefWidth="70.0" text="Items" />
          <TableColumn fx:id="paymentMethodColumn" prefWidth="100.0" text="Payment" />
-         <TableColumn fx:id="transactionTypeColumn" prefWidth="60.0" text="Type" />
+         <TableColumn fx:id="transactionTypeColumn" prefWidth="80.0" text="Type" />
          <TableColumn fx:id="statusColumn" prefWidth="90.0" text="Status" />
       </columns>
       </TableView>
 
-      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#204200" height="36.0" layoutX="270.0" layoutY="190.0" stroke="WHITE" strokeType="INSIDE" width="924.0" />
-        <Text fill="#fffefb" layoutX="652.0" layoutY="215.0" strokeType="OUTSIDE" strokeWidth="0.0" text="TRANSACTION" textAlignment="CENTER">
+      <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#204200" height="36.0" layoutX="270.0" layoutY="190.0" stroke="WHITE" strokeType="INSIDE" width="1000.0" />
+        <Text fill="#fffefb" layoutX="700.0" layoutY="215.0" strokeType="OUTSIDE" strokeWidth="0.0" text="TRANSACTION LOG" textAlignment="CENTER">
         <font>
             <Font size="24.0" />
         </font>

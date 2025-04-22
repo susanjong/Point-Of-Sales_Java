@@ -44,14 +44,14 @@ public class TransactionLogController implements Initializable {
     @FXML private Button authButton;
     @FXML private Button transactionButton;
     @FXML private Button productModButton;
+    @FXML private Button exportButton;
     
     @FXML private TableView<TransactionLogEntry> logTableView;
     @FXML private TableColumn<TransactionLogEntry, Integer> noColumn;
     @FXML private TableColumn<TransactionLogEntry, String> timestampColumn;
     @FXML private TableColumn<TransactionLogEntry, Integer> transactionIdColumn;
-    @FXML private TableColumn<TransactionLogEntry, Integer> userIdColumn;
     @FXML private TableColumn<TransactionLogEntry, String> usernameColumn;
-    @FXML private TableColumn<TransactionLogEntry, String> roleColumn;
+    @FXML private TableColumn<TransactionLogEntry, String> productsColumn;
     @FXML private TableColumn<TransactionLogEntry, String> amountColumn;
     @FXML private TableColumn<TransactionLogEntry, Integer> itemCountColumn;
     @FXML private TableColumn<TransactionLogEntry, String> paymentMethodColumn;
@@ -81,9 +81,8 @@ public class TransactionLogController implements Initializable {
         noColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
         timestampColumn.setCellValueFactory(new PropertyValueFactory<>("formattedTimestamp"));
         transactionIdColumn.setCellValueFactory(new PropertyValueFactory<>("transactionId"));
-        userIdColumn.setCellValueFactory(new PropertyValueFactory<>("userId"));
         usernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
-        roleColumn.setCellValueFactory(new PropertyValueFactory<>("role"));
+        productsColumn.setCellValueFactory(new PropertyValueFactory<>("products"));
         amountColumn.setCellValueFactory(new PropertyValueFactory<>("formattedAmount"));
         itemCountColumn.setCellValueFactory(new PropertyValueFactory<>("itemCount"));
         paymentMethodColumn.setCellValueFactory(new PropertyValueFactory<>("paymentMethod"));
@@ -131,12 +130,10 @@ public class TransactionLogController implements Initializable {
                 Stage stage = (Stage) productModButton.getScene().getWindow();
                 stage.setScene(new Scene(root));
                 stage.show();
-
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
         });
-        
         
         // Redirect non-admins away immediately
         Platform.runLater(() -> {
@@ -192,7 +189,6 @@ public class TransactionLogController implements Initializable {
         
         int id = 1; // Start with ID 1 for display purposes
         for (RefundEntry refund : refunds) {
-          
             TransactionLogEntry entry = new TransactionLogEntry(
                 id++,                 
                 refund.getTimestamp(), 
@@ -282,9 +278,7 @@ public class TransactionLogController implements Initializable {
         // User search filter
         String userSearch = userSearchField.getText().trim();
         if (!userSearch.isEmpty()) {
-            filteredLogs.removeIf(log -> 
-                !log.getUsername().toLowerCase().contains(userSearch.toLowerCase()) && 
-                !String.valueOf(log.getUserId()).equals(userSearch));
+            filteredLogs.removeIf(log -> !log.getUsername().toLowerCase().contains(userSearch.toLowerCase()));
         }
         
         logEntries = FXCollections.observableArrayList(filteredLogs);

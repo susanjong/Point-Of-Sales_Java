@@ -590,7 +590,7 @@ public class CashierController implements Initializable{
         
         Button deleteBtn = new Button("Delete");
         deleteBtn.setStyle("-fx-background-color: #9A030F; -fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;");
-        deleteBtn.setPrefWidth(70.0);
+        deleteBtn.setPrefWidth(100.0);
         deleteBtn.setOnAction(e -> {
             handleRemoveFromCart(item);
         });
@@ -599,16 +599,19 @@ public class CashierController implements Initializable{
         quantityControls.setAlignment(javafx.geometry.Pos.CENTER);
         
         Button minusBtn = new Button("-");
-        minusBtn.setPrefWidth(25.0);
+        minusBtn.setPrefWidth(15.0);
         minusBtn.setOnAction(e -> {
             handleDecreaseQuantity(item);
         });
         
         Label quantityLabel = new Label(String.valueOf(item.getQuantity()));
-        quantityLabel.setStyle("-fx-font-weight: bold;");
+        quantityLabel.setMinWidth(30.0);
+        quantityLabel.setPrefWidth(30.0);
+        quantityLabel.setAlignment(javafx.geometry.Pos.CENTER);
+        quantityLabel.setStyle("-fx-font-weight: bold; -fx-padding: 0 5;");
         
         Button plusBtn = new Button("+");
-        plusBtn.setPrefWidth(25.0);
+        plusBtn.setPrefWidth(15.0);
         plusBtn.setOnAction(e -> {
             handleIncreaseQuantity(item);
         });

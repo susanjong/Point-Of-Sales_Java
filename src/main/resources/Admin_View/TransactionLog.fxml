@@ -86,8 +86,6 @@
             <DatePicker fx:id="startDatePicker" />
             <Label text="To:" />
             <DatePicker fx:id="endDatePicker" />
-            <Label text="Payment:" />
-            <ComboBox fx:id="paymentMethodComboBox" prefWidth="120.0" />
             <Label text="Amount:" />
             <TextField fx:id="minAmountField" promptText="Min" prefWidth="70.0" />
             <Label text="to" />
@@ -108,7 +106,6 @@
          <TableColumn fx:id="productsColumn" prefWidth="220.0" text="Products" />
          <TableColumn fx:id="amountColumn" prefWidth="100.0" text="Amount (Rp)" />
          <TableColumn fx:id="itemCountColumn" prefWidth="70.0" text="Items" />
-         <TableColumn fx:id="paymentMethodColumn" prefWidth="100.0" text="Payment" />
          <TableColumn fx:id="transactionTypeColumn" prefWidth="80.0" text="Type" />
          <TableColumn fx:id="statusColumn" prefWidth="90.0" text="Status" />
       </columns>

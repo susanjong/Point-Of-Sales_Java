@@ -23,7 +23,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -54,7 +53,6 @@ public class TransactionLogController implements Initializable {
     @FXML private TableColumn<TransactionLogEntry, String> productsColumn;
     @FXML private TableColumn<TransactionLogEntry, String> amountColumn;
     @FXML private TableColumn<TransactionLogEntry, Integer> itemCountColumn;
-    @FXML private TableColumn<TransactionLogEntry, String> paymentMethodColumn;
     @FXML private TableColumn<TransactionLogEntry, String> transactionTypeColumn;
     @FXML private TableColumn<TransactionLogEntry, String> statusColumn;
     
@@ -66,7 +64,6 @@ public class TransactionLogController implements Initializable {
     
     @FXML private DatePicker startDatePicker;
     @FXML private DatePicker endDatePicker;
-    @FXML private ComboBox<String> paymentMethodComboBox;
     @FXML private TextField minAmountField;
     @FXML private TextField maxAmountField;
     @FXML private TextField userSearchField;
@@ -85,15 +82,9 @@ public class TransactionLogController implements Initializable {
         productsColumn.setCellValueFactory(new PropertyValueFactory<>("products"));
         amountColumn.setCellValueFactory(new PropertyValueFactory<>("formattedAmount"));
         itemCountColumn.setCellValueFactory(new PropertyValueFactory<>("itemCount"));
-        paymentMethodColumn.setCellValueFactory(new PropertyValueFactory<>("paymentMethod"));
         transactionTypeColumn.setCellValueFactory(new PropertyValueFactory<>("transactionType"));
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
         
-        // Initialize payment method combo box
-        paymentMethodComboBox.setItems(FXCollections.observableArrayList(
-            "All", "Cash", "Credit Card", "Debit Card", "E-wallet", "Transfer"
-        ));
-        paymentMethodComboBox.setValue("All");
         
         // Set up date pickers with default values
         startDatePicker.setValue(LocalDate.now().minusWeeks(1));
@@ -240,40 +231,7 @@ public class TransactionLogController implements Initializable {
         LocalDateTime startDateTime = startDatePicker.getValue().atStartOfDay();
         LocalDateTime endDateTime = endDatePicker.getValue().atTime(LocalTime.MAX);
         List<TransactionLogEntry> filteredLogs = TransactionLogDAO.getLogsByDateRange(startDateTime, endDateTime);
-        
-        // Payment method filter
-        String selectedPaymentMethod = paymentMethodComboBox.getValue();
-        if (!"All".equals(selectedPaymentMethod)) {
-            filteredLogs.removeIf(log -> !log.getPaymentMethod().equals(selectedPaymentMethod));
-        }
-        
-        // Amount range filter
-        String minAmountText = minAmountField.getText().trim();
-        String maxAmountText = maxAmountField.getText().trim();
-        
-        if (!minAmountText.isEmpty() && !maxAmountText.isEmpty()) {
-            try {
-                double minAmount = Double.parseDouble(minAmountText);
-                double maxAmount = Double.parseDouble(maxAmountText);
-                filteredLogs.removeIf(log -> log.getAmount() < minAmount || log.getAmount() > maxAmount);
-            } catch (NumberFormatException e) {
-                showAlert(Alert.AlertType.WARNING, "Invalid Input", "Please enter valid numbers for amount range.");
-            }
-        } else if (!minAmountText.isEmpty()) {
-            try {
-                double minAmount = Double.parseDouble(minAmountText);
-                filteredLogs.removeIf(log -> log.getAmount() < minAmount);
-            } catch (NumberFormatException e) {
-                showAlert(Alert.AlertType.WARNING, "Invalid Input", "Please enter a valid number for minimum amount.");
-            }
-        } else if (!maxAmountText.isEmpty()) {
-            try {
-                double maxAmount = Double.parseDouble(maxAmountText);
-                filteredLogs.removeIf(log -> log.getAmount() > maxAmount);
-            } catch (NumberFormatException e) {
-                showAlert(Alert.AlertType.WARNING, "Invalid Input", "Please enter a valid number for maximum amount.");
-            }
-        }
+    
         
         // User search filter
         String userSearch = userSearchField.getText().trim();
@@ -289,7 +247,6 @@ public class TransactionLogController implements Initializable {
     private void resetFilters() {
         startDatePicker.setValue(LocalDate.now().minusWeeks(1));
         endDatePicker.setValue(LocalDate.now());
-        paymentMethodComboBox.setValue("All");
         minAmountField.clear();
         maxAmountField.clear();
         userSearchField.clear();

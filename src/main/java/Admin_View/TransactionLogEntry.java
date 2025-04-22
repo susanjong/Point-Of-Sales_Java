@@ -11,7 +11,6 @@ public class TransactionLogEntry {
     private String products;
     private double amount;
     private int itemCount;
-    private String paymentMethod;
     private String transactionType;
     private String status;
     
@@ -19,7 +18,7 @@ public class TransactionLogEntry {
 
     public TransactionLogEntry(int id, LocalDateTime timestamp, int transactionId, 
                                String username, String products, double amount, int itemCount,
-                               String paymentMethod, String transactionType, String status) {
+                               String transactionType, String status) {
         this.id = id;
         this.timestamp = timestamp;
         this.transactionId = transactionId;
@@ -27,14 +26,12 @@ public class TransactionLogEntry {
         this.products = products;
         this.amount = amount;
         this.itemCount = itemCount;
-        this.paymentMethod = paymentMethod;
         this.transactionType = transactionType;
         this.status = status;
     }
     
     // Convert from TransactionEntry to TransactionLogEntry
-    public static TransactionLogEntry fromTransactionEntry(int id, TransactionEntry entry,
-                                                        String paymentMethod, String status) {
+    public static TransactionLogEntry fromTransactionEntry(int id, TransactionEntry entry, String status) {
         return new TransactionLogEntry(
             id,
             entry.getDate(),
@@ -43,7 +40,6 @@ public class TransactionLogEntry {
             entry.getProducts(),
             entry.getTotalPrice(),
             entry.getTotalItem(),
-            paymentMethod,
             "Sale",
             status
         );
@@ -88,10 +84,6 @@ public class TransactionLogEntry {
 
     public int getItemCount() {
         return itemCount;
-    }
-
-    public String getPaymentMethod() {
-        return paymentMethod;
     }
 
     public String getTransactionType() {

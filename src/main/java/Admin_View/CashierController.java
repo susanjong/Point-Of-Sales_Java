@@ -286,14 +286,36 @@ public class CashierController implements Initializable{
         // Create the main VBox container with the specified styling
         VBox bundleBox = new VBox();
         bundleBox.setStyle("-fx-border-color: #CCCCCC; -fx-border-radius: 8; -fx-padding: 10.0;");
-        bundleBox.setSpacing(5);
+        bundleBox.setSpacing(4);
         
-        // Create bundle name label with wrapping text
-        Label nameLabel = new Label(bundle.getName());
+        // Extract the bundle name (before the colon)
+        String bundleName = bundle.getName();
+        int colonIndex = bundleName.indexOf(':');
+        String title = colonIndex > 0 ? bundleName.substring(0, colonIndex) : bundleName;
+        
+        // Create bundle name label with wrapping text - now with bold formatting
+        Label nameLabel = new Label(title);
         nameLabel.setMaxWidth(180.0);
         nameLabel.setMinWidth(180.0);
         nameLabel.setWrapText(true);
-        nameLabel.setStyle("-fx-font-size: 14px;");
+        nameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;"); // Added bold styling
+        
+        // Create "Includes:" label
+        Label includesLabel = new Label("Includes:");
+        includesLabel.setStyle("-fx-font-size: 12px; -fx-font-style: italic;");
+        
+        // Create products list from the existing bundle name which already contains product info
+        VBox productsListBox = new VBox(2);
+        if (colonIndex > 0 && colonIndex < bundleName.length() - 1) {
+            String productsText = bundleName.substring(colonIndex + 1).trim();
+            String[] products = productsText.split(",");
+            
+            for (String product : products) {
+                Label productLabel = new Label("• " + product.trim());
+                productLabel.setStyle("-fx-font-size: 11px;");
+                productsListBox.getChildren().add(productLabel);
+            }
+        }
         
         // Display the bundle price using getDiscountedPrice method
         Label priceLabel = new Label(formatPrice(bundle.getDiscountedPrice()));
@@ -304,7 +326,7 @@ public class CashierController implements Initializable{
         double savingsPercentage = bundle.getSavingsPercentage();
         
         Label savingsLabel = new Label(String.format("Save %s (%.0f%% off)", 
-                              formatPrice(savings), savingsPercentage));
+                            formatPrice(savings), savingsPercentage));
         savingsLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px;");
         
         // Create add to cart button with green styling
@@ -314,7 +336,7 @@ public class CashierController implements Initializable{
         addToCartBtn.setOnAction(e -> addBundleToCart(bundle));
         
         // Add all elements to the VBox
-        bundleBox.getChildren().addAll(nameLabel, priceLabel, savingsLabel, addToCartBtn);
+        bundleBox.getChildren().addAll(nameLabel, includesLabel, productsListBox, priceLabel, savingsLabel, addToCartBtn);
         
         return bundleBox;
     }
@@ -490,16 +512,7 @@ public class CashierController implements Initializable{
         
         return productBox;
     }
-    
-    // Helper method to extract filename from path
-    private String getFileName(String path) {
-        if (path == null) return "";
-        int lastSlash = path.lastIndexOf('/');
-        if (lastSlash >= 0 && lastSlash < path.length() - 1) {
-            return path.substring(lastSlash + 1);
-        }
-        return path;
-    }
+
     
     private void handleAddToCartFromDisplay(Product product) {
         // Check available stock in the database

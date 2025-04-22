@@ -178,20 +178,22 @@ public class TransactionLogController implements Initializable {
         List<TransactionLogEntry> entries = new ArrayList<>();
         List<RefundEntry> refunds = RefundDAO.getAllRefunds();
         
-        int id = 1; // Start with ID 1 for display purposes
+        int id = 1;
         for (RefundEntry refund : refunds) {
+            // Create a description of the refunded product
+            String productDescription = refund.getProductCode() + " (Qty: " + refund.getQty() + ")";
+            
+            // Use the existing constructor
             TransactionLogEntry entry = new TransactionLogEntry(
-                id++,                 
-                refund.getTimestamp(), 
-                refund.getTransactionId(), 
-                0,                     
-                refund.getUsername(),  
-                "Customer",           
-                refund.getTotalRefund(), 
-                refund.getQty(),       
-                "Cash",                 
-                "Return",              
-                "Completed"            
+                id++,
+                refund.getTimestamp(),
+                refund.getTransactionId(),
+                refund.getUsername(),
+                productDescription,
+                refund.getTotalRefund(),
+                refund.getQty(),
+                "Return",  // transaction type
+                "Completed"  // status
             );
             entries.add(entry);
         }

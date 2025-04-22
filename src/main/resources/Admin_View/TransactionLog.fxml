@@ -35,7 +35,6 @@
             <Button fx:id="refundproductsBtn" onAction="#handleNavigation" styleClass="nav-button" text="REFUND PRODUCTS" />
             <Button fx:id="usersBtn" onAction="#handleNavigation" styleClass="nav-button" text="USERS" />
             <Button fx:id="adminLogBtn" onAction="#handleNavigation" styleClass="nav-button" text="ADMIN LOG" style="-fx-background-color: #5b8336; -fx-text-fill: white;" />
-            <Button fx:id="transLogBtn" onAction="#handleNavigation" styleClass="nav-button" text="TRANSACTION LOG" style="-fx-background-color: #5b8336; -fx-text-fill: white;" />
          </children>
       </HBox>
       

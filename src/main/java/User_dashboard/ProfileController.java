@@ -104,48 +104,6 @@ public class ProfileController implements Initializable {
     }
 
     @FXML
-    private void handleUpdateProfile(ActionEvent event) {
-        System.out.println("[ProfileController] Updating profile...");
-
-        String firstName = firstNameField.getText().trim();
-        String lastName = lastNameField.getText().trim();
-        String email = emailField.getText().trim();
-        String username = usernameField.getText().trim();
-
-        // Validasi input
-        if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || username.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Validation Error",
-                    "All fields must be filled!");
-            return;
-        }
-
-        // Validasi email format
-        if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            showAlert(Alert.AlertType.WARNING, "Validation Error",
-                    "Please enter a valid email address!");
-            return;
-        }
-
-        // Update user object
-        currentUser.setFirstName(firstName);
-        currentUser.setLastName(lastName);
-        currentUser.setEmail(email);
-        currentUser.setUsername(username);
-
-        boolean success = UserDAO.updateUser(currentUser);
-        System.out.println("[ProfileController] Update result: " + success);
-
-        if (success) {
-            UserSession.setCurrentUser(currentUser);
-            showAlert(Alert.AlertType.INFORMATION, "Success",
-                    "Profile updated successfully!");
-        } else {
-            showAlert(Alert.AlertType.ERROR, "Error",
-                    "Failed to update profile. Please try again.");
-        }
-    }
-
-    @FXML
     private void handleUpdatePassword(ActionEvent event) {
         System.out.println("[ProfileController] Changing password...");
 

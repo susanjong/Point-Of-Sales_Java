@@ -20,20 +20,24 @@ import User_dashboard.DatabaseConnection;
 import User_dashboard.LoginController;
 import User_dashboard.User;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -52,159 +56,310 @@ public class CashierController implements Initializable{
     @FXML private Button addToCartBtn;
     @FXML private Label productNameLabel;
     @FXML private Label priceLabel;
-    
+
     @FXML private TextField paidField;
     @FXML private Label balanceLabel;
-    
+
     @FXML private VBox cartItemsContainer;
     @FXML private Label totalAmountLabel;
-    
-    private Map<String, BundleProduct> bundleProductMap = new HashMap<>(); 
+    @FXML private ScrollPane productsScrollPane;
+    @FXML private ScrollPane bundleScrollPane;
+    @FXML private ScrollPane cartScrollPane;
+
+    private Map<String, BundleProduct> bundleProductMap = new HashMap<>();
     private double totalAmount = 0.0;
     private NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy");
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
     private Product currentProduct = null;
     private final ObservableList<CartItem> cartItems = FXCollections.observableArrayList();
     private final ArrayList<Product> products = new ArrayList<>();
     private int transactionId;
     private boolean transactionSaved = false;
     private boolean processingComplete = false;
-    
+    private boolean isInitialized = false;
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         System.out.println("Initializing CashierController...");
-        
+
         // Set up currency format
         currencyFormat.setMaximumFractionDigits(0);
-        
+
+        // Configure ScrollPanes for better responsiveness
+        configureScrollPanes();
+
+        // Configure FlowPanes for responsive layout
+        configureFlowPanes();
+
         // Set up listeners
         paidField.textProperty().addListener((observable, oldValue, newValue) -> {
             calculateBalance();
         });
-        
-        // Load initial data
-        try {
-            loadProductsFromDatabase();
-            loadBundleProducts();
-            System.out.println("Loaded " + products.size() + " products from database");
-            displayProducts();
-            System.out.println("Displayed products in UI");
-        } catch (Exception e) {
-            System.err.println("Error during initialization: " + e.getMessage());
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Initialization Error", "Error loading products: " + e.getMessage());
-        }
-        
+
+        // Maximize stage FIRST, then load content
+        Platform.runLater(() -> {
+            maximizeStage();
+
+            // Load content AFTER stage is maximized
+            Platform.runLater(() -> {
+                try {
+                    loadProductsFromDatabase();
+                    loadBundleProducts();
+                    System.out.println("Loaded " + products.size() + " products from database");
+                    displayProducts();
+                    System.out.println("Displayed products in UI");
+                } catch (Exception e) {
+                    System.err.println("Error during initialization: " + e.getMessage());
+                    e.printStackTrace();
+                    showAlert(Alert.AlertType.ERROR, "Initialization Error", "Error loading products: " + e.getMessage());
+                }
+            });
+        });
+
         // Initialize UI components
+        clearCart();
         refreshCartView();
         updateTotalAmount();
         updateTotalDisplay();
         setupSearchFieldListener();
 
-        if (productNameLabel == null || priceLabel == null) {
-            // Get the containers where your labels should be displayed
-            VBox productNameVBox = null;
-            VBox priceVBox = null;
-            
-            // Find the containers in the FXML hierarchy
-            for (javafx.scene.Node node : searchField.getParent().getParent().getChildrenUnmodifiable()) {
-                if (node instanceof HBox) {
-                    HBox hbox = (HBox) node;
-                    for (javafx.scene.Node child : hbox.getChildren()) {
-                        if (child instanceof VBox) {
-                            VBox vbox = (VBox) child;
-                            for (javafx.scene.Node vboxChild : vbox.getChildren()) {
-                                if (vboxChild instanceof Label) {
-                                    Label label = (Label) vboxChild;
-                                    if (label.getText().equals("PRODUCT NAME")) {
-                                        productNameVBox = vbox;
-                                    } else if (label.getText().equals("PRICE")) {
-                                        priceVBox = vbox;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            if (productNameVBox != null && priceVBox != null) {
-                // Create and add productNameLabel
-                productNameLabel = new Label("");
-                productNameLabel.setPrefHeight(30.0);
-                productNameLabel.setPrefWidth(300.0);
-                productNameLabel.setStyle("-fx-background-color: #E0E0E0; -fx-background-radius: 5; -fx-padding: 5px;");
-                
-                // Find the Region and replace it with our label
-                for (int i = 0; i < productNameVBox.getChildren().size(); i++) {
-                    if (productNameVBox.getChildren().get(i) instanceof javafx.scene.layout.Region) {
-                        productNameVBox.getChildren().set(i, productNameLabel);
-                        break;
-                    }
-                }
-                
-                // Create and add priceLabel
-                priceLabel = new Label("");
-                priceLabel.setPrefHeight(30.0);
-                priceLabel.setPrefWidth(200.0);
-                priceLabel.setStyle("-fx-background-color: #E0E0E0; -fx-background-radius: 5; -fx-padding: 5px;");
-                
-                // Find the Region and replace it with our label
-                for (int i = 0; i < priceVBox.getChildren().size(); i++) {
-                    if (priceVBox.getChildren().get(i) instanceof javafx.scene.layout.Region) {
-                        priceVBox.getChildren().set(i, priceLabel);
-                        break;
-                    }
-                }
-            }
+        // Disable add to cart button initially
+        if (addToCartBtn != null) {
+            addToCartBtn.setDisable(true);
         }
-        addToCartBtn.setDisable(true);
+
+        System.out.println("Components initialized");
+    }
+
+    /**
+     * Configure ScrollPanes for better responsiveness
+     */
+    private void configureScrollPanes() {
+        // Configure products scroll pane
+        if (productsScrollPane != null) {
+            productsScrollPane.setFitToWidth(true);
+            productsScrollPane.setFitToHeight(false);
+            productsScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            productsScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        }
+
+        // Configure bundle scroll pane
+        if (bundleScrollPane != null) {
+            bundleScrollPane.setFitToWidth(true);
+            bundleScrollPane.setFitToHeight(false);
+            bundleScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            bundleScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        }
+
+        // Configure cart scroll pane
+        if (cartScrollPane != null) {
+            cartScrollPane.setFitToWidth(true);
+            cartScrollPane.setFitToHeight(true);
+            cartScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            cartScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        }
+    }
+
+    /**
+     * Configure FlowPanes for responsive layout
+     */
+    private void configureFlowPanes() {
+        if (productsContainer != null) {
+            productsContainer.setHgap(10);
+            productsContainer.setVgap(10);
+            productsContainer.setPadding(new Insets(10));
+            productsContainer.prefWrapLengthProperty().bind(
+                    productsContainer.widthProperty()
+            );
+        }
+
+        if (bundleProductsContainer != null) {
+            bundleProductsContainer.setHgap(10);
+            bundleProductsContainer.setVgap(10);
+            bundleProductsContainer.setPadding(new Insets(10));
+            bundleProductsContainer.prefWrapLengthProperty().bind(
+                    bundleProductsContainer.widthProperty()
+            );
+        }
+    }
+
+    /**
+     * Load all data from database
+     */
+    private void loadAllData() {
+        System.out.println("Loading all data...");
+
+        try {
+            // Clear existing data
+            products.clear();
+            bundleProductMap.clear();
+
+            // Clear containers
+            if (productsContainer != null) {
+                productsContainer.getChildren().clear();
+            }
+            if (bundleProductsContainer != null) {
+                bundleProductsContainer.getChildren().clear();
+            }
+
+            // Load products from database
+            loadProductsFromDatabase();
+            System.out.println("Loaded " + products.size() + " products");
+
+            // Load bundle products
+            loadBundleProducts();
+            System.out.println("Loaded " + bundleProductMap.size() + " bundles");
+
+            // Display products
+            displayProducts();
+            System.out.println("Products displayed");
+
+        } catch (Exception e) {
+            System.err.println("Error loading data: " + e.getMessage());
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Load Error", "Error loading data: " + e.getMessage());
+        }
+    }
+
+    private void maximizeStage() {
+        try {
+            Stage stage = null;
+            if (cashierBtn != null && cashierBtn.getScene() != null) {
+                stage = (Stage) cashierBtn.getScene().getWindow();
+            } else if (profileBtn != null && profileBtn.getScene() != null) {
+                stage = (Stage) profileBtn.getScene().getWindow();
+            }
+
+            if (stage != null) {
+                stage.setMaximized(true);
+                stage.setMinWidth(1024);
+                stage.setMinHeight(768);
+                System.out.println("Stage maximized successfully");
+            } else {
+                System.err.println("Could not get stage reference");
+            }
+        } catch (Exception e) {
+            System.err.println("Error maximizing stage: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Public method to reload all content when returning to Cashier page
+     */
+    public void reloadAllContent() {
+        System.out.println("=== RELOADING ALL CONTENT ===");
+
+        Platform.runLater(() -> {
+            try {
+                products.clear();
+                bundleProductMap.clear();
+                cartItems.clear();
+
+                if (productsContainer != null) {
+                    productsContainer.getChildren().clear();
+                }
+                if (bundleProductsContainer != null) {
+                    bundleProductsContainer.getChildren().clear();
+                }
+                if (cartItemsContainer != null) {
+                    cartItemsContainer.getChildren().clear();
+                }
+
+                resetAllFields();
+                loadAllData();
+
+                if (productsContainer != null) {
+                    productsContainer.requestLayout();
+                }
+                if (bundleProductsContainer != null) {
+                    bundleProductsContainer.requestLayout();
+                }
+
+                System.out.println("=== RELOAD COMPLETE ===");
+
+            } catch (Exception e) {
+                System.err.println("Error reloading content: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+
+    /**
+     * Reset all input fields and labels
+     */
+    private void resetAllFields() {
+        try {
+            if (searchField != null) {
+                searchField.clear();
+            }
+            if (productNameLabel != null) {
+                productNameLabel.setText("");
+            }
+            if (priceLabel != null) {
+                priceLabel.setText("");
+            }
+            if (paidField != null) {
+                paidField.clear();
+            }
+            if (balanceLabel != null) {
+                balanceLabel.setText("");
+            }
+            if (totalAmountLabel != null) {
+                totalAmountLabel.setText(formatPrice(0));
+            }
+            if (addToCartBtn != null) {
+                addToCartBtn.setDisable(true);
+            }
+
+            currentProduct = null;
+            totalAmount = 0.0;
+
+        } catch (Exception e) {
+            System.err.println("Error resetting fields: " + e.getMessage());
+        }
+    }
+
+    private void clearCart() {
+        cartItems.clear();
+        totalAmount = 0.0;
+        refreshCartView();
+        updateTotalDisplay();
     }
 
     private void loadBundleProducts() {
         System.out.println("Loading bundle products...");
-        // Clear the existing map and container
         bundleProductMap.clear();
+
         if (bundleProductsContainer != null) {
             bundleProductsContainer.getChildren().clear();
         } else {
             System.err.println("WARNING: bundleProductsContainer is null!");
-            try {
-                bundleProductsContainer = (FlowPane) cashierBtn.getScene().lookup("#bundleProductsContainer");
-            } catch (Exception e) {
-                System.err.println("Failed to find bundleProductsContainer: " + e.getMessage());
-            }
+            return;
         }
-        
+
         try (Connection conn = DatabaseConnection.getConnection()) {
-            // First, get all unique bundle codes and their prices
             String bundleQuery = "SELECT DISTINCT code, price FROM bundle_products";
             try (PreparedStatement stmt = conn.prepareStatement(bundleQuery);
                  ResultSet rs = stmt.executeQuery()) {
-                
+
                 int bundleCount = 0;
                 while (rs.next()) {
                     bundleCount++;
                     String bundleCode = rs.getString("code");
                     double bundlePrice = rs.getDouble("price");
-                    
-                    // Create a new bundle object to store info
+
                     BundleProduct bundle = new BundleProduct(bundleCode, bundlePrice);
-                    bundle.setPreserveOriginalPrice(true); // Add this flag to prevent price recalculation
+                    bundle.setPreserveOriginalPrice(true);
                     bundleProductMap.put(bundleCode, bundle);
-                    
-                    // Now get all products in this bundle
+
                     loadBundleItems(conn, bundle);
-                    
-                    // Create and add the bundle UI element
+
                     VBox bundleBox = createBundleProductBox(bundle);
-                    
-                    if (bundleProductsContainer != null) {
-                        bundleProductsContainer.getChildren().add(bundleBox);
-                    } else {
-                        System.err.println("Cannot add bundle to UI, container is null");
-                    }
+                    bundleProductsContainer.getChildren().add(bundleBox);
                 }
+
+                System.out.println("Loaded " + bundleCount + " bundle products");
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -212,21 +367,20 @@ public class CashierController implements Initializable{
         }
     }
 
-    
     private void loadBundleItems(Connection conn, BundleProduct bundle) throws SQLException {
         String itemsQuery = "SELECT bp.product_code, bp.qty, p.product_name, p.price, p.qty, " +
-                            "p.exp_date, p.category " +
-                            "FROM bundle_products bp " +
-                            "JOIN product p ON bp.product_code = p.code " +
-                            "WHERE bp.code = ?";
-        
+                "p.exp_date, p.category " +
+                "FROM bundle_products bp " +
+                "JOIN product p ON bp.product_code = p.code " +
+                "WHERE bp.code = ?";
+
         try (PreparedStatement stmt = conn.prepareStatement(itemsQuery)) {
             stmt.setString(1, bundle.getCode());
             try (ResultSet rs = stmt.executeQuery()) {
                 String bundleName = getBundleNameFromDatabase(conn, bundle.getCode());
                 StringBuilder fullBundleName = new StringBuilder(bundleName + ": ");
                 List<String> productNames = new ArrayList<>();
-                
+
                 while (rs.next()) {
                     String productCode = rs.getString("product_code");
                     int qty = rs.getInt("qty");
@@ -235,24 +389,20 @@ public class CashierController implements Initializable{
                     int productQty = rs.getInt("qty");
                     String expirationDate = rs.getString("exp_date");
                     String category = rs.getString("category");
-                    
-                    // Create a Product object first
+
                     Product product = new Product(
-                        productCode, productName, productPrice, 
-                        productQty, expirationDate, category
+                            productCode, productName, productPrice,
+                            productQty, expirationDate, category
                     );
-                    
-                    // Now add the Product object to the bundle with the quantity
+
                     bundle.addProduct(product, qty);
-                    
                     productNames.add(productName + " (" + qty + ")");
                 }
-                
+
                 if (!productNames.isEmpty()) {
                     fullBundleName.append(String.join(", ", productNames));
                     bundle.setName(fullBundleName.toString());
                 } else {
-                    // If no products found, just use the name from database
                     bundle.setName(bundleName);
                 }
             }
@@ -260,8 +410,8 @@ public class CashierController implements Initializable{
     }
 
     private String getBundleNameFromDatabase(Connection conn, String bundleCode) {
-        String defaultName = "Bundle";  // Default fallback name
-        
+        String defaultName = "Bundle";
+
         try {
             String query = "SELECT bundle_name FROM bundle_products WHERE code = ?";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -275,76 +425,73 @@ public class CashierController implements Initializable{
         } catch (SQLException e) {
             System.err.println("Error getting bundle name: " + e.getMessage());
         }
-        
+
         return defaultName;
     }
 
-    /**
- * Creates a UI box for displaying a bundle product that matches your design
- */
     private VBox createBundleProductBox(BundleProduct bundle) {
-        // Create the main VBox container with the specified styling
-        VBox bundleBox = new VBox();
-        bundleBox.setStyle("-fx-border-color: #CCCCCC; -fx-border-radius: 8; -fx-padding: 10.0;");
-        bundleBox.setSpacing(4);
-        
-        // Extract the bundle name (before the colon)
+        VBox bundleBox = new VBox(5);
+        bundleBox.setStyle("-fx-border-color: #CCCCCC; -fx-border-radius: 8; -fx-padding: 10; " +
+                "-fx-background-color: white; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);");
+        bundleBox.setMinWidth(200);
+        bundleBox.setMaxWidth(220);
+        bundleBox.setPrefWidth(200);
+
         String bundleName = bundle.getName();
         int colonIndex = bundleName.indexOf(':');
         String title = colonIndex > 0 ? bundleName.substring(0, colonIndex) : bundleName;
-        
-        // Create bundle name label with wrapping text - now with bold formatting
+
         Label nameLabel = new Label(title);
-        nameLabel.setMaxWidth(180.0);
-        nameLabel.setMinWidth(180.0);
+        nameLabel.setMaxWidth(Double.MAX_VALUE);
         nameLabel.setWrapText(true);
-        nameLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;"); // Added bold styling
-        
-        // Create "Includes:" label
+        nameLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
+
         Label includesLabel = new Label("Includes:");
-        includesLabel.setStyle("-fx-font-size: 12px; -fx-font-style: italic;");
-        
-        // Create products list from the existing bundle name which already contains product info
+        includesLabel.setStyle("-fx-font-size: 11px; -fx-font-style: italic; -fx-text-fill: #666;");
+
         VBox productsListBox = new VBox(2);
+        productsListBox.setMaxWidth(Double.MAX_VALUE);
+
         if (colonIndex > 0 && colonIndex < bundleName.length() - 1) {
             String productsText = bundleName.substring(colonIndex + 1).trim();
             String[] products = productsText.split(",");
-            
+
             for (String product : products) {
                 Label productLabel = new Label("• " + product.trim());
-                productLabel.setStyle("-fx-font-size: 11px;");
+                productLabel.setStyle("-fx-font-size: 10px;");
+                productLabel.setWrapText(true);
+                productLabel.setMaxWidth(Double.MAX_VALUE);
                 productsListBox.getChildren().add(productLabel);
             }
         }
-        
-        // Display the bundle price using getDiscountedPrice method
+
         Label priceLabel = new Label(formatPrice(bundle.getDiscountedPrice()));
-        priceLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
-        
-        // Use the getSavingsAmount and getSavingsPercentage methods
+        priceLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #2E7D32;");
+
         double savings = bundle.getSavingsAmount();
         double savingsPercentage = bundle.getSavingsPercentage();
-        
-        Label savingsLabel = new Label(String.format("Save %s (%.0f%% off)", 
-                            formatPrice(savings), savingsPercentage));
-        savingsLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 12px;");
-        
-        // Create add to cart button with green styling
+
+        Label savingsLabel = new Label(String.format("Save %s (%.0f%% off)",
+                formatPrice(savings), savingsPercentage));
+        savingsLabel.setStyle("-fx-text-fill: #D32F2F; -fx-font-size: 11px;");
+        savingsLabel.setWrapText(true);
+        savingsLabel.setMaxWidth(Double.MAX_VALUE);
+
         Button addToCartBtn = new Button("Add to Cart");
-        addToCartBtn.setStyle("-fx-background-color: #5B8336; -fx-text-fill: white;");
-        addToCartBtn.setUserData(bundle); // Store BundleProduct object with the button
+        addToCartBtn.setMaxWidth(Double.MAX_VALUE);
+        addToCartBtn.setStyle("-fx-background-color: #5B8336; -fx-text-fill: white; -fx-font-size: 11px; -fx-cursor: hand;");
+        addToCartBtn.setOnMouseEntered(e -> addToCartBtn.setStyle("-fx-background-color: #4A6B2A; -fx-text-fill: white; -fx-font-size: 11px; -fx-cursor: hand;"));
+        addToCartBtn.setOnMouseExited(e -> addToCartBtn.setStyle("-fx-background-color: #5B8336; -fx-text-fill: white; -fx-font-size: 11px; -fx-cursor: hand;"));
         addToCartBtn.setOnAction(e -> addBundleToCart(bundle));
-        
-        // Add all elements to the VBox
+
         bundleBox.getChildren().addAll(nameLabel, includesLabel, productsListBox, priceLabel, savingsLabel, addToCartBtn);
-        
+
         return bundleBox;
     }
 
     private void addBundleToCart(BundleProduct bundle) {
         boolean bundleFound = false;
-        
-        // Check if bundle already exists in cart
+
         for (CartItem item : cartItems) {
             if (item.getName().equals(bundle.getName())) {
                 item.setQuantity(item.getQuantity() + 1);
@@ -352,72 +499,25 @@ public class CashierController implements Initializable{
                 break;
             }
         }
-        
-        // Add new bundle to cart if not found
+
         if (!bundleFound) {
             CartItem bundleItem = new CartItem(bundle.getName(), bundle.getPrice(), 1);
             cartItems.add(bundleItem);
         }
-        
+
         refreshCartView();
         updateTotalAmount();
-        
+
         showAlert(Alert.AlertType.INFORMATION, "Success", "Bundle added to cart!");
     }
 
-    /**
-     * Original method that extracts bundle info from UI elements
-     */
-    private void addBundleToCartFromUI(Button clickedButton) {
-        VBox bundleBox = (VBox) clickedButton.getParent();
-        String bundleName = "";
-        double bundlePrice = 0;
-        
-        // Extract information from the UI elements
-        for (javafx.scene.Node node : bundleBox.getChildren()) {
-            if (node instanceof Label) {
-                Label label = (Label) node;
-                if (label.getStyle().contains("-fx-font-weight: bold")) {
-                    String priceText = label.getText().replace("Rp ", "").replace(".", "");
-                    try {
-                        bundlePrice = Double.parseDouble(priceText);
-                    } catch (NumberFormatException e) {
-                        // Keep default price if parsing fails
-                    }
-                } else if (!label.getText().isEmpty() && !label.getText().startsWith("Rp")) {
-                    bundleName = label.getText();
-                }
-            }
-        }
-        
-        // Check if bundle already exists in cart
-        boolean bundleFound = false;
-        for (CartItem item : cartItems) {
-            if (item.getName().equals(bundleName)) {
-                item.setQuantity(item.getQuantity() + 1);
-                bundleFound = true;
-                break;
-            }
-        }
-        
-        // Add new bundle to cart if not found
-        if (!bundleFound) {
-            CartItem bundleItem = new CartItem(bundleName, bundlePrice, 1);
-            cartItems.add(bundleItem);
-        }
-        
-        refreshCartView();
-        updateTotalAmount();
-        
-        showAlert(Alert.AlertType.INFORMATION, "Success", "Bundle added to cart!");
-    }
-    
     private void loadProductsFromDatabase() {
+        System.out.println("Loading products from database...");
         products.clear();
         Connection conn = null;
         PreparedStatement pst = null;
         ResultSet rs = null;
-        
+
         try {
             conn = DatabaseConnection.getConnection();
             if (conn == null) {
@@ -425,35 +525,37 @@ public class CashierController implements Initializable{
                 showAlert(Alert.AlertType.ERROR, "Database Error", "Could not connect to database");
                 return;
             }
-            
+
             String query = "SELECT code, product_name, price, qty, exp_date, category FROM product";
             pst = conn.prepareStatement(query);
             rs = pst.executeQuery();
-            
+
+            int count = 0;
             while (rs.next()) {
+                count++;
                 String code = rs.getString("code");
                 String name = rs.getString("product_name");
                 double price = rs.getDouble("price");
                 int qty = rs.getInt("qty");
-                
-                // Handle exp_date which can be null
+
                 String expDate = null;
                 Date sqlDate = rs.getDate("exp_date");
                 if (sqlDate != null) {
                     expDate = dateFormat.format(sqlDate);
                 }
-                
+
                 String category = rs.getString("category");
-                
-                // Create product object with all fields from database
+
                 Product product = new Product(code, name, price, qty, expDate, category);
                 products.add(product);
             }
-            
+
+            System.out.println("Loaded " + count + " products from database");
+
         } catch (SQLException e) {
             System.err.println("SQL Error: " + e.getMessage());
             e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Database Error", 
+            showAlert(Alert.AlertType.ERROR, "Database Error",
                     "Could not load products from database: " + e.getMessage());
         } finally {
             try {
@@ -467,67 +569,87 @@ public class CashierController implements Initializable{
     }
 
     private void displayProducts() {
-        if (productsContainer != null) {
-            productsContainer.getChildren().clear();
-            
-            if (products.isEmpty()) {
-                Label noProductsLabel = new Label("No products available");
-                noProductsLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: gray;");
-                productsContainer.getChildren().add(noProductsLabel);
-            } else {
-                for (Product product : products) {
-                    try {
-                        VBox productBox = createProductBox(product);
-                        productsContainer.getChildren().add(productBox);
-                    } catch (Exception e) {
-                        System.err.println("Error creating product box for " + product.getName() + ": " + e.getMessage());
-                        e.printStackTrace();
-                    }
+        System.out.println("Displaying products...");
+
+        if (productsContainer == null) {
+            System.err.println("ERROR: productsContainer is null!");
+            return;
+        }
+
+        productsContainer.getChildren().clear();
+
+        if (products.isEmpty()) {
+            Label noProductsLabel = new Label("No products available");
+            noProductsLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: gray;");
+            productsContainer.getChildren().add(noProductsLabel);
+            System.out.println("No products to display");
+        } else {
+            for (Product product : products) {
+                try {
+                    VBox productBox = createProductBox(product);
+                    productsContainer.getChildren().add(productBox);
+                } catch (Exception e) {
+                    System.err.println("Error creating product box for " + product.getName() + ": " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
-        } else {
-            System.err.println("productsContainer is null");
+            System.out.println("Displayed " + products.size() + " products");
         }
+
+        productsContainer.requestLayout();
     }
 
     private VBox createProductBox(Product product) {
         VBox productBox = new VBox(5);
-        productBox.setStyle("-fx-border-color: #CCCCCC; -fx-border-radius: 8; -fx-padding: 10.0;");
-        
-        // Rest of your method remains the same...
+        productBox.setStyle("-fx-border-color: #CCCCCC; -fx-border-radius: 8; -fx-padding: 10; " +
+                "-fx-background-color: white; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);");
+        productBox.setMinWidth(160);
+        productBox.setMaxWidth(180);
+        productBox.setPrefWidth(170);
+
         Label nameLabel = new Label(product.getName());
-        nameLabel.setMaxWidth(150.0);
-        nameLabel.setMinWidth(150.0);
+        nameLabel.setMaxWidth(Double.MAX_VALUE);
         nameLabel.setWrapText(true);
-        nameLabel.setStyle("-fx-font-size: 14px;");
-        
+        nameLabel.setStyle("-fx-font-size: 12px;");
+        nameLabel.setMinHeight(40);
+
         Label priceLabel = new Label(formatPrice(product.getPrice()));
-        priceLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
-        
+        priceLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #2E7D32;");
+
+        Label stockLabel = new Label("Stock: " + product.getQuantity());
+        stockLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666;");
+
         Button addButton = new Button("Add to Cart");
-        addButton.setStyle("-fx-background-color: #5B8336; -fx-text-fill: white; -fx-font-size: 12px;");
+        addButton.setMaxWidth(Double.MAX_VALUE);
+        addButton.setStyle("-fx-background-color: #5B8336; -fx-text-fill: white; -fx-font-size: 11px; -fx-cursor: hand;");
+        addButton.setOnMouseEntered(e -> addButton.setStyle("-fx-background-color: #4A6B2A; -fx-text-fill: white; -fx-font-size: 11px; -fx-cursor: hand;"));
+        addButton.setOnMouseExited(e -> addButton.setStyle("-fx-background-color: #5B8336; -fx-text-fill: white; -fx-font-size: 11px; -fx-cursor: hand;"));
         addButton.setOnAction(e -> handleAddToCartFromDisplay(product));
-        
-        productBox.getChildren().addAll(nameLabel, priceLabel, addButton);
-        
+
+        if (product.getQuantity() <= 0) {
+            addButton.setDisable(true);
+            addButton.setText("Out of Stock");
+            addButton.setStyle("-fx-background-color: #CCCCCC; -fx-text-fill: #666; -fx-font-size: 11px;");
+        }
+
+        productBox.getChildren().addAll(nameLabel, priceLabel, stockLabel, addButton);
+
         return productBox;
     }
 
-    
     private void handleAddToCartFromDisplay(Product product) {
-        // Check available stock in the database
         int availableQty = 0;
         Connection conn = null;
         PreparedStatement pst = null;
         ResultSet rs = null;
-        
+
         try {
             conn = DatabaseConnection.getConnection();
             String query = "SELECT qty FROM product WHERE code = ?";
             pst = conn.prepareStatement(query);
             pst.setString(1, product.getCode());
             rs = pst.executeQuery();
-            
+
             if (rs.next()) {
                 availableQty = rs.getInt("qty");
             }
@@ -542,26 +664,25 @@ public class CashierController implements Initializable{
                 System.err.println("Error closing resources: " + e.getMessage());
             }
         }
-        
+
         boolean productFound = false;
         for (CartItem item : cartItems) {
             if (item.getName().equals(product.getName())) {
-                // Check if current quantity + 1 exceeds available
                 if (item.getQuantity() + 1 <= availableQty) {
                     item.setQuantity(item.getQuantity() + 1);
-                    item.setMaxQuantity(availableQty); // Update max quantity in case it changed
+                    item.setMaxQuantity(availableQty);
                     productFound = true;
                     refreshCartView();
                     updateTotalAmount();
                     showAlert(Alert.AlertType.INFORMATION, "Success", "Product added to cart!");
                 } else {
-                    showAlert(Alert.AlertType.WARNING, "Stock Limit", 
-                        "Cannot add more. Maximum available stock is " + availableQty);
+                    showAlert(Alert.AlertType.WARNING, "Stock Limit",
+                            "Cannot add more. Maximum available stock is " + availableQty);
                 }
                 return;
             }
         }
-        
+
         if (!productFound && availableQty > 0) {
             CartItem productItem = new CartItem(product.getName(), product.getPrice(), 1, availableQty);
             cartItems.add(productItem);
@@ -576,64 +697,69 @@ public class CashierController implements Initializable{
     private void refreshCartView() {
         if (cartItemsContainer != null) {
             cartItemsContainer.getChildren().clear();
-            
+
             for (CartItem item : cartItems) {
                 HBox itemView = createCartItemView(item);
                 cartItemsContainer.getChildren().add(itemView);
             }
         }
     }
-    
+
     private HBox createCartItemView(CartItem item) {
         HBox itemRow = new HBox(10);
         itemRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-        VBox productInfo = new VBox();
-        HBox.setHgrow(productInfo, javafx.scene.layout.Priority.ALWAYS);
-        
+        itemRow.setPadding(new Insets(8));
+        itemRow.setStyle("-fx-background-color: white; -fx-border-color: #E0E0E0; " +
+                "-fx-border-width: 0 0 1 0; -fx-border-radius: 0;");
+
+        VBox productInfo = new VBox(3);
+        HBox.setHgrow(productInfo, Priority.ALWAYS);
+
         Label nameLabel = new Label(item.getName());
         nameLabel.setWrapText(true);
-        nameLabel.setStyle("-fx-font-size: 12px; -fx-pref-width: 300px; -fx-pref-height: 37px;");
-        
+        nameLabel.setMaxWidth(Double.MAX_VALUE);
+        nameLabel.setStyle("-fx-font-size: 12px;");
+
         Label priceLabel = new Label(formatPrice(item.getPrice()));
-        priceLabel.setStyle("-fx-font-weight: bold;");
-        
+        priceLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 11px; -fx-text-fill: #2E7D32;");
+
         productInfo.getChildren().addAll(nameLabel, priceLabel);
-        
-        Button deleteBtn = new Button("Delete");
-        deleteBtn.setStyle("-fx-background-color: #9A030F; -fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;");
-        deleteBtn.setPrefWidth(100.0);
-        deleteBtn.setOnAction(e -> {
-            handleRemoveFromCart(item);
-        });
-        
-        HBox quantityControls = new HBox(5);
+
+        HBox quantityControls = new HBox(8);
         quantityControls.setAlignment(javafx.geometry.Pos.CENTER);
-        
+
         Button minusBtn = new Button("-");
-        minusBtn.setPrefWidth(15.0);
-        minusBtn.setOnAction(e -> {
-            handleDecreaseQuantity(item);
-        });
-        
+        minusBtn.setMinWidth(30);
+        minusBtn.setPrefWidth(30);
+        minusBtn.setStyle("-fx-background-color: #F5F5F5; -fx-font-weight: bold; -fx-cursor: hand;");
+        minusBtn.setOnAction(e -> handleDecreaseQuantity(item));
+
         Label quantityLabel = new Label(String.valueOf(item.getQuantity()));
-        quantityLabel.setMinWidth(30.0);
-        quantityLabel.setPrefWidth(30.0);
+        quantityLabel.setMinWidth(35);
+        quantityLabel.setPrefWidth(35);
         quantityLabel.setAlignment(javafx.geometry.Pos.CENTER);
-        quantityLabel.setStyle("-fx-font-weight: bold; -fx-padding: 0 5;");
-        
+        quantityLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
+
         Button plusBtn = new Button("+");
-        plusBtn.setPrefWidth(15.0);
-        plusBtn.setOnAction(e -> {
-            handleIncreaseQuantity(item);
-        });
-        
+        plusBtn.setMinWidth(30);
+        plusBtn.setPrefWidth(30);
+        plusBtn.setStyle("-fx-background-color: #F5F5F5; -fx-font-weight: bold; -fx-cursor: hand;");
+        plusBtn.setOnAction(e -> handleIncreaseQuantity(item));
+
         quantityControls.getChildren().addAll(minusBtn, quantityLabel, plusBtn);
-        
-        itemRow.getChildren().addAll(productInfo, deleteBtn, quantityControls);
-        
+
+        Button deleteBtn = new Button("×");
+        deleteBtn.setStyle("-fx-background-color: #D32F2F; -fx-text-fill: white; " +
+                "-fx-font-size: 18px; -fx-font-weight: bold; -fx-cursor: hand;");
+        deleteBtn.setMinWidth(35);
+        deleteBtn.setPrefWidth(35);
+        deleteBtn.setOnAction(e -> handleRemoveFromCart(item));
+
+        itemRow.getChildren().addAll(productInfo, quantityControls, deleteBtn);
+
         return itemRow;
     }
-    
+
     private void calculateBalance() {
         try {
             String paidText = paidField.getText().trim();
@@ -642,16 +768,16 @@ public class CashierController implements Initializable{
                 return;
             }
             paidText = paidText.replaceAll("[^\\d]", "");
-            
+
             double paidAmount = Double.parseDouble(paidText);
             double balance = paidAmount - totalAmount;
-            
+
             balanceLabel.setText(formatPrice(balance));
         } catch (NumberFormatException e) {
             balanceLabel.setText("Invalid amount");
         }
     }
-    
+
     @FXML
     private void searchProductByCode() {
         String code = searchField.getText().trim();
@@ -659,7 +785,7 @@ public class CashierController implements Initializable{
             Connection conn = null;
             PreparedStatement pst = null;
             ResultSet rs = null;
-            
+
             try {
                 conn = DatabaseConnection.getConnection();
                 if (conn == null) {
@@ -667,50 +793,46 @@ public class CashierController implements Initializable{
                     showAlert(Alert.AlertType.ERROR, "Database Error", "Could not connect to database");
                     return;
                 }
-                
+
                 String query = "SELECT code, product_name, price, qty, exp_date, category FROM product WHERE code = ?";
                 pst = conn.prepareStatement(query);
                 pst.setString(1, code);
                 rs = pst.executeQuery();
-                
+
                 if (rs.next()) {
                     String productCode = rs.getString("code");
                     String name = rs.getString("product_name");
                     double price = rs.getDouble("price");
                     int qty = rs.getInt("qty");
-                    
-                    // Handle exp_date which can be null
+
                     String expDate = null;
                     Date sqlDate = rs.getDate("exp_date");
                     if (sqlDate != null) {
                         expDate = dateFormat.format(sqlDate);
                     }
-                    
+
                     String category = rs.getString("category");
-                    
-                    // Create product object with all fields from database
+
                     currentProduct = new Product(productCode, name, price, qty, expDate, category);
-                    
-                    // Display product info
+
                     productNameLabel.setText(name);
                     priceLabel.setText(formatPrice(price));
                     addToCartBtn.setDisable(qty <= 0);
-                    
+
                     System.out.println("Found product: " + name + " with price: " + price);
                 } else {
-                    // Reset if product not found
                     currentProduct = null;
                     productNameLabel.setText("Product not found");
                     priceLabel.setText("");
                     addToCartBtn.setDisable(true);
-                    
+
                     showAlert(Alert.AlertType.WARNING, "Not Found", "Product with code " + code + " not found.");
                 }
-                
+
             } catch (SQLException e) {
                 System.err.println("SQL Error: " + e.getMessage());
                 e.printStackTrace();
-                showAlert(Alert.AlertType.ERROR, "Database Error", 
+                showAlert(Alert.AlertType.ERROR, "Database Error",
                         "Could not search product: " + e.getMessage());
             } finally {
                 try {
@@ -731,88 +853,79 @@ public class CashierController implements Initializable{
 
     @FXML
     void handleAddToCart(ActionEvent event) {
-    if (currentProduct != null) {
-        String productName = currentProduct.getName();
-        double productPrice = currentProduct.getPrice();
-        int availableQty = 0;
-        
-        // Get available quantity from database again to ensure it's current
-        Connection conn = null;
-        PreparedStatement pst = null;
-        ResultSet rs = null;
-        
-        try {
-            conn = DatabaseConnection.getConnection();
-            String query = "SELECT qty FROM product WHERE code = ?";
-            pst = conn.prepareStatement(query);
-            pst.setString(1, currentProduct.getCode());
-            rs = pst.executeQuery();
-            
-            if (rs.next()) {
-                availableQty = rs.getInt("qty");
-            }
-        } catch (SQLException e) {
-            System.err.println("Error checking stock: " + e.getMessage());
-            availableQty = 0;  // Be conservative if we can't check
-        } finally {
+        if (currentProduct != null) {
+            String productName = currentProduct.getName();
+            double productPrice = currentProduct.getPrice();
+            int availableQty = 0;
+
+            Connection conn = null;
+            PreparedStatement pst = null;
+            ResultSet rs = null;
+
             try {
-                if (rs != null) rs.close();
-                if (pst != null) pst.close();
-                if (conn != null) conn.close();
-            } catch (SQLException e) {
-                System.err.println("Error closing resources: " + e.getMessage());
-            }
-        }
-        
-        // Check if product already exists in cart
-        for (CartItem item : cartItems) {
-            if (item.getName().equals(productName)) {
-                // Check if current quantity + cart quantity exceeds available
-                if (item.getQuantity() + 1 <= availableQty) {
-                    item.setQuantity(item.getQuantity() + 1);
-                    refreshCartView();
-                    updateTotalAmount();
-                    searchField.clear();
-                    
-                    // Reset product info display
-                    currentProduct = null;
-                    productNameLabel.setText("");
-                    priceLabel.setText("");
-                    addToCartBtn.setDisable(true);
-                    
-                    showAlert(Alert.AlertType.INFORMATION, "Success", "Product quantity increased!");
-                } else {
-                    showAlert(Alert.AlertType.WARNING, "Stock Limit", 
-                        "Cannot add more. Maximum available stock is " + availableQty);
+                conn = DatabaseConnection.getConnection();
+                String query = "SELECT qty FROM product WHERE code = ?";
+                pst = conn.prepareStatement(query);
+                pst.setString(1, currentProduct.getCode());
+                rs = pst.executeQuery();
+
+                if (rs.next()) {
+                    availableQty = rs.getInt("qty");
                 }
-                return;
+            } catch (SQLException e) {
+                System.err.println("Error checking stock: " + e.getMessage());
+                availableQty = 0;
+            } finally {
+                try {
+                    if (rs != null) rs.close();
+                    if (pst != null) pst.close();
+                    if (conn != null) conn.close();
+                } catch (SQLException e) {
+                    System.err.println("Error closing resources: " + e.getMessage());
+                }
             }
-        }
-        
-        // Add new product to cart if stock is available
-        if (availableQty > 0) {
-            CartItem newItem = new CartItem(productName, productPrice, 1, availableQty);
-            cartItems.add(newItem);
-            refreshCartView();
-            updateTotalAmount();
-            searchField.clear();
-            
-            // Reset product info display
-            currentProduct = null;
-            productNameLabel.setText("");
-            priceLabel.setText("");
-            addToCartBtn.setDisable(true);
-            
-            showAlert(Alert.AlertType.INFORMATION, "Success", "Product added to cart!");
-        } else {
-            showAlert(Alert.AlertType.WARNING, "Out of Stock", "Sorry, this product is out of stock.");
+
+            for (CartItem item : cartItems) {
+                if (item.getName().equals(productName)) {
+                    if (item.getQuantity() + 1 <= availableQty) {
+                        item.setQuantity(item.getQuantity() + 1);
+                        refreshCartView();
+                        updateTotalAmount();
+                        searchField.clear();
+
+                        currentProduct = null;
+                        productNameLabel.setText("");
+                        priceLabel.setText("");
+                        addToCartBtn.setDisable(true);
+
+                        showAlert(Alert.AlertType.INFORMATION, "Success", "Product quantity increased!");
+                    } else {
+                        showAlert(Alert.AlertType.WARNING, "Stock Limit",
+                                "Cannot add more. Maximum available stock is " + availableQty);
+                    }
+                    return;
+                }
+            }
+
+            if (availableQty > 0) {
+                CartItem newItem = new CartItem(productName, productPrice, 1, availableQty);
+                cartItems.add(newItem);
+                refreshCartView();
+                updateTotalAmount();
+                searchField.clear();
+
+                currentProduct = null;
+                productNameLabel.setText("");
+                priceLabel.setText("");
+                addToCartBtn.setDisable(true);
+
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Product added to cart!");
+            } else {
+                showAlert(Alert.AlertType.WARNING, "Out of Stock", "Sorry, this product is out of stock.");
+            }
         }
     }
-}
-    /**
-     * Add event listener for search field
-     * Add this to your initialize method
-     */
+
     private void setupSearchFieldListener() {
         searchField.setOnKeyPressed(event -> {
             if (event.getCode() == javafx.scene.input.KeyCode.ENTER) {
@@ -820,82 +933,19 @@ public class CashierController implements Initializable{
             }
         });
     }
-    
-   
-    
-    @FXML
-    void handleAddProductToCart(ActionEvent event) {
-        Button clickedButton = (Button) event.getSource();
-        VBox productBox = (VBox) clickedButton.getParent();
-        String productName = "";
-        double productPrice = 0; 
-        
-        for (javafx.scene.Node node : productBox.getChildren()) {
-            if (node instanceof Label) {
-                Label label = (Label) node;
-                if (label.getStyle().contains("-fx-font-weight: bold")) {
-                    String priceText = label.getText().replace("Rp ", "").replace(".", "");
-                    try {
-                        productPrice = Double.parseDouble(priceText);
-                    } catch (NumberFormatException e) {
-                    }
-                } else if (!label.getText().isEmpty() && !label.getText().startsWith("Rp")) {
-                    productName = label.getText();
-                }
-            }
-        }
-        
-        if (productName.isEmpty()) {
-            productName = "Chitato snack cheese flavour";
-        }
-        
-        boolean productFound = false;
-        for (CartItem item : cartItems) {
-            if (item.getName().equals(productName)) {
-                item.setQuantity(item.getQuantity() + 1);
-                productFound = true;
-                break;
-            }
-        }
-        
-        if (!productFound) {
-            CartItem productItem = new CartItem(productName, productPrice, 1);
-            cartItems.add(productItem);
-        }
-        
-        refreshCartView();
-        updateTotalAmount();
-        
-        showAlert(Alert.AlertType.INFORMATION, "Success", "Product added to cart!");
-    }
-    
+
     private void handleRemoveFromCart(CartItem itemToRemove) {
         cartItems.remove(itemToRemove);
         refreshCartView();
         updateTotalAmount();
     }
-    
-    @FXML
-    void handleRemoveFromCart(ActionEvent event) {
-        Button clickedButton = (Button) event.getSource();
-        HBox parentRow = (HBox) clickedButton.getParent();
-        
-        int index = cartItemsContainer.getChildren().indexOf(parentRow);
-        if (index >= 0 && index < cartItems.size()) {
-            cartItems.remove(index);
-            refreshCartView();
-            updateTotalAmount();
-        }
-    }
-    
+
     private void handleIncreaseQuantity(CartItem item) {
-        // Re-check available stock in database for latest quantity
         int availableQty = 0;
         Connection conn = null;
         PreparedStatement pst = null;
         ResultSet rs = null;
-        
-        // Find the product code first
+
         String productCode = "";
         for (Product product : products) {
             if (product.getName().equals(item.getName())) {
@@ -903,7 +953,7 @@ public class CashierController implements Initializable{
                 break;
             }
         }
-    
+
         if (!productCode.isEmpty()) {
             try {
                 conn = DatabaseConnection.getConnection();
@@ -911,7 +961,7 @@ public class CashierController implements Initializable{
                 pst = conn.prepareStatement(query);
                 pst.setString(1, productCode);
                 rs = pst.executeQuery();
-                
+
                 if (rs.next()) {
                     availableQty = rs.getInt("qty");
                 }
@@ -927,34 +977,18 @@ public class CashierController implements Initializable{
                 }
             }
         }
-        
-        // Update the maximum quantity and check if we can increase
+
         item.setMaxQuantity(availableQty);
         if (item.getQuantity() < item.getMaxQuantity()) {
             item.setQuantity(item.getQuantity() + 1);
             refreshCartView();
             updateTotalAmount();
         } else {
-            showAlert(Alert.AlertType.WARNING, "Stock Limit", 
-                "Cannot add more. Maximum available stock is " + item.getMaxQuantity());
+            showAlert(Alert.AlertType.WARNING, "Stock Limit",
+                    "Cannot add more. Maximum available stock is " + item.getMaxQuantity());
         }
     }
-    
-    @FXML
-    void handleIncreaseQuantity(ActionEvent event) {
-        Button clickedButton = (Button) event.getSource();
-        HBox quantityBox = (HBox) clickedButton.getParent();
-        HBox parentRow = (HBox) quantityBox.getParent();
-        
-        int index = cartItemsContainer.getChildren().indexOf(parentRow);
-        if (index >= 0 && index < cartItems.size()) {
-            CartItem item = cartItems.get(index);
-            item.setQuantity(item.getQuantity() + 1);
-            refreshCartView();
-            updateTotalAmount();
-        }
-    }
-    
+
     private void handleDecreaseQuantity(CartItem item) {
         if (item.getQuantity() > 1) {
             item.setQuantity(item.getQuantity() - 1);
@@ -962,116 +996,72 @@ public class CashierController implements Initializable{
             updateTotalAmount();
         }
     }
-    
-    @FXML
-    void handleDecreaseQuantity(ActionEvent event) {
-        Button clickedButton = (Button) event.getSource();
-        HBox quantityBox = (HBox) clickedButton.getParent();
-        HBox parentRow = (HBox) quantityBox.getParent();
-        
-        int index = cartItemsContainer.getChildren().indexOf(parentRow);
-        if (index >= 0 && index < cartItems.size()) {
-            CartItem item = cartItems.get(index);
-            if (item.getQuantity() > 1) {
-                item.setQuantity(item.getQuantity() - 1);
-                refreshCartView();
-                updateTotalAmount();
-            }
-        }
-    }
 
-    private PurchaseTransaction currentTransaction;
-    
-    
     @FXML
-void handlePayment(ActionEvent event) {
-    String paidText = paidField.getText().trim();
-    if (paidText.isEmpty()) {
-        showAlert(Alert.AlertType.WARNING, "Warning", "Please enter the paid amount.");
-        return;
-    }
-    
-    // Check if cart is empty
-    if (cartItems.isEmpty()) {
-        showAlert(Alert.AlertType.WARNING, "Warning", "Cart is empty. Please add products first.");
-        return;
-    }
-    
-    try {
-        paidText = paidText.replaceAll("[^\\d]", "");
-        double paidAmount = Double.parseDouble(paidText);
-        
-        if (paidAmount < totalAmount) {
-            showAlert(Alert.AlertType.WARNING, "Warning", "Paid amount is less than the total.");
+    void handlePayment(ActionEvent event) {
+        String paidText = paidField.getText().trim();
+        if (paidText.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Warning", "Please enter the paid amount.");
             return;
         }
-        
-        String username = "guest"; // Default value
-        User currentUser = LoginController.getCurrentUser();
-        if (currentUser != null) {
-            username = currentUser.getUsername();
-        }
-        
-        // Create PurchaseTransaction instance
-        PurchaseTransaction transaction = new PurchaseTransaction(
-            new java.sql.Date(System.currentTimeMillis()),
-            0, // transactionId will be set during serialization
-            cartItems,
-            username
-        );
-        
-        // Process transaction using PurchaseTransaction methods
-        String transactionData = transaction.serializeTransaction();
-        
-        try {
-            transaction.processTransaction();
-            
-            // Log the successful transaction
-            int itemCount = getTotalItemCount();
-            String paymentMethod = "Cash"; // You may need to add payment method selection to your UI
-            
-            
-            double change = paidAmount - transaction.getTotalAmount();
-            
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Payment Successful");
-            alert.setHeaderText(null);
-            alert.setContentText("Payment received!\nChange: " + formatPrice(change));
-            alert.showAndWait();
-            
-            // Reset UI after successful transaction
-            cartItems.clear();
-            totalAmount = 0.0;
-            paidField.clear();
-            balanceLabel.setText("");
-            refreshCartView();
-            updateTotalDisplay();
-        } catch (Exception e) {
-            // Log failed transaction
-            int itemCount = getTotalItemCount();
-            String paymentMethod = "Cash";
-                                            
-            showAlert(Alert.AlertType.ERROR, "Error", "Transaction processing failed: " + e.getMessage());
-        }
-        
-    } catch (NumberFormatException e) {
-        showAlert(Alert.AlertType.ERROR, "Error", "Invalid payment amount.");
-    }
-}
 
-// Helper method to count total items in cart
-private int getTotalItemCount() {
-    int count = 0;
-    for (CartItem item : cartItems) {
-        count += item.getQuantity();
+        if (cartItems.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Warning", "Cart is empty. Please add products first.");
+            return;
+        }
+
+        try {
+            paidText = paidText.replaceAll("[^\\d]", "");
+            double paidAmount = Double.parseDouble(paidText);
+
+            if (paidAmount < totalAmount) {
+                showAlert(Alert.AlertType.WARNING, "Warning", "Paid amount is less than the total.");
+                return;
+            }
+
+            String username = "guest";
+            User currentUser = LoginController.getCurrentUser();
+            if (currentUser != null) {
+                username = currentUser.getUsername();
+            }
+
+            PurchaseTransaction transaction = new PurchaseTransaction(
+                    new java.sql.Date(System.currentTimeMillis()),
+                    0,
+                    cartItems,
+                    username
+            );
+
+            try {
+                transaction.processTransaction();
+
+                double change = paidAmount - transaction.getTotalAmount();
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Payment Successful");
+                alert.setHeaderText(null);
+                alert.setContentText("Payment received!\nChange: " + formatPrice(change));
+                alert.showAndWait();
+
+                cartItems.clear();
+                totalAmount = 0.0;
+                paidField.clear();
+                balanceLabel.setText("");
+                refreshCartView();
+                updateTotalDisplay();
+            } catch (Exception e) {
+                showAlert(Alert.AlertType.ERROR, "Error", "Transaction processing failed: " + e.getMessage());
+            }
+
+        } catch (NumberFormatException e) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Invalid payment amount.");
+        }
     }
-    return count;
-}
 
     private void updateTotalAmount() {
         totalAmount = 0.0;
         for (CartItem item : cartItems) {
-        totalAmount += item.getPrice() * item.getQuantity();
+            totalAmount += item.getPrice() * item.getQuantity();
         }
         updateTotalDisplay();
     }
@@ -1081,11 +1071,11 @@ private int getTotalItemCount() {
             totalAmountLabel.setText(formatPrice(totalAmount));
         }
     }
-    
+
     private String formatPrice(double price) {
         return currencyFormat.format(price).replace("Rp", "Rp ");
     }
-    
+
     private void showAlert(Alert.AlertType alertType, String title, String message) {
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
@@ -1093,14 +1083,14 @@ private int getTotalItemCount() {
         alert.setContentText(message);
         alert.showAndWait();
     }
-    
+
     @FXML
     void handleNavigation(ActionEvent event) {
         Object source = event.getSource();
-        
+
         try {
             String fxmlFile = "";
-            
+
             if (source == profileBtn) {
                 fxmlFile = "Profile.fxml";
             } else if (source == productsBtn) {
@@ -1114,45 +1104,54 @@ private int getTotalItemCount() {
             } else if (source == adminLogBtn) {
                 fxmlFile = "AuthenticationLog.fxml";
             } else if (source == cashierBtn) {
+                reloadAllContent();
                 return;
             }
-            
+
             if (!fxmlFile.isEmpty()) {
                 URL url = getClass().getResource(fxmlFile);
-                
+
                 if (url == null) {
-                    // Try alternative path format if the first attempt fails
                     String altPath = fxmlFile.replace("/com/example/uts_pbo/", "/");
                     url = getClass().getResource(altPath);
-                    
+
                     if (url == null) {
-                        // Try one more alternative - without leading slash
                         String noSlashPath = fxmlFile.substring(1);
                         url = getClass().getClassLoader().getResource(noSlashPath);
-                        
+
                         if (url == null) {
-                            showAlert(Alert.AlertType.ERROR, "Navigation Error", 
-                                "Could not find FXML file: " + fxmlFile + 
-                                "\nPlease check if the file exists in the resources folder.");
+                            showAlert(Alert.AlertType.ERROR, "Navigation Error",
+                                    "Could not find FXML file: " + fxmlFile);
                             return;
                         }
                     }
                 }
-                
-                Parent root = FXMLLoader.load(url);
+
+                FXMLLoader loader = new FXMLLoader(url);
+                Parent root = loader.load();
+
                 Stage stage = (Stage) ((Button) source).getScene().getWindow();
                 Scene scene = new Scene(root);
                 stage.setScene(scene);
+                stage.setMaximized(true);
                 stage.show();
+
+                if (fxmlFile.equals("Cashier.fxml")) {
+                    Platform.runLater(() -> {
+                        Object controller = loader.getController();
+                        if (controller instanceof CashierController) {
+                            ((CashierController) controller).reloadAllContent();
+                        }
+                    });
+                }
             }
-            
+
         } catch (IOException e) {
-            showAlert(Alert.AlertType.ERROR, "Navigation Error", 
+            showAlert(Alert.AlertType.ERROR, "Navigation Error",
                     "Could not navigate to the requested page: " + e.getMessage());
             e.printStackTrace();
         }
     }
-
 
     public SimpleDateFormat getDateFormat() {
         return dateFormat;
@@ -1162,7 +1161,6 @@ private int getTotalItemCount() {
         this.dateFormat = dateFormat;
     }
 
-    
     public static class CartItem {
         private String code;
         private String name;
@@ -1175,7 +1173,7 @@ private int getTotalItemCount() {
             this.name = name;
             this.price = price;
             this.quantity = quantity;
-            this.maxQuantity = Integer.MAX_VALUE; 
+            this.maxQuantity = Integer.MAX_VALUE;
         }
 
         public CartItem(String name, double price, int quantity, int maxQuantity) {
@@ -1183,9 +1181,9 @@ private int getTotalItemCount() {
             this.name = name;
             this.price = price;
             this.quantity = quantity;
-            this.maxQuantity = Integer.MAX_VALUE; 
+            this.maxQuantity = maxQuantity;
         }
-        
+
         public String getCode() {
             return code;
         }
@@ -1193,15 +1191,15 @@ private int getTotalItemCount() {
         public String getName() {
             return name;
         }
-        
+
         public double getPrice() {
             return price;
         }
-        
+
         public int getQuantity() {
             return quantity;
         }
-        
+
         public void setQuantity(int quantity) {
             if (quantity <= maxQuantity) {
                 this.quantity = quantity;
@@ -1211,11 +1209,11 @@ private int getTotalItemCount() {
         public int getMaxQuantity() {
             return maxQuantity;
         }
-        
+
         public void setMaxQuantity(int maxQuantity) {
             this.maxQuantity = maxQuantity;
         }
-        
+
         public double getTotal() {
             return price * quantity;
         }

@@ -54,7 +54,7 @@ public class Main extends Application {
     // Add method to show login screen
     public static void showLoginScreen() {
         try {
-            FXMLLoader loader = new FXMLLoader(Main.class.getResource("Login.fxml"));
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("/User_dashboard/Login.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root);
 
@@ -83,7 +83,7 @@ public class Main extends Application {
     // Method to show sign up screen
     public static void showSignUpScreen() {
         try {
-            FXMLLoader loader = new FXMLLoader(Main.class.getResource("SignUp.fxml"));
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("/User_dashboard/SignUp.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root);
             
@@ -166,7 +166,7 @@ public class Main extends Application {
     // Add this method to your Main class
     public static void showDataDiriSignUp(String username) {
         try {
-            FXMLLoader loader = new FXMLLoader(Main.class.getResource("DataDiriSignUp.fxml"));
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("/User_dashboard/DataDiriSignUp.fxml"));
             Parent root = loader.load();
             
             // Get the controller and pass the username
@@ -255,7 +255,7 @@ public class Main extends Application {
 
     public static void showProfile() {
         try {
-            FXMLLoader loader = new FXMLLoader(Main.class.getResource("Profile.fxml"));
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource("/Admin_View/Profile.fxml"));
             Parent root = loader.load();
             Scene scene = new Scene(root);
             Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();

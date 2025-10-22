@@ -112,7 +112,7 @@
                     <TextField fx:id="firstNameField"
                                GridPane.rowIndex="0"
                                GridPane.columnIndex="1"
-                               promptText="Enter your first name"
+                               disable="true"
                                style="-fx-font-size: 14px; -fx-padding: 10; -fx-background-radius: 6px; -fx-border-color: #ccc; -fx-border-radius: 6px; -fx-border-width: 1px;"/>
 
                     <!-- Last Name -->
@@ -123,7 +123,7 @@
                     <TextField fx:id="lastNameField"
                                GridPane.rowIndex="1"
                                GridPane.columnIndex="1"
-                               promptText="Enter your last name"
+                               disable="true"
                                style="-fx-font-size: 14px; -fx-padding: 10; -fx-background-radius: 6px; -fx-border-color: #ccc; -fx-border-radius: 6px; -fx-border-width: 1px;"/>
 
                     <!-- Email -->
@@ -134,7 +134,7 @@
                     <TextField fx:id="emailField"
                                GridPane.rowIndex="2"
                                GridPane.columnIndex="1"
-                               promptText="Enter your email"
+                               disable="true"
                                style="-fx-font-size: 14px; -fx-padding: 10; -fx-background-radius: 6px; -fx-border-color: #ccc; -fx-border-radius: 6px; -fx-border-width: 1px;"/>
 
                     <!-- Username -->
@@ -145,7 +145,7 @@
                     <TextField fx:id="usernameField"
                                GridPane.rowIndex="3"
                                GridPane.columnIndex="1"
-                               promptText="Enter your username"
+                               disable="true"
                                style="-fx-font-size: 14px; -fx-padding: 10; -fx-background-radius: 6px; -fx-border-color: #ccc; -fx-border-radius: 6px; -fx-border-width: 1px;"/>
 
                     <!-- Separator -->
@@ -187,11 +187,6 @@
                             <Insets top="20"/>
                         </padding>
 
-                        <Button text="Update Profile"
-                                onAction="#handleUpdateProfile"
-                                prefWidth="140"
-                                prefHeight="40"
-                                style="-fx-background-color: #59812a; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 6px; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2);"/>
 
                         <Button text="Change Password"
                                 onAction="#handleUpdatePassword"

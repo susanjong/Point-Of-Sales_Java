@@ -1,4 +1,4 @@
-package com.example.uts_pbo;
+package User_dashboard;
 import Admin_View.AuthenticationLogDAO;
 import Admin_View.AuthenticationLogEntry;
 public class AuthLogger {

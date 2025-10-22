@@ -1,4 +1,4 @@
-package com.example.uts_pbo;
+package User_dashboard;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -17,7 +17,7 @@ public class LoginController {
     private PasswordField EnterPassword;
 
     @FXML
-    private Hyperlink ForgotPassword;
+    private Hyperlink ForgotPasswordController;
 
     @FXML
     private Hyperlink HyperlinkCreateAcc;
@@ -41,11 +41,14 @@ public class LoginController {
         validateLogin();
     }
 
+    /**
+     * FIXED: Method untuk navigate ke Forgot Password page
+     */
     @FXML
     void forgotPasswordOnAction(ActionEvent event) {
         try {
-            Main.getPrimaryStage().setTitle("Forgot Password");
-            Main.showLoginScreen(); // Redirect to OTP email screen when implemented
+            // Panggil static method dari ForgotPasswordController untuk navigasi
+            User_dashboard.ForgotPasswordController.navigateToForgotPassword(event);
         } catch (Exception e) {
             LoginMessageLabel.setText("Error: Could not load forgot password page");
             LoginMessageLabel.setTextFill(Color.RED);
@@ -85,24 +88,24 @@ public class LoginController {
             authenticateUser();
         }
     }
-    
+
     private void authenticateUser() {
         String usernameOrEmail = UsernameFieldText.getText();
         String password = EnterPassword.getText();
-        
+
         // Try to authenticate user
         User user = UserDAO.getUserByUsernameOrEmail(usernameOrEmail);
-        
+
         if (user != null && user.verifyPassword(password)) {
             // Login successful
             currentUser = user;
             UserSession.setCurrentUser(user);
 
             AuthLogger.logLogin(user);
-            
+
             LoginMessageLabel.setText("Login successful!");
             LoginMessageLabel.setTextFill(Color.GREEN);
-            
+
             // Navigate based on user role
             try {
                 if (user.isAdmin()) {
@@ -126,7 +129,7 @@ public class LoginController {
                 // Username/email doesn't exist
                 AuthLogger.logFailedLogin(usernameOrEmail);
             }
-            
+
             LoginMessageLabel.setText("Invalid username or password");
             LoginMessageLabel.setTextFill(Color.RED);
         }

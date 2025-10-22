@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-import com.example.uts_pbo.NavigationAuthorizer;
-import com.example.uts_pbo.UserSession;
+import User_dashboard.NavigationAuthorizer;
+import User_dashboard.UserSession;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;

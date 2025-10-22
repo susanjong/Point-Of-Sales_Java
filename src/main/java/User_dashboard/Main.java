@@ -1,8 +1,5 @@
-package com.example.uts_pbo;
+package User_dashboard;
 
-import Admin_View.AuthenticationLogDAO;
-import Admin_View.AuthenticationLogEntry;
-import Admin_View.Product;
 import javafx.application.Application;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -12,7 +9,6 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import java.io.IOException;
-import javafx.geometry.Rectangle2D;
 
 public class Main extends Application {
     private static Stage primaryStage;

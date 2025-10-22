@@ -1,4 +1,4 @@
-package com.example.uts_pbo;
+package User_dashboard;
 
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -380,13 +380,13 @@ public class ProfileController implements Initializable {
     private void redirectToLogin() {
         System.out.println("[ProfileController] Redirecting to login...");
         try {
-            URL loginUrl = getClass().getResource("/com/example/uts_pbo/Login.fxml");
+            URL loginUrl = getClass().getResource("/User_dashboard/Login.fxml");
 
             if (loginUrl == null) {
                 loginUrl = getClass().getResource("Login.fxml");
 
                 if (loginUrl == null) {
-                    loginUrl = getClass().getClassLoader().getResource("com/example/uts_pbo/Login.fxml");
+                    loginUrl = getClass().getClassLoader().getResource("User_dashboard/Login.fxml");
 
                     if (loginUrl == null) {
                         System.err.println("[ProfileController] Could not find Login.fxml file!");

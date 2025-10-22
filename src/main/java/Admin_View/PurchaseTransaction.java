@@ -9,9 +9,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import com.example.uts_pbo.DatabaseConnection;
-import com.example.uts_pbo.LoginController;
-import com.example.uts_pbo.User;
+import User_dashboard.DatabaseConnection;
+import User_dashboard.LoginController;
+import User_dashboard.User;
 
 import Admin_View.CashierController.CartItem;
 import javafx.scene.control.Alert;

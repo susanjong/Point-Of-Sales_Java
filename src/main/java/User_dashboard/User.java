@@ -1,4 +1,4 @@
-package com.example.uts_pbo;
+package User_dashboard;
 
 public class User {
     private int id;

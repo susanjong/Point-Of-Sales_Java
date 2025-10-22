@@ -6,9 +6,9 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
-import com.example.uts_pbo.DatabaseConnection;
-import com.example.uts_pbo.LoginController;
-import com.example.uts_pbo.User;
+import User_dashboard.DatabaseConnection;
+import User_dashboard.LoginController;
+import User_dashboard.User;
 
 public class RefundTransaction extends Transaction implements Payable {
     private List<Product> refundProducts;

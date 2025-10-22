@@ -1,11 +1,11 @@
 package Admin_View;
 
-import com.example.uts_pbo.AuthLogger;
-import com.example.uts_pbo.DatabaseConnection;
-import com.example.uts_pbo.NavigationAuthorizer;
-import com.example.uts_pbo.User;
-import com.example.uts_pbo.UserDAO;
-import com.example.uts_pbo.UserSession;
+import User_dashboard.AuthLogger;
+import User_dashboard.DatabaseConnection;
+import User_dashboard.NavigationAuthorizer;
+import User_dashboard.User;
+import User_dashboard.UserDAO;
+import User_dashboard.UserSession;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -22,7 +22,6 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class UserManagementController implements Initializable {
@@ -264,7 +263,7 @@ public class UserManagementController implements Initializable {
 
     private void redirectToLogin() {
         try {
-            Parent root = FXMLLoader.load(getClass().getResource("/com/example/uts_pbo/Login.fxml"));
+            Parent root = FXMLLoader.load(getClass().getResource("/User_dashboard/Login.fxml"));
             Stage stage = (Stage) profileBtn.getScene().getWindow();
             stage.setScene(new Scene(root));
         } catch (IOException e) {

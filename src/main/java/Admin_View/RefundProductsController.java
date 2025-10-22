@@ -12,15 +12,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import User_dashboard.DatabaseConnection;
-import User_dashboard.Main;
 
+import User_dashboard.DatabaseConnection;
+
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -35,6 +37,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 public class RefundProductsController {
@@ -59,43 +62,119 @@ public class RefundProductsController {
     @FXML private Label totalAmountLabel;
     @FXML private TextField TransactionIDField;
     @FXML private Label balanceLabel;
+    @FXML private ScrollPane refundItemsScrollPane;
 
     private ObservableList<Product> refundList = FXCollections.observableArrayList();
     private List<Product> selectedRefunds = new ArrayList<>();
 
     @FXML
     public void initialize() {
-        // Konfigurasi kolom tabel
+        System.out.println("[RefundProductsController] initialize() called");
+
+        // Configure table columns with proper cell value factories
         codeColumn.setCellValueFactory(new PropertyValueFactory<>("code"));
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
         qtyColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         expDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
         categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
+
+        // Enable text wrapping for name column
         nameColumn.setStyle("-fx-alignment: CENTER-LEFT;");
+
+        // Make table columns resizable and responsive
         refundproductTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        // Konfigurasi VBox container
+        // Configure refundItemsContainer for better responsiveness
         if (refundItemsContainer != null) {
             refundItemsContainer.setSpacing(8);
             refundItemsContainer.setPadding(new Insets(10));
+            VBox.setVgrow(refundItemsContainer, Priority.ALWAYS);
         }
 
-        // Load data produk
+        // Configure ScrollPane if it exists
+        if (refundItemsScrollPane != null) {
+            refundItemsScrollPane.setFitToWidth(true);
+            refundItemsScrollPane.setFitToHeight(true);
+            VBox.setVgrow(refundItemsScrollPane, Priority.ALWAYS);
+        }
+
+        // Load refund data
         loadRefundData();
 
-        // Listener untuk klik produk
+        // Set up table selection listener
         refundproductTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        refundproductTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
-            if (newSel != null) addToRefundList(newSel);
+        refundproductTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) {
+                addToRefundList(newSelection);
+            }
         });
-
 
         // Initialize total amount label
         totalAmountLabel.setText("Rp 0.00");
+
+        // Setup window with default size and maximize capability
+        setupWindowSizeAndMaximize();
+    }
+
+    /**
+     * ✅ Setup window untuk ukuran default yang tepat dan dapat di-maximize
+     */
+    private void setupWindowSizeAndMaximize() {
+        Platform.runLater(() -> {
+            try {
+                Stage stage = getStage();
+                if (stage != null) {
+                    // Get screen bounds
+                    Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
+                    // Set minimum size yang responsif
+                    stage.setMinWidth(1200);
+                    stage.setMinHeight(700);
+
+                    // Set default size (80% dari screen untuk kenyamanan)
+                    double defaultWidth = screenBounds.getWidth() * 0.8;
+                    double defaultHeight = screenBounds.getHeight() * 0.85;
+
+                    stage.setWidth(defaultWidth);
+                    stage.setHeight(defaultHeight);
+
+                    // Center on screen
+                    stage.centerOnScreen();
+
+                    // Allow maximize without breaking layout
+                    stage.maximizedProperty().addListener((obs, wasMax, isMax) -> {
+                        if (isMax) {
+                            System.out.println("[RefundProductsController] Window maximized");
+                        } else {
+                            System.out.println("[RefundProductsController] Window restored");
+                        }
+                    });
+
+                    System.out.println("[RefundProductsController] Window configured: " +
+                            defaultWidth + "x" + defaultHeight);
+                }
+            } catch (Exception e) {
+                System.err.println("[RefundProductsController] Error setting window: " + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Helper method to get current stage
+     */
+    private Stage getStage() {
+        if (refundproductTable != null && refundproductTable.getScene() != null) {
+            return (Stage) refundproductTable.getScene().getWindow();
+        }
+        if (profileBtn != null && profileBtn.getScene() != null) {
+            return (Stage) profileBtn.getScene().getWindow();
+        }
+        return null;
     }
 
     private void loadRefundData() {
+        System.out.println("[RefundProductsController] Loading refund data...");
         // Clear the existing list
         refundList.clear();
 
@@ -108,7 +187,9 @@ public class RefundProductsController {
 
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
+            int count = 0;
             while (rs.next()) {
+                count++;
                 String code = rs.getString("code");
                 String name = rs.getString("product_name");
                 double price = rs.getDouble("price");
@@ -128,12 +209,15 @@ public class RefundProductsController {
                 refundList.add(product);
             }
 
+            System.out.println("[RefundProductsController] Loaded " + count + " products");
+
             // Close resources
             rs.close();
             pstmt.close();
             conn.close();
 
         } catch (SQLException e) {
+            System.err.println("[RefundProductsController] Database error: " + e.getMessage());
             showAlert(Alert.AlertType.ERROR, "Database Error",
                     "Failed to load product data: " + e.getMessage());
             e.printStackTrace();
@@ -166,6 +250,7 @@ public class RefundProductsController {
 
             selectedRefunds.add(refundProduct);
             updateRefundItemsContainer();
+            System.out.println("[RefundProductsController] Added to refund list: " + product.getName());
         }
     }
 
@@ -188,10 +273,12 @@ public class RefundProductsController {
     private HBox createRefundItemView(Product product, int index) {
         HBox itemRow = new HBox(10);
         itemRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-        itemRow.setPadding(new Insets(8, 12, 8, 12));
-        itemRow.setStyle("-fx-background-color: #ffffff; -fx-background-radius: 5; -fx-border-color: #ddd; -fx-border-radius: 5; -fx-border-width: 1;");
-        itemRow.setPrefHeight(75);
-        itemRow.setMinHeight(75);
+        itemRow.setPadding(new Insets(10, 12, 10, 12));
+        itemRow.setStyle("-fx-background-color: #ffffff; -fx-background-radius: 5; " +
+                "-fx-border-color: #ddd; -fx-border-radius: 5; -fx-border-width: 1; " +
+                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 4, 0, 0, 1);");
+        itemRow.setPrefHeight(80);
+        itemRow.setMinHeight(80);
 
         // Product info container with flexible width
         VBox productInfo = new VBox(5);
@@ -207,7 +294,8 @@ public class RefundProductsController {
         Label priceLabel = new Label("Rp " + String.format("%,.2f", product.getPrice()));
         priceLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666;");
 
-        Label subtotalLabel = new Label("Subtotal: Rp " + String.format("%,.2f", product.getPrice() * product.getQuantity()));
+        Label subtotalLabel = new Label("Subtotal: Rp " +
+                String.format("%,.2f", product.getPrice() * product.getQuantity()));
         subtotalLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #1d4008; -fx-font-weight: bold;");
 
         productInfo.getChildren().addAll(nameLabel, priceLabel, subtotalLabel);
@@ -215,13 +303,18 @@ public class RefundProductsController {
         // Quantity controls container
         HBox quantityControls = new HBox(5);
         quantityControls.setAlignment(javafx.geometry.Pos.CENTER);
-        quantityControls.setMinWidth(100);
-        quantityControls.setPrefWidth(100);
+        quantityControls.setMinWidth(110);
+        quantityControls.setPrefWidth(110);
 
         Button minusBtn = new Button("-");
         minusBtn.setPrefWidth(32);
         minusBtn.setPrefHeight(32);
-        minusBtn.setStyle("-fx-background-color: #ddd; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 5;");
+        minusBtn.setStyle("-fx-background-color: #ddd; -fx-font-size: 16px; " +
+                "-fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;");
+        minusBtn.setOnMouseEntered(e -> minusBtn.setStyle("-fx-background-color: #ccc; " +
+                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;"));
+        minusBtn.setOnMouseExited(e -> minusBtn.setStyle("-fx-background-color: #ddd; " +
+                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;"));
         minusBtn.setOnAction(e -> {
             if (product.getQuantity() > 1) {
                 product.setQuantity(product.getQuantity() - 1);
@@ -237,7 +330,14 @@ public class RefundProductsController {
         Button plusBtn = new Button("+");
         plusBtn.setPrefWidth(32);
         plusBtn.setPrefHeight(32);
-        plusBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 5;");
+        plusBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; " +
+                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;");
+        plusBtn.setOnMouseEntered(e -> plusBtn.setStyle("-fx-background-color: #45a049; " +
+                "-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; " +
+                "-fx-background-radius: 5; -fx-cursor: hand;"));
+        plusBtn.setOnMouseExited(e -> plusBtn.setStyle("-fx-background-color: #4CAF50; " +
+                "-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; " +
+                "-fx-background-radius: 5; -fx-cursor: hand;"));
         plusBtn.setOnAction(e -> {
             product.setQuantity(product.getQuantity() + 1);
             updateRefundItemsContainer();
@@ -247,12 +347,20 @@ public class RefundProductsController {
 
         // Delete button
         Button deleteBtn = new Button("✕");
-        deleteBtn.setStyle("-fx-background-color: #9A030F; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 5;");
-        deleteBtn.setPrefWidth(35);
-        deleteBtn.setPrefHeight(35);
+        deleteBtn.setStyle("-fx-background-color: #9A030F; -fx-text-fill: white; " +
+                "-fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;");
+        deleteBtn.setPrefWidth(38);
+        deleteBtn.setPrefHeight(38);
+        deleteBtn.setOnMouseEntered(e -> deleteBtn.setStyle("-fx-background-color: #7a0208; " +
+                "-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; " +
+                "-fx-background-radius: 5; -fx-cursor: hand;"));
+        deleteBtn.setOnMouseExited(e -> deleteBtn.setStyle("-fx-background-color: #9A030F; " +
+                "-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; " +
+                "-fx-background-radius: 5; -fx-cursor: hand;"));
         deleteBtn.setOnAction(e -> {
             selectedRefunds.remove(index);
             updateRefundItemsContainer();
+            System.out.println("[RefundProductsController] Removed item at index: " + index);
         });
 
         itemRow.getChildren().addAll(productInfo, quantityControls, deleteBtn);
@@ -262,6 +370,8 @@ public class RefundProductsController {
 
     @FXML
     private void handlerefund() {
+        System.out.println("[RefundProductsController] Processing refund...");
+
         if (selectedRefunds.isEmpty()) {
             showAlert("Error", "No items selected for refund.");
             return;
@@ -300,7 +410,7 @@ public class RefundProductsController {
 
             // Serialize and save the transaction data to database
             String transactionData = refundTx.serializeTransaction();
-            System.out.println(transactionData); // For debugging
+            System.out.println("[RefundProductsController] Transaction data: " + transactionData);
 
             // Show success message using the calculateTotal method from RefundTransaction
             showAlert(Alert.AlertType.INFORMATION, "Success",
@@ -317,7 +427,10 @@ public class RefundProductsController {
             // Reload product data to reflect updated quantities
             loadRefundData();
 
+            System.out.println("[RefundProductsController] Refund completed successfully");
+
         } catch (Exception e) {
+            System.err.println("[RefundProductsController] Error processing refund: " + e.getMessage());
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to process refund: " + e.getMessage());
             e.printStackTrace();
         }
@@ -438,30 +551,88 @@ public class RefundProductsController {
     @FXML
     void handleNavigation(ActionEvent event) {
         Object source = event.getSource();
+        System.out.println("[RefundProductsController] Navigation triggered");
 
         try {
-            // Gunakan Main.java untuk navigasi agar ukuran konsisten
+            String fxmlFile = "";
+
             if (source == profileBtn) {
-                Main.showProfile();
+                fxmlFile = "/Admin_View/Profile.fxml";
             } else if (source == cashierBtn) {
-                Main.showCashier();
+                fxmlFile = "/Admin_View/Cashier.fxml";
             } else if (source == bundleproductsBtn) {
-                Main.showBundleProducts();
+                fxmlFile = "/Admin_View/BundleProducts.fxml";
             } else if (source == usersBtn) {
-                Main.showUserManagement();
+                fxmlFile = "/Admin_View/UserManagement.fxml";
             } else if (source == productsBtn) {
-                Main.showProductManagement();
+                fxmlFile = "/Admin_View/ProductManagement.fxml";
             } else if (source == adminLogBtn) {
-                Main.showAuthenticationLogs();
+                fxmlFile = "/Admin_View/AuthenticationLog.fxml";
             } else if (source == refundproductsBtn) {
-                // Already on refund page, do nothing
+                System.out.println("[RefundProductsController] Already on Refund Products page");
                 return;
             }
 
-        } catch (Exception e) {
+            if (!fxmlFile.isEmpty()) {
+                loadScene(fxmlFile, (Stage) ((Button) source).getScene().getWindow());
+            }
+
+        } catch (IOException e) {
             showAlert(Alert.AlertType.ERROR, "Navigation Error",
                     "Could not navigate to the requested page: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /**
+     * ✅ Load scene baru dengan ukuran default optimal dan maximize capability
+     */
+    private void loadScene(String fxmlFile, Stage stage) throws IOException {
+        System.out.println("[RefundProductsController] Loading scene: " + fxmlFile);
+
+        URL url = getClass().getResource(fxmlFile);
+        if (url == null) {
+            String altPath = fxmlFile.replace("/com/example/uts_pbo/", "/");
+            url = getClass().getResource(altPath);
+
+            if (url == null) {
+                String noSlashPath = fxmlFile.substring(1);
+                url = getClass().getClassLoader().getResource(noSlashPath);
+
+                if (url == null) {
+                    showAlert(Alert.AlertType.ERROR, "Navigation Error",
+                            "Could not find FXML file: " + fxmlFile);
+                    return;
+                }
+            }
+        }
+
+        Parent root = FXMLLoader.load(url);
+
+        // Get screen bounds
+        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+
+        // Set minimum size
+        stage.setMinWidth(1200);
+        stage.setMinHeight(700);
+
+        // Set default size (80% dari layar)
+        double defaultWidth = screenBounds.getWidth() * 0.8;
+        double defaultHeight = screenBounds.getHeight() * 0.85;
+
+        // Set scene
+        stage.setScene(new Scene(root));
+
+        // ✅ Set ukuran default dan center, TIDAK auto-maximize
+        Platform.runLater(() -> {
+            stage.setWidth(defaultWidth);
+            stage.setHeight(defaultHeight);
+            stage.centerOnScreen();
+
+            System.out.println("[RefundProductsController] Scene loaded: " +
+                    defaultWidth + "x" + defaultHeight);
+        });
+
+        stage.show();
     }
 }

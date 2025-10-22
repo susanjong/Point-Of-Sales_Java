@@ -36,6 +36,9 @@ public class ProfileController implements Initializable {
 
     private User currentUser;
 
+    private static final double FIXED_WIDTH = 1280;
+    private static final double FIXED_HEIGHT = 800;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("[ProfileController] initialize() called");
@@ -50,57 +53,37 @@ public class ProfileController implements Initializable {
         System.out.println("[ProfileController] User loaded: id=" + currentUser.getId() +
                 ", username=" + currentUser.getUsername());
 
-        // Populate fields dengan data user
         if (firstNameField != null) firstNameField.setText(currentUser.getFirstName());
         if (lastNameField != null) lastNameField.setText(currentUser.getLastName());
         if (emailField != null) emailField.setText(currentUser.getEmail());
         if (usernameField != null) usernameField.setText(currentUser.getUsername());
 
-        // Setup window maximize & centered
-        setupWindowMaximized();
+        setupFixedWindow();
     }
 
-    /**
-     * ✅ Setup window untuk selalu maximize dan center di semua ukuran layar
-     */
-    private void setupWindowMaximized() {
+    private void setupFixedWindow() {
         Platform.runLater(() -> {
-            try {
-                Stage stage = (Stage) firstNameField.getScene().getWindow();
-                if (stage != null) {
-                    // Get screen bounds
-                    Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-
-                    // Set minimum size responsif
-                    stage.setMinWidth(1024);
-                    stage.setMinHeight(768);
-
-                    // Set posisi ke center screen
-                    stage.setX(screenBounds.getMinX());
-                    stage.setY(screenBounds.getMinY());
-                    stage.setWidth(screenBounds.getWidth());
-                    stage.setHeight(screenBounds.getHeight());
-
-                    // Maximize window
-                    stage.setMaximized(true);
-                    stage.centerOnScreen();
-
-                    // Lock maximized state - prevent user dari resize
-                    stage.maximizedProperty().addListener((obs, wasMax, isMax) -> {
-                        if (!isMax) {
-                            Platform.runLater(() -> {
-                                stage.setMaximized(true);
-                                stage.centerOnScreen();
-                            });
-                        }
-                    });
-
-                    System.out.println("[ProfileController] Window maximized and centered");
-                }
-            } catch (Exception e) {
-                System.err.println("[ProfileController] Error setting window: " + e.getMessage());
+            Stage stage = getStage();
+            if (stage != null) {
+                stage.setMinWidth(FIXED_WIDTH);
+                stage.setMinHeight(FIXED_HEIGHT);
+                stage.setWidth(FIXED_WIDTH);
+                stage.setHeight(FIXED_HEIGHT);
+                stage.setResizable(false);
+                stage.centerOnScreen();
+                System.out.println("[ProfileController] Fixed window size set: " + FIXED_WIDTH + "x" + FIXED_HEIGHT);
             }
         });
+    }
+
+    private Stage getStage() {
+        if (firstNameField != null && firstNameField.getScene() != null) {
+            return (Stage) firstNameField.getScene().getWindow();
+        }
+        if (profileBtn != null && profileBtn.getScene() != null) {
+            return (Stage) profileBtn.getScene().getWindow();
+        }
+        return null;
     }
 
     @FXML
@@ -110,24 +93,18 @@ public class ProfileController implements Initializable {
         String newPwd = newPasswordField.getText();
         String confirm = confirmPasswordField.getText();
 
-        // Validasi password tidak kosong
         if (newPwd.isEmpty() || confirm.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Validation Error",
-                    "Password fields cannot be empty!");
+            showAlert(Alert.AlertType.WARNING, "Validation Error", "Password fields cannot be empty!");
             return;
         }
 
-        // Validasi password match
         if (!newPwd.equals(confirm)) {
             System.out.println("[ProfileController] Passwords do not match");
-            showAlert(Alert.AlertType.WARNING, "Validation Error",
-                    "Passwords do not match!");
+            showAlert(Alert.AlertType.WARNING, "Validation Error", "Passwords do not match!");
             return;
         }
 
-        // Validasi password strength
         if (!User.isValidPassword(newPwd)) {
-            System.out.println("[ProfileController] Password validation failed");
             showAlert(Alert.AlertType.WARNING, "Validation Error",
                     "Password must be 6-20 characters long and include:\n" +
                             "• At least one uppercase letter\n" +
@@ -136,7 +113,6 @@ public class ProfileController implements Initializable {
             return;
         }
 
-        // Create updated user with new password
         User updated = new User(
                 currentUser.getFirstName(),
                 currentUser.getLastName(),
@@ -148,25 +124,19 @@ public class ProfileController implements Initializable {
         updated.setId(currentUser.getId());
 
         boolean success = UserDAO.updateUser(updated);
-        System.out.println("[ProfileController] Password change result: " + success);
-
         if (success) {
             currentUser = updated;
             UserSession.setCurrentUser(updated);
-            showAlert(Alert.AlertType.INFORMATION, "Success",
-                    "Password changed successfully!");
+            showAlert(Alert.AlertType.INFORMATION, "Success", "Password changed successfully!");
             newPasswordField.clear();
             confirmPasswordField.clear();
         } else {
-            showAlert(Alert.AlertType.ERROR, "Error",
-                    "Failed to change password. Please try again.");
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to change password. Please try again.");
         }
     }
 
     @FXML
     private void handleLogout(ActionEvent event) {
-        System.out.println("[ProfileController] Logout initiated");
-
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Logout Confirmation");
         confirm.setHeaderText("Are you sure you want to logout?");
@@ -174,34 +144,19 @@ public class ProfileController implements Initializable {
 
         confirm.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                System.out.println("[ProfileController] Logout confirmed by user");
-
-                // Log the logout action
                 if (UserSession.isLoggedIn()) {
                     User user = UserSession.getCurrentUser();
                     AuthLogger.logLogout(user);
-                    System.out.println("[ProfileController] User logged out: " + user.getUsername());
                 }
-
-                // Clear session
                 UserSession.logout();
-
-                // Show confirmation
-                showAlert(Alert.AlertType.INFORMATION, "Logged Out",
-                        "You have been logged out successfully.");
-
-                // Redirect to login
+                showAlert(Alert.AlertType.INFORMATION, "Logged Out", "You have been logged out successfully.");
                 redirectToLogin();
-            } else {
-                System.out.println("[ProfileController] Logout cancelled by user");
             }
         });
     }
 
     @FXML
     private void handleDeleteAccount(ActionEvent event) {
-        System.out.println("[ProfileController] Delete account initiated");
-
         Alert confirm = new Alert(Alert.AlertType.WARNING);
         confirm.setTitle("Delete Account");
         confirm.setHeaderText("⚠️ PERMANENT ACTION");
@@ -214,16 +169,8 @@ public class ProfileController implements Initializable {
 
         confirm.showAndWait().ifPresent(response -> {
             if (response == deleteButton) {
-                System.out.println("[ProfileController] Account deletion confirmed");
-
-                // Log before deleting
-                if (UserSession.isLoggedIn()) {
-                    AuthLogger.logLogout(currentUser);
-                }
-
+                AuthLogger.logLogout(currentUser);
                 boolean success = UserDAO.deleteUser(currentUser.getId());
-                System.out.println("[ProfileController] Delete result: " + success);
-
                 if (success) {
                     UserSession.logout();
                     showAlert(Alert.AlertType.INFORMATION, "Account Deleted",
@@ -240,154 +187,80 @@ public class ProfileController implements Initializable {
     @FXML
     void handleNavigation(ActionEvent event) {
         Object source = event.getSource();
-        System.out.println("[ProfileController] Navigation triggered");
+        String fxmlFile = "";
 
-        try {
-            String fxmlFile = "";
+        if (source == productsBtn) {
+            fxmlFile = "/Admin_View/ProductManagement.fxml";
+        } else if (source == bundleproductsBtn) {
+            fxmlFile = "/Admin_View/BundleProducts.fxml";
+        } else if (source == refundproductsBtn) {
+            fxmlFile = "/Admin_View/RefundProducts.fxml";
+        } else if (source == cashierBtn) {
+            fxmlFile = "/Admin_View/Cashier.fxml";
+        } else if (source == usersBtn) {
+            fxmlFile = "/Admin_View/UserManagement.fxml";
+        } else if (source == adminLogBtn) {
+            fxmlFile = "/Admin_View/AuthenticationLog.fxml";
+        } else if (source == profileBtn) {
+            return;
+        }
 
-            if (source == productsBtn) {
-                fxmlFile = "/Admin_View/ProductManagement.fxml";
-            } else if (source == bundleproductsBtn) {
-                fxmlFile = "/Admin_View/BundleProducts.fxml";
-            } else if (source == refundproductsBtn) {
-                fxmlFile = "/Admin_View/RefundProducts.fxml";
-            } else if (source == cashierBtn) {
-                fxmlFile = "/Admin_View/Cashier.fxml";
-            } else if (source == usersBtn) {
-                fxmlFile = "/Admin_View/UserManagement.fxml";
-            } else if (source == adminLogBtn) {
-                fxmlFile = "/Admin_View/AuthenticationLog.fxml";
-            } else if (source == profileBtn) {
-                System.out.println("[ProfileController] Already on Profile page");
-                return;
-            }
-
-            if (!fxmlFile.isEmpty()) {
+        if (!fxmlFile.isEmpty()) {
+            try {
                 loadScene(fxmlFile, (Stage) ((Button) source).getScene().getWindow());
+            } catch (IOException e) {
+                showAlert(Alert.AlertType.ERROR, "Navigation Error", "Could not navigate: " + e.getMessage());
             }
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Navigation Error",
-                    "Could not navigate to the requested page: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    /**
-     * ✅ Load scene baru dengan window maximize & centered otomatis
-     */
     private void loadScene(String fxmlFile, Stage stage) throws IOException {
-        System.out.println("[ProfileController] Loading scene: " + fxmlFile);
-
         URL url = getClass().getResource(fxmlFile);
         if (url == null) {
-            String altPath = fxmlFile.replace("/com/example/uts_pbo/", "/");
-            url = getClass().getResource(altPath);
+            url = getClass().getClassLoader().getResource(fxmlFile.startsWith("/") ? fxmlFile.substring(1) : fxmlFile);
+        }
 
-            if (url == null) {
-                String noSlashPath = fxmlFile.substring(1);
-                url = getClass().getClassLoader().getResource(noSlashPath);
-
-                if (url == null) {
-                    showAlert(Alert.AlertType.ERROR, "Navigation Error",
-                            "Could not find FXML file: " + fxmlFile);
-                    return;
-                }
-            }
+        if (url == null) {
+            showAlert(Alert.AlertType.ERROR, "Navigation Error", "Could not find FXML file: " + fxmlFile);
+            return;
         }
 
         Parent root = FXMLLoader.load(url);
-
-        // Get screen bounds
-        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-
-        // Set minimum size
-        stage.setMinWidth(1024);
-        stage.setMinHeight(768);
-
-        // Set scene
         stage.setScene(new Scene(root));
-
-        // ✅ Maximize dan center otomatis di semua ukuran layar
-        Platform.runLater(() -> {
-            stage.setX(screenBounds.getMinX());
-            stage.setY(screenBounds.getMinY());
-            stage.setWidth(screenBounds.getWidth());
-            stage.setHeight(screenBounds.getHeight());
-            stage.setMaximized(true);
-            stage.centerOnScreen();
-
-            // Lock maximized state
-            stage.maximizedProperty().addListener((obs, wasMax, isMax) -> {
-                if (!isMax) {
-                    Platform.runLater(() -> {
-                        stage.setMaximized(true);
-                        stage.centerOnScreen();
-                    });
-                }
-            });
-
-            System.out.println("[ProfileController] Scene loaded, maximized and centered");
-        });
-
+        stage.setMinWidth(FIXED_WIDTH);
+        stage.setMinHeight(FIXED_HEIGHT);
+        stage.setWidth(FIXED_WIDTH);
+        stage.setHeight(FIXED_HEIGHT);
+        stage.setResizable(false);
+        stage.centerOnScreen();
         stage.show();
     }
 
-    /**
-     * ✅ Redirect ke Login dengan maximize dan center otomatis
-     */
     private void redirectToLogin() {
-        System.out.println("[ProfileController] Redirecting to login...");
         try {
             URL loginUrl = getClass().getResource("/User_dashboard/Login.fxml");
-
             if (loginUrl == null) {
-                loginUrl = getClass().getResource("Login.fxml");
-
+                loginUrl = getClass().getClassLoader().getResource("User_dashboard/Login.fxml");
                 if (loginUrl == null) {
-                    loginUrl = getClass().getClassLoader().getResource("User_dashboard/Login.fxml");
-
-                    if (loginUrl == null) {
-                        System.err.println("[ProfileController] Could not find Login.fxml file!");
-                        return;
-                    }
+                    System.err.println("[ProfileController] Could not find Login.fxml file!");
+                    return;
                 }
             }
 
             Parent root = FXMLLoader.load(loginUrl);
-            Stage stage = (Stage) firstNameField.getScene().getWindow();
+            Stage stage = getStage();
+            if (stage == null) {
+                System.err.println("[ProfileController] Could not get stage reference");
+                return;
+            }
 
-            // Get screen bounds
-            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-
-            // Set minimum size
-            stage.setMinWidth(1024);
-            stage.setMinHeight(768);
-
-            // Set scene
             stage.setScene(new Scene(root));
-
-            // ✅ Maximize dan center otomatis
-            Platform.runLater(() -> {
-                stage.setX(screenBounds.getMinX());
-                stage.setY(screenBounds.getMinY());
-                stage.setWidth(screenBounds.getWidth());
-                stage.setHeight(screenBounds.getHeight());
-                stage.setMaximized(true);
-                stage.centerOnScreen();
-
-                // Lock maximized state
-                stage.maximizedProperty().addListener((obs, wasMax, isMax) -> {
-                    if (!isMax) {
-                        Platform.runLater(() -> {
-                            stage.setMaximized(true);
-                            stage.centerOnScreen();
-                        });
-                    }
-                });
-
-                System.out.println("[ProfileController] Login window maximized and centered");
-            });
-
+            stage.setMinWidth(FIXED_WIDTH);
+            stage.setMinHeight(FIXED_HEIGHT);
+            stage.setWidth(FIXED_WIDTH);
+            stage.setHeight(FIXED_HEIGHT);
+            stage.setResizable(false);
+            stage.centerOnScreen();
             stage.show();
 
         } catch (IOException e) {
@@ -396,20 +269,13 @@ public class ProfileController implements Initializable {
         }
     }
 
-    /**
-     * ✅ Alert Helper - Short version
-     */
     private void showAlert(Alert.AlertType type, String message) {
-        System.out.println("[ProfileController] Alert: " + message);
         Alert alert = new Alert(type);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
     }
 
-    /**
-     * ✅ Alert Helper - Full version
-     */
     private void showAlert(Alert.AlertType alertType, String title, String message) {
         Alert alert = new Alert(alertType);
         alert.setTitle(title);

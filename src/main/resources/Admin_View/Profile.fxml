@@ -66,8 +66,10 @@
         </HBox>
     </top>
     <center>
-        <ScrollPane fitToWidth="false" fitToHeight="true" style="-fx-background: #FFFEFB; -fx-background-color: #FFFEFB;">
-            <VBox alignment="TOP_CENTER" spacing="20" style="-fx-background-color: #FFFEFB;">
+        <ScrollPane fitToWidth="true" fitToHeight="true" minHeight="200.0" minWidth="300.0"
+                    style="-fx-background: #FFFEFB; -fx-background-color: #FFFEFB;">
+
+        <VBox alignment="TOP_CENTER" spacing="20" style="-fx-background-color: #FFFEFB;">
                 <padding>
                     <Insets top="30" right="50" bottom="30" left="50"/>
                 </padding>
